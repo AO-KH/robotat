@@ -79,32 +79,6 @@ export default function Services() {
           ))}
         </div>
 
-        {/* Partner Block */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="relative rounded-3xl overflow-hidden glass-card border-primary/20"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#06040d] via-[#06040d]/90 to-transparent z-10" />
-          {/* Services Page Partner image */}
-          <img 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4onxYJAK0vyjFmBJULc2JDsnBEOjIxyaFsyYHLfC8N5PMFfmwtN36AHt-Qa5ljq0ypgtnEYa4pdMycIHLES-FtA0j5OXin2yee_JOi3W7-NSTEVo2UK2gD3HObg9p07hqvtRt-JoLHykx7GbehOGnTqlJm27o_d7VJCTampsWGJ04pv5OXF2mH2yX3T5FqumQmCPL-jTRYVGxUpBZfnbQGm-vkM4BUOmZYJOiJme35xBfmMA2WWr0mbJqIhFW1rRdx2hoNrAozg" 
-            alt="xMachines Partnership"
-            className="absolute inset-0 w-full h-full object-cover object-right"
-          />
-          <div className="relative z-20 p-8 md:p-16 max-w-2xl">
-            <div className="px-3 py-1 rounded-md bg-white/10 border border-white/20 text-xs font-mono inline-block mb-6">
-              STRATEGIC PARTNERSHIP
-            </div>
-            <h2 className="text-3xl font-bold mb-6">Powered by xMachines Intelligence</h2>
-            <blockquote className="text-xl text-muted-foreground italic border-l-4 border-primary pl-6 mb-8">
-              "Integrating our precision AI with the ROBOTAT fleet has created the most capable agricultural platform on the market today."
-            </blockquote>
-            <p className="font-semibold text-foreground">— Director of Robotics, xMachines</p>
-          </div>
-        </motion.div>
-
         {/* Closing CTA */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
