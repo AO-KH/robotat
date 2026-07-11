@@ -16,6 +16,8 @@ const authLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { message: "Too many attempts. Please try again in a few minutes." },
+  // Don't throttle the integration tests (many login/register calls per IP).
+  skip: () => process.env.NODE_ENV === "test",
 });
 
 authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
