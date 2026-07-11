@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ROBOTAT by NASL - Fleet &amp; Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c86fd8",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#1d131f",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 border-b border-primary/10 justify-between sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">menu</span>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">ROBOTAT <span class="text-primary/70 font-medium text-sm">by NASL</span></h2>
+</div>
+<div class="flex items-center">
+<button class="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<main class="flex-1 pb-24">
+<!-- Hero / Section Header -->
+<section class="px-4 pt-8 pb-4">
+<h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight tracking-tight">Robotic platform + modular attachments</h1>
+<p class="text-slate-600 dark:text-slate-400 mt-2 text-sm">High-performance autonomous solutions for precision agriculture and industrial automation.</p>
+</section>
+<!-- Product Cards Stack -->
+<div class="flex flex-col gap-4 p-4">
+<!-- MAX T100 -->
+<div class="flex flex-col overflow-hidden rounded-xl bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/10 shadow-sm">
+<div class="w-full aspect-video bg-slate-200 dark:bg-slate-800 bg-cover bg-center" data-alt="Futuristic black and purple heavy duty robotic base platform" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC1db8RKPXGa6mXVDGoFeMMf1vLhaHqCiMewsASwYbHiKbwbCvAAt5P67Q5p_L7Gs6YnL4uSMyOihnTdoCvLzAUz_u4_tatElj5j6_7NAQEPGrreKAAd455yMiUJoJZA9pY0MJMmMnyZc_VYs9hw4xsALnvtPqFf1S1TZDVRPGCTsmKkIxQvxeRqvpNJt31jcjjAygLFABc4rK3KJZjAERTATryMpYQ94nFOYZ4J9E5tnsntmKdaq6F9GenDNizphzVESqghPv0Qg');"></div>
+<div class="p-4 flex flex-col gap-3">
+<div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">MAX T100</h3>
+<p class="text-primary text-xs font-semibold uppercase tracking-wider">Core Platform</p>
+</div>
+<ul class="space-y-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">bolt</span> 500kg payload capacity</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">battery_full</span> 8h continuous battery life</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">settings_input_component</span> High-torque electric drivetrain</li>
+</ul>
+<button class="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Request demo</button>
+</div>
+</div>
+<!-- X-Cultivator -->
+<div class="flex flex-col overflow-hidden rounded-xl bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/10 shadow-sm">
+<div class="w-full aspect-video bg-slate-200 dark:bg-slate-800 bg-cover bg-center" data-alt="Robotic arm attachment for soil aeration on a purple background" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBG4bUSoSJrOL1HQO2HkOpfEtFbFQcnYC1EXdBpL_38MUFFDjr77vkR0ibeSqbuSARYqBaaKMALnhbKVB7Xf9hbPcFkSZu8EEcMCloySfWcAW8BGqCWxyTO77mczNvTM9ysN4jiP-ft0uqYG7W5KkkDoFF04Khbh3u6QPNDbWXpb6M8c1oIuuqTmUBSXis_Fnm_HiD4ML-kQH4ueomeKw52YUJHTLwe2Bk0IMIlHgsB_VqNrFOM4YMq497hqnpScnP9NdhqER7KKw');"></div>
+<div class="p-4 flex flex-col gap-3">
+<div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">X-Cultivator</h3>
+<p class="text-primary text-xs font-semibold uppercase tracking-wider">Tillage Module</p>
+</div>
+<ul class="space-y-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">precision_manufacturing</span> Precision soil aeration</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">sensors</span> Adjustable depth sensors</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">route</span> Automated pathing</li>
+</ul>
+<button class="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Request demo</button>
+</div>
+</div>
+<!-- X-Grass Cutter -->
+<div class="flex flex-col overflow-hidden rounded-xl bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/10 shadow-sm">
+<div class="w-full aspect-video bg-slate-200 dark:bg-slate-800 bg-cover bg-center" data-alt="Autonomous mowing module attached to a sleek robot" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBiS-kcFdjK3IN21eZi_bW7C4sATwsze29T0dPWjv3vhzLtiFuGYGrpvQpmGQjlIMfc_Qszgh9yHfoGNI-U4sMWsPE5X4SKvfRTqoTyqwOGfNZ_yYM6Z6SgJmsEInSxbjXhxJDZ12Ml2W8vDiDUPknndG4ff8LtpIQTqLQ6xy_AsCIWU91dzgbNtj3Bm4RHX9W8OnWLoplhXbnV4IAXbTGzSMPCO4jWOWqRCfWbJBMOwe5XvI6pnB2Y8C1kyhNQxoxVuT02TAdnfQ');"></div>
+<div class="p-4 flex flex-col gap-3">
+<div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">X-Grass Cutter</h3>
+<p class="text-primary text-xs font-semibold uppercase tracking-wider">Maintenance Module</p>
+</div>
+<ul class="space-y-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">content_cut</span> Multi-blade precision cutting</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">height</span> Dynamic height adjustment</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">shield</span> Obstacle avoidance lidar</li>
+</ul>
+<button class="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Request demo</button>
+</div>
+</div>
+<!-- X-Sprayer -->
+<div class="flex flex-col overflow-hidden rounded-xl bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/10 shadow-sm">
+<div class="w-full aspect-video bg-slate-200 dark:bg-slate-800 bg-cover bg-center" data-alt="Smart spraying system for crops with purple lighting" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDG_qynrME2aFeL591ZbLShVrDmJkoKul2rrCT0C1bRuI7sK5EB8bYmOWQR0k913-Q7vz3FzZUdrOOmv8KjJHPwR4fwfBsMrHYm-T-QKLg_Zfg36udyjb9IpjVF4I-s3SXA73YsSIQyCa_H6J-WopKKbRb6O_ge_Yd16lwYaEWqMokC2SPeKmH5f4QOUcOM6WjKeR_MgW8mIwvvVMbiSk2u3zc791NDeIU3J8SaXu6n_pV3KNJ-M6wzNgO2JBdT-37hDqCAzq7W4A');"></div>
+<div class="p-4 flex flex-col gap-3">
+<div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">X-Sprayer</h3>
+<p class="text-primary text-xs font-semibold uppercase tracking-wider">Application Module</p>
+</div>
+<ul class="space-y-1">
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">opacity</span> Targeted liquid delivery</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">radar</span> UV leaf detection</li>
+<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-[18px] text-primary">sanitizer</span> Zero-waste calibration</li>
+</ul>
+<button class="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Request demo</button>
+</div>
+</div>
+</div>
+<!-- Command Center Section -->
+<section class="mt-12 bg-primary/10 py-10 px-4">
+<div class="max-w-md mx-auto">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 leading-tight">ROBOTAT Platform — your command center</h2>
+<div class="relative mb-8 rounded-xl overflow-hidden border border-primary/20 shadow-2xl bg-slate-900">
+<div class="bg-slate-800 p-2 flex items-center gap-1 border-b border-primary/20">
+<div class="size-2 rounded-full bg-red-500"></div>
+<div class="size-2 rounded-full bg-yellow-500"></div>
+<div class="size-2 rounded-full bg-green-500"></div>
+</div>
+<div class="p-4 aspect-[4/3] flex flex-col gap-4">
+<div class="h-8 w-1/3 bg-primary/20 rounded"></div>
+<div class="flex gap-2">
+<div class="h-24 flex-1 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary/40 text-4xl">monitoring</span>
+</div>
+<div class="h-24 flex-1 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary/40 text-4xl">map</span>
+</div>
+</div>
+<div class="h-32 w-full bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary/40 text-4xl">analytics</span>
+</div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark/80 to-transparent flex items-center justify-center">
+<span class="text-white text-xs font-mono px-3 py-1 bg-primary/50 rounded-full">DASHBOARD_v4.2</span>
+</div>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-start gap-3">
+<div class="size-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[16px]">check</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm">Real-time fleet tracking and health monitoring via 5G/Starlink.</p>
+</div>
+<div class="flex items-start gap-3">
+<div class="size-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[16px]">check</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm">Centralized mission planning with drag-and-drop tasking.</p>
+</div>
+<div class="flex items-start gap-3">
+<div class="size-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[16px]">check</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm">AI-driven crop analysis and predictive maintenance alerts.</p>
+</div>
+</div>
+<button class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20">Book a Demo</button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-slate-200 dark:border-primary/20 bg-white/90 dark:bg-background-dark/90 px-4 pb-4 pt-2 backdrop-blur-md">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Fleet</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Control</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Profile</p>
+</a>
+</nav>
+</div>
+</body></html>

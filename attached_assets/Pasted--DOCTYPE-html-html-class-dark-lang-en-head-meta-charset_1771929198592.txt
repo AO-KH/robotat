@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ROBOTAT by NASL - Services</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c86fd8",
+                        "secondary": "#17277F",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#1d131f",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .bg-mesh {
+            background: radial-gradient(circle at 0% 0%, rgba(200, 111, 216, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, rgba(23, 39, 127, 0.15) 0%, transparent 50%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header / Nav -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 justify-between border-b border-primary/10 sticky top-0 z-50">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined">menu</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center font-display">ROBOTAT by NASL</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-full size-10 bg-primary/10 text-primary">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<main class="flex-grow bg-mesh">
+<!-- Hero Title -->
+<section class="px-4 pt-8 pb-4">
+<h2 class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight text-left">
+                End-to-end deployment and support
+            </h2>
+<p class="text-slate-600 dark:text-slate-400 mt-2 text-sm">Empowering your operations with industrial-grade robotic solutions and 24/7 expert assistance.</p>
+</section>
+<!-- Services Grid -->
+<section class="grid grid-cols-2 gap-3 p-4">
+<div class="flex flex-col gap-3 rounded-xl border border-primary/10 bg-white/5 dark:bg-primary/5 p-4 backdrop-blur-sm">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">rocket_launch</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">System Deployment</h3>
+<p class="text-slate-600 dark:text-slate-400 text-xs font-normal leading-normal">Full-scale integration across complex sites.</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-xl border border-primary/10 bg-white/5 dark:bg-primary/5 p-4 backdrop-blur-sm">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">Training</h3>
+<p class="text-slate-600 dark:text-slate-400 text-xs font-normal leading-normal">Expert certification for your on-site operators.</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-xl border border-primary/10 bg-white/5 dark:bg-primary/5 p-4 backdrop-blur-sm">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">build</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">Maintenance</h3>
+<p class="text-slate-600 dark:text-slate-400 text-xs font-normal leading-normal">24/7 technical support and rapid parts delivery.</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-xl border border-primary/10 bg-white/5 dark:bg-primary/5 p-4 backdrop-blur-sm">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">lightbulb</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">Consultancy</h3>
+<p class="text-slate-600 dark:text-slate-400 text-xs font-normal leading-normal">Strategic pathfinding and workflow optimization.</p>
+</div>
+</div>
+</section>
+<!-- Partner Section -->
+<section class="p-4">
+<div class="flex flex-col gap-4 rounded-xl border border-primary/20 bg-secondary/10 dark:bg-secondary/20 p-5 overflow-hidden relative">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+<div class="flex items-center gap-2">
+<div class="h-6 w-auto bg-slate-200 dark:bg-slate-800 rounded px-2 flex items-center justify-center font-bold text-[10px] tracking-widest text-slate-500 uppercase">Partner: xMachines</div>
+</div>
+<div class="flex flex-col gap-2 relative z-10">
+<p class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">"Consistent performance across rugged terrain"</p>
+<p class="text-slate-600 dark:text-slate-400 text-sm italic">— Chief Operations Officer, xMachines Group</p>
+</div>
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg" data-alt="Industrial robot traversing rocky desert landscape at sunset" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4onxYJAK0vyjFmBJULc2JDsnBEOjIxyaFsyYHLfC8N5PMFfmwtN36AHt-Qa5ljq0ypgtnEYa4pdMycIHLES-FtA0j5OXin2yee_JOi3W7-NSTEVo2UK2gD3HObg9p07hqvtRt-JoLHykx7GbehOGnTqlJm27o_d7VJCTampsWGJ04pv5OXF2mH2yX3T5FqumQmCPL-jTRYVGxUpBZfnbQGm-vkM4BUOmZYJOiJme35xBfmMA2WWr0mbJqIhFW1rRdx2hoNrAozg");'>
+</div>
+</div>
+</section>
+<!-- Closing CTA Banner -->
+<section class="p-4 mb-8">
+<div class="rounded-xl bg-gradient-to-br from-secondary to-primary p-6 text-center shadow-xl">
+<h3 class="text-white text-2xl font-bold mb-2">Ready to see the fleet in action?</h3>
+<p class="text-white/80 text-sm mb-6">Join 50+ industrial partners using ROBOTAT to redefine remote operations.</p>
+<div class="flex flex-col gap-3">
+<button class="w-full py-3 bg-white text-secondary font-bold rounded-lg hover:bg-slate-100 transition-colors">Book a Demo</button>
+<button class="w-full py-3 border border-white/30 text-white font-bold rounded-lg backdrop-blur-sm hover:bg-white/10 transition-colors">Contact Sales</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-100 dark:bg-slate-900/50 p-6 border-t border-primary/10">
+<div class="flex flex-col gap-6">
+<div>
+<h2 class="text-primary font-bold text-xl mb-2">ROBOTAT</h2>
+<p class="text-slate-600 dark:text-slate-400 text-sm">Innovation in autonomous mobility systems by NASL Engineering.</p>
+</div>
+<div class="grid grid-cols-2 gap-4 text-sm">
+<div class="flex flex-col gap-2">
+<p class="font-bold">Contact Info</p>
+<a class="text-primary" href="mailto:info@nasl.tech">info@nasl.tech</a>
+<p class="text-slate-500">1200 Innovation Way, Tech Hub</p>
+</div>
+<div class="flex flex-col gap-2">
+<p class="font-bold">Follow Us</p>
+<div class="flex gap-3 text-primary">
+<span class="material-symbols-outlined">share</span>
+<span class="material-symbols-outlined">public</span>
+</div>
+</div>
+</div>
+<div class="text-[10px] text-slate-500 uppercase tracking-widest border-t border-slate-200 dark:border-slate-800 pt-4 text-center">
+                © 2024 NASL SYSTEMS INC. ALL RIGHTS RESERVED.
+            </div>
+</div>
+</footer>
+<!-- Bottom Nav Bar -->
+<nav class="flex gap-2 border-t border-primary/20 bg-background-light dark:bg-background-dark px-4 pb-6 pt-2 sticky bottom-0 z-50">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Fleet</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">settings</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Services</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Contact</p>
+</a>
+</nav>
+</body></html>
