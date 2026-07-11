@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import passport from "passport";
 import { api } from "@shared/routes";
 import type { User } from "@shared/schema";
@@ -8,7 +9,16 @@ import { createUser, getUserByEmail } from "./auth.storage";
 
 export const authRoutes = Router();
 
-authRoutes.post(api.auth.register.path, async (req, res, next) => {
+// Throttle credential endpoints per IP to blunt brute-force / credential stuffing.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { message: "Too many attempts. Please try again in a few minutes." },
+});
+
+authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
   try {
     const input = api.auth.register.input.parse(req.body);
     const existing = await getUserByEmail(input.email);
@@ -29,7 +39,7 @@ authRoutes.post(api.auth.register.path, async (req, res, next) => {
   }
 });
 
-authRoutes.post(api.auth.login.path, (req, res, next) => {
+authRoutes.post(api.auth.login.path, authLimiter, (req, res, next) => {
   try {
     api.auth.login.input.parse(req.body);
   } catch (err) {

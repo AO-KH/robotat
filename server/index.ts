@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { log } from "./lib/log";
@@ -7,6 +8,32 @@ import { createServer } from "http";
 
 const app = express();
 const httpServer = createServer(app);
+
+const isProd = process.env.NODE_ENV === "production";
+
+// Security headers. The strict CSP + frame/cross-origin protections are enabled in
+// production only — in dev they would break Vite's inline scripts, HMR websocket,
+// and the local preview iframe.
+app.use(
+  helmet({
+    contentSecurityPolicy: isProd
+      ? {
+          useDefaults: true,
+          directives: {
+            "script-src": ["'self'"],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            "font-src": ["'self'", "https://fonts.gstatic.com"],
+            "img-src": ["'self'", "data:", "https:"],
+            "connect-src": ["'self'"],
+          },
+        }
+      : false,
+    frameguard: isProd,
+    crossOriginOpenerPolicy: isProd,
+    crossOriginResourcePolicy: isProd,
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 
 declare module "http" {
   interface IncomingMessage {
