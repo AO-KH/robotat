@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useDemoModal } from "@/context/DemoModalContext";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
 
 import logo from "@assets/Robtat_by_Nasl_Logo-02_1771961617038.png";
 

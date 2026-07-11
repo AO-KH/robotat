@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, loginSchema, type RegisterInput, type LoginInput } from "@shared/schema";
-import { useCurrentUser, useLogin, useRegister } from "@/hooks/use-auth";
+import { useCurrentUser, useLogin, useRegister } from "@/features/auth/use-auth";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);

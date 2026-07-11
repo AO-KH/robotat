@@ -5,8 +5,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { storage } from "./storage";
-import { pool } from "./db";
+import { pool } from "../../lib/db";
+import { getUserByEmail, getUserById } from "./auth.storage";
 import type { User, PublicUser } from "@shared/schema";
 
 const scryptAsync = promisify(scrypt);
@@ -57,7 +57,7 @@ export function setupAuth(app: Express): void {
   passport.use(
     new LocalStrategy({ usernameField: "email", passwordField: "password" }, async (email, password, done) => {
       try {
-        const user = await storage.getUserByEmail(email);
+        const user = await getUserByEmail(email);
         if (!user) return done(null, false, { message: "Invalid email or password" });
         const ok = await verifyPassword(password, user.passwordHash);
         if (!ok) return done(null, false, { message: "Invalid email or password" });
@@ -71,7 +71,7 @@ export function setupAuth(app: Express): void {
   passport.serializeUser((user, done) => done(null, (user as User).id));
   passport.deserializeUser(async (id: number, done) => {
     try {
-      const user = await storage.getUserById(id);
+      const user = await getUserById(id);
       done(null, user ?? false);
     } catch (err) {
       done(err);

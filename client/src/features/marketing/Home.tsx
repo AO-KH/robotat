@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Mail } from "lucide-react";
-import { useDemoModal } from "@/context/DemoModalContext";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
 import type { ReactNode } from "react";
 
 import marqueeImg from "@assets/06_1772321886237.png";

@@ -6,19 +6,19 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 
 // Context & Layout
-import { DemoModalProvider } from "@/context/DemoModalContext";
+import { DemoModalProvider } from "@/features/booking/DemoModalContext";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { BackgroundMesh } from "@/components/ui/BackgroundMesh";
-import { BookDemoModal } from "@/components/ui/BookDemoModal";
+import { BackgroundMesh } from "@/components/layout/BackgroundMesh";
+import { BookDemoModal } from "@/features/booking/BookDemoModal";
 
 // Pages
-import Home from "@/pages/Home";
-import Services from "@/pages/Services";
-import Fleet from "@/pages/Fleet";
-import Auth from "@/pages/Auth";
-import Dashboard from "@/pages/Dashboard";
-import NotFound from "@/pages/not-found";
+import Home from "@/features/marketing/Home";
+import Services from "@/features/marketing/Services";
+import Fleet from "@/features/marketing/Fleet";
+import Auth from "@/features/auth/Auth";
+import Dashboard from "@/features/dashboard/Dashboard";
+import NotFound from "@/features/marketing/not-found";
 
 // Scroll to top on route change
 function ScrollToTop() {

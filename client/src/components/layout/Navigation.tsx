@@ -2,8 +2,8 @@ import { Link, useLocation } from "wouter";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, User, Home, Tractor, Layers, MessageSquare, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useDemoModal } from "@/context/DemoModalContext";
-import { useCurrentUser } from "@/hooks/use-auth";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useCurrentUser } from "@/features/auth/use-auth";
 
 import logo from "@assets/Robtat_by_Nasl_Logo-02_1771961617038.png";
 

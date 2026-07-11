@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Cpu, ShieldCheck, Wrench, BarChart3, ArrowRight } from "lucide-react";
-import { useDemoModal } from "@/context/DemoModalContext";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
 
 const services = [
   {

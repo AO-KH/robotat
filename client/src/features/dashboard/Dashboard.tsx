@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard, Settings, LogOut, ChevronRight, ClipboardList, Loader2, MapPin, Plus } from "lucide-react";
 import { useLocation } from "wouter";
-import { useCurrentUser, useLogout } from "@/hooks/use-auth";
-import { useMyAssessments } from "@/hooks/use-assessments";
-import { useDemoModal } from "@/context/DemoModalContext";
+import { useCurrentUser, useLogout } from "@/features/auth/use-auth";
+import { useMyAssessments } from "@/features/booking/use-assessments";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useEffect } from "react";
 
 const statusStyles: Record<string, string> = {

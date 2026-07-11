@@ -30,11 +30,16 @@ originally scaffolded on Replit. It is NOT a mobile app.
 
 ## Directory map
 
-- `client/src/pages/`  — Home, Services, Fleet, Auth, Dashboard, not-found
-- `client/src/components/ui/`     — shadcn/ui components
-- `client/src/components/layout/` — Navigation
-- `client/src/context/`  — DemoModalContext (global "Book a Demo" modal trigger)
-- `server/`  — index.ts (bootstrap), routes.ts, storage.ts, db.ts, vite.ts, static.ts
+Feature-first layout on both sides. See `README.md` and `docs/ARCHITECTURE.md`.
+
+- `client/src/features/`  — marketing/ (Home, Services, Fleet, not-found), auth/ (Auth + use-auth), booking/ (BookDemoModal, DemoModalContext, use-assessments), dashboard/ (Dashboard)
+- `client/src/components/layout/` — Navigation, Footer, BackgroundMesh
+- `client/src/components/ui/`      — shadcn/ui design-system primitives
+- `client/src/hooks/` — generic hooks (use-toast, use-mobile); `client/src/lib/` — queryClient, utils
+- `server/index.ts` — bootstrap; `server/routes.ts` — mounts the module routers
+- `server/lib/`      — db, log, errors, notify (email/WhatsApp delivery)
+- `server/modules/`  — auth/ (service+storage+routes), assessments/, contact/, demo-requests/
+- `server/vite.ts` / `static.ts` — dev (Vite middleware) / prod (static serving)
 - `shared/`  — schema.ts (Drizzle tables + Zod), routes.ts (typed API contract)
 - `attached_assets/` — images + a product PDF
 
@@ -56,20 +61,24 @@ DATABASE_URL=postgresql://user:password@localhost:5432/robotat
 PORT=5000
 ```
 
-Note: neither `server/index.ts` nor `server/db.ts` currently loads a `.env` file
-(no `dotenv` import). Either export the vars in the shell, or add `dotenv` and
-import it at the top of `server/index.ts`.
+Note: `server/index.ts` loads `.env` via `import "dotenv/config"` (and so does
+`drizzle.config.ts`), so a local `.env` file is picked up automatically. `.env` is
+gitignored; see `.env.example` for the full list of variables.
 
-## Current state — this is a PROTOTYPE. Known gaps:
+## Current state
 
-1. Auth is fake. `client/src/pages/Auth.tsx` just redirects to `/dashboard` on
-   submit — no real login, no session, no protected routes. Passport is installed
-   but there are no auth routes.
-2. Dashboard data is hardcoded. `Dashboard.tsx` uses static mock arrays for stats
-   and service history — nothing comes from the DB.
-3. The only real backend endpoint is `POST /api/demo-requests`. That's the whole API.
-4. Replit-specific Vite plugins are still in `vite.config.ts`
-   (`@replit/vite-plugin-*`). Fine to keep, but candidates for removal for local dev.
+Auth and booking are real now (backed by PostgreSQL):
+
+1. Real auth — register/login/logout/me via `server/modules/auth/`, scrypt password
+   hashing, passport local strategy, PG-backed sessions. `/dashboard` is protected.
+2. Site-assessment booking — `server/modules/assessments/` creates bookings tied to
+   the signed-in user; the dashboard lists them from `GET /api/assessments`.
+3. Delivery — each booking reaches the business by WhatsApp (`wa.me` link, always on;
+   optional Cloud API) and email (SMTP, or a console log in dev). See `server/lib/notify.ts`.
+4. Legacy `POST /api/demo-requests` remains for anonymous lead capture.
+
+Still open: Replit-specific Vite plugins are in `vite.config.ts` (`@replit/vite-plugin-*`) —
+fine to keep, candidates for removal for local dev.
 
 ## Conventions
 

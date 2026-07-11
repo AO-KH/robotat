@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Wifi, Target, MonitorPlay, X, ChevronRight, Shield, Battery, Gauge, Box } from "lucide-react";
-import { useDemoModal } from "@/context/DemoModalContext";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useState } from "react";
 
 import maxT100Img from "@assets/max_t100_robot.png";

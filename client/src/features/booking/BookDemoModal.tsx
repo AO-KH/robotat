@@ -4,9 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Mail, ArrowLeft, User as UserIcon, Building2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import { useDemoModal } from "@/context/DemoModalContext";
-import { useCurrentUser } from "@/hooks/use-auth";
-import { useContactLinks, useContactSubmit, useBookAssessment } from "@/hooks/use-assessments";
+import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useCurrentUser } from "@/features/auth/use-auth";
+import { useContactLinks, useContactSubmit, useBookAssessment } from "@/features/booking/use-assessments";
 import { bookAssessmentSchema, type BookAssessmentInput } from "@shared/schema";
 
 type View = "choose" | "form";
