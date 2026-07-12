@@ -8,6 +8,9 @@ import { contactRoutes } from "./modules/contact/contact.routes";
 import { demoRequestRoutes } from "./modules/demo-requests/demo-requests.routes";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  // Liveness probe for containers / load balancers (no auth, no DB).
+  app.get("/api/health", (_req, res) => res.status(200).json({ ok: true }));
+
   // Sessions + passport must be wired before the route handlers.
   setupAuth(app);
 

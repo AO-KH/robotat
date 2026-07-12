@@ -1,0 +1,60 @@
+# Production-ish stack: Postgres + one-shot migration + the app.
+# Usage:  docker compose up --build
+# Put a real SESSION_SECRET (and any SMTP/WhatsApp vars) in a .env file next to this.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-robotat}
+      POSTGRES_DB: robotat
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Runs migrations once against the DB, then exits (the app waits for it).
+  migrate:
+    build:
+      context: .
+      target: build
+    command: npm run db:migrate
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-robotat}@db:5432/robotat
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-robotat}@db:5432/robotat
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      WHATSAPP_BUSINESS_NUMBER: ${WHATSAPP_BUSINESS_NUMBER:-}
+      # Optional delivery config (uncomment / set in .env to enable):
+      # SMTP_HOST: ${SMTP_HOST:-}
+      # SMTP_PORT: ${SMTP_PORT:-}
+      # SMTP_USER: ${SMTP_USER:-}
+      # SMTP_PASS: ${SMTP_PASS:-}
+      # ASSESSMENT_INBOX: ${ASSESSMENT_INBOX:-}
+      # WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      # WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

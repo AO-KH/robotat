@@ -96,6 +96,29 @@ API push when Meta credentials are provided.
 | `npm run check`   | TypeScript typecheck |
 | `npm run db:push` | Push the Drizzle schema to the database |
 
+## Deployment
+
+The repo ships a multi-stage [`Dockerfile`](Dockerfile) and a
+[`docker-compose.yml`](docker-compose.yml) that brings up Postgres, runs
+migrations once, then starts the app:
+
+```bash
+# set a real SESSION_SECRET (and any SMTP/WhatsApp vars) in .env first
+docker compose up --build       # app on http://localhost:5000
+```
+
+The compose `migrate` service applies `migrations/` before the app starts; the
+app image runs the bundled server (`dist/index.cjs`) and serves the built client.
+A liveness probe is exposed at `GET /api/health`.
+
+**In production**, put the app behind a TLS-terminating reverse proxy / platform
+(the app itself speaks plain HTTP on `PORT`), set a strong `SESSION_SECRET`, and
+point `DATABASE_URL` at a managed Postgres. `helmet`'s strict CSP and
+`Secure`/`SameSite` session cookies switch on automatically when `NODE_ENV=production`.
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs typecheck →
+migrate → tests → build against a Postgres service on every push and PR.
+
 ## Conventions
 
 - **API contract first.** Add an endpoint to `shared/routes.ts` (method, path, Zod
