@@ -7,6 +7,7 @@ import { SiWhatsapp } from "react-icons/si";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useContactLinks, useContactSubmit, useBookAssessment } from "@/features/booking/use-assessments";
+import { useI18n } from "@/i18n";
 import { bookAssessmentSchema, type BookAssessmentInput } from "@shared/schema";
 
 type View = "choose" | "form";
@@ -15,6 +16,7 @@ type AccountType = "individual" | "company";
 export function BookDemoModal() {
   const { isOpen, closeModal } = useDemoModal();
   const { data: user } = useCurrentUser();
+  const { t } = useI18n();
   const { data: links, isLoading } = useContactLinks(isOpen);
   const { mutateAsync: recordBooking } = useBookAssessment();
   const { mutateAsync: submitContact } = useContactSubmit();
@@ -31,7 +33,6 @@ export function BookDemoModal() {
     formState: { errors, isSubmitting },
   } = useForm<BookAssessmentInput>({ resolver: zodResolver(bookAssessmentSchema) });
 
-  // Reset to the channel chooser each time the modal opens.
   useEffect(() => {
     if (isOpen) {
       setView("choose");
@@ -41,7 +42,6 @@ export function BookDemoModal() {
     }
   }, [isOpen, user, reset]);
 
-  // WhatsApp — quick chat: log once for signed-in users, then let the link open.
   const handleWhatsapp = () => {
     if (user && !recordedRef.current) {
       recordedRef.current = true;
@@ -50,10 +50,9 @@ export function BookDemoModal() {
     setTimeout(closeModal, 400);
   };
 
-  // Email — submit the detail form, then open the user's mail client pre-filled.
   const onSubmit = async (data: BookAssessmentInput) => {
     if (type === "company" && !data.company?.trim()) {
-      setError("company", { message: "Company name is required" });
+      setError("company", { message: t("booking.companyRequired") });
       return;
     }
     const payload = type === "individual" ? { ...data, company: "" } : data;
@@ -93,14 +92,14 @@ export function BookDemoModal() {
                     <button
                       onClick={() => setView("choose")}
                       aria-label="Back"
-                      className="p-1.5 -ml-1.5 rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                      className="p-1.5 rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <ArrowLeft className="w-5 h-5" />
+                      <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
                     </button>
                   )}
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">Book a site assessment</h2>
-                    <p className="text-sm text-muted-foreground mt-1">A ROBOTAT agronomist visits your farm.</p>
+                    <h2 className="text-xl font-bold text-foreground">{t("booking.title")}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{t("booking.subtitle")}</p>
                   </div>
                 </div>
                 <button
@@ -116,10 +115,8 @@ export function BookDemoModal() {
                 {view === "choose" ? (
                   <div className="p-6">
                     <div className="text-center mb-6">
-                      <h3 className="text-lg font-semibold">How would you like to reach us?</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Chat with us now, or send the full details by email.
-                      </p>
+                      <h3 className="text-lg font-semibold">{t("booking.howReach")}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{t("booking.howReachSub")}</p>
                     </div>
 
                     {isLoading || !links ? (
@@ -136,25 +133,25 @@ export function BookDemoModal() {
                           className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366]/20 transition-colors"
                         >
                           <SiWhatsapp className="w-8 h-8 text-[#25D366]" />
-                          <span className="text-sm font-semibold">WhatsApp</span>
-                          <span className="text-[11px] text-muted-foreground leading-tight">Chat with us now</span>
+                          <span className="text-sm font-semibold">{t("booking.whatsapp")}</span>
+                          <span className="text-[11px] text-muted-foreground leading-tight">{t("booking.whatsappSub")}</span>
                         </a>
                         <button
                           onClick={() => setView("form")}
                           className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
                         >
                           <Mail className="w-8 h-8 text-[#c084fc]" />
-                          <span className="text-sm font-semibold">Email</span>
-                          <span className="text-[11px] text-muted-foreground leading-tight">Fill in the details</span>
+                          <span className="text-sm font-semibold">{t("booking.email")}</span>
+                          <span className="text-[11px] text-muted-foreground leading-tight">{t("booking.emailSub")}</span>
                         </button>
                       </div>
                     )}
 
                     {!user && (
                       <p className="text-center text-xs text-muted-foreground mt-5">
-                        Have an account?{" "}
-                        <a href="/auth" className="text-[#c084fc] hover:underline">Sign in</a>{" "}
-                        to track your requests.
+                        {t("booking.haveAccount")}{" "}
+                        <a href="/auth" className="text-[#c084fc] hover:underline">{t("auth.signIn")}</a>{" "}
+                        {t("booking.signInToTrack")}
                       </p>
                     )}
                   </div>
@@ -164,13 +161,13 @@ export function BookDemoModal() {
                     {/* Individual / Company toggle */}
                     <div className="grid grid-cols-2 gap-2 p-1 rounded-full bg-black/40 border border-white/10">
                       {([
-                        { key: "individual", label: "Individual", icon: UserIcon },
-                        { key: "company", label: "Company", icon: Building2 },
+                        { key: "individual", label: t("booking.individual"), icon: UserIcon },
+                        { key: "company", label: t("booking.company"), icon: Building2 },
                       ] as const).map((opt) => (
                         <button
                           type="button"
                           key={opt.key}
-                          onClick={() => setType(opt.key)}
+                          onClick={() => setType(opt.key as AccountType)}
                           className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium transition-colors ${
                             type === opt.key
                               ? "bg-primary text-primary-foreground"
@@ -185,49 +182,49 @@ export function BookDemoModal() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground/80">
-                          {type === "company" ? "Contact name *" : "Full name *"}
+                          {type === "company" ? t("booking.contactName") : t("booking.fullName")}
                         </label>
                         <input {...register("name")} className={inputClass} placeholder="John Doe" />
                         {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">Phone</label>
+                        <label className="text-sm font-medium text-foreground/80">{t("booking.phone")}</label>
                         <input {...register("phone")} className={inputClass} placeholder="+966…" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/80">Email *</label>
+                      <label className="text-sm font-medium text-foreground/80">{t("booking.emailLabel")}</label>
                       <input {...register("email")} type="email" className={inputClass} placeholder="you@example.com" />
                       {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                     </div>
 
                     {type === "company" && (
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">Company name *</label>
-                        <input {...register("company")} className={inputClass} placeholder="Company name" />
+                        <label className="text-sm font-medium text-foreground/80">{t("booking.companyName")}</label>
+                        <input {...register("company")} className={inputClass} placeholder={t("booking.companyNamePlaceholder")} />
                         {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">Land size (ha)</label>
+                        <label className="text-sm font-medium text-foreground/80">{t("booking.landSize")}</label>
                         <input {...register("landSize")} className={inputClass} placeholder="e.g. 50" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">Location / Maps link</label>
+                        <label className="text-sm font-medium text-foreground/80">{t("booking.location")}</label>
                         <input {...register("location")} className={inputClass} placeholder="https://goo.gl/…" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/80">Message</label>
+                      <label className="text-sm font-medium text-foreground/80">{t("booking.message")}</label>
                       <textarea
                         {...register("message")}
                         rows={3}
                         className={`${inputClass} resize-none`}
-                        placeholder="Tell us about your crop and what you need…"
+                        placeholder={t("booking.messagePlaceholder")}
                       />
                     </div>
 
@@ -236,7 +233,7 @@ export function BookDemoModal() {
                       disabled={isSubmitting}
                       className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Mail className="w-4 h-4" /> Send by email</>}
+                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Mail className="w-4 h-4" /> {t("booking.sendByEmail")}</>}
                     </button>
                   </form>
                 )}

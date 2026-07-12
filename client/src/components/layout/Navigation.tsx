@@ -4,16 +4,37 @@ import { Menu, X, User, Home, Tractor, Layers, MessageSquare, ChevronRight } fro
 import { useEffect, useState } from "react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
+import { useI18n, type Lang } from "@/i18n";
 
 import logo from "@assets/Robtat_by_Nasl_Logo-02_1771961617038.png";
+
+function LangToggle({ className = "" }: { className?: string }) {
+  const { lang, setLang, t } = useI18n();
+  return (
+    <div className={`inline-flex items-center rounded-full border border-white/10 bg-white/5 p-0.5 ${className}`}>
+      {(["en", "ar"] as Lang[]).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          aria-pressed={lang === l}
+          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+            lang === l ? "bg-primary/20 text-[#c084fc]" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t(`lang.${l}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function Navigation() {
   const [location] = useLocation();
   const { openModal } = useDemoModal();
   const { data: user } = useCurrentUser();
+  const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Close the menu whenever the route changes
   useEffect(() => {
     setMenuOpen(false);
   }, [location]);
@@ -21,24 +42,24 @@ export function Navigation() {
   const isStaff = user?.role === "staff";
 
   const desktopLinks = [
-    { href: "/", label: "Home" },
-    { href: "/fleet", label: "Our Products" },
-    { href: "/services", label: "Services" },
-    ...(isStaff ? [{ href: "/admin", label: "Admin" }] : []),
+    { href: "/", label: t("nav.home") },
+    { href: "/fleet", label: t("nav.products") },
+    { href: "/services", label: t("nav.services") },
+    ...(isStaff ? [{ href: "/admin", label: t("nav.admin") }] : []),
   ];
 
   const menuLinks = [
-    { href: "/", label: "Home" },
-    { href: "/fleet", label: "Our Products" },
-    { href: "/services", label: "Services" },
-    ...(isStaff ? [{ href: "/admin", label: "Admin" }] : []),
-    user ? { href: "/dashboard", label: "My dashboard" } : { href: "/auth", label: "Sign in" },
+    { href: "/", label: t("nav.home") },
+    { href: "/fleet", label: t("nav.products") },
+    { href: "/services", label: t("nav.services") },
+    ...(isStaff ? [{ href: "/admin", label: t("nav.admin") }] : []),
+    user ? { href: "/dashboard", label: t("nav.myDashboard") } : { href: "/auth", label: t("nav.signIn") },
   ];
 
   const mobileLinks = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/fleet", label: "Products", icon: Tractor },
-    { href: "/services", label: "Services", icon: Layers },
+    { href: "/", label: t("nav.home"), icon: Home },
+    { href: "/fleet", label: t("nav.products"), icon: Tractor },
+    { href: "/services", label: t("nav.services"), icon: Layers },
   ];
 
   return (
@@ -78,16 +99,17 @@ export function Navigation() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <LangToggle className="hidden sm:inline-flex" />
             <button
               onClick={openModal}
               className="hidden sm:flex px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-medium text-[13px] uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
             >
-              Book a Demo
+              {t("nav.bookDemo")}
             </button>
             <Link href={user ? "/dashboard" : "/auth"}>
               <button
-                aria-label={user ? "Dashboard" : "Sign in"}
+                aria-label={user ? t("nav.myDashboard") : t("nav.signIn")}
                 className={`p-2.5 rounded-full border transition-colors ${
                   user
                     ? "bg-primary/15 border-primary/40 text-[#c084fc] hover:bg-primary/25"
@@ -130,18 +152,19 @@ export function Navigation() {
                   }`}
                 >
                   {link.label}
-                  <ChevronRight className="w-4 h-4 opacity-50" />
+                  <ChevronRight className="w-4 h-4 opacity-50 rtl:rotate-180" />
                 </Link>
               ))}
-              <div className="mt-2 pt-3.5 border-t border-border">
+              <div className="mt-2 pt-3.5 border-t border-border flex items-center justify-between gap-3">
+                <LangToggle />
                 <button
                   onClick={() => {
                     setMenuOpen(false);
                     openModal();
                   }}
-                  className="w-full px-4 py-3.5 rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors"
+                  className="flex-1 px-4 py-3 rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors"
                 >
-                  Book a Demo
+                  {t("nav.bookDemo")}
                 </button>
               </div>
             </motion.div>
@@ -173,7 +196,7 @@ export function Navigation() {
             className="flex flex-col items-center justify-center w-full h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Contact</span>
+            <span className="text-[10px] font-medium">{t("nav.contact")}</span>
           </button>
         </div>
       </nav>

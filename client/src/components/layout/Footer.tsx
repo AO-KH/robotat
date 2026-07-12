@@ -1,35 +1,37 @@
 import { Link } from "wouter";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useI18n } from "@/i18n";
 
 import logo from "@assets/Robtat_by_Nasl_Logo-02_1771961617038.png";
 
-const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
-  {
-    heading: "Robots",
-    links: [
-      { label: "Capabilities", href: "/#capabilities" },
-      { label: "Products", href: "/fleet" },
-      { label: "Services", href: "/services" },
-    ],
-  },
-  {
-    heading: "Customers",
-    links: [
-      { label: "Sign in", href: "/auth" },
-      { label: "Dashboard", href: "/dashboard" },
-    ],
-  },
-  {
-    heading: "Company",
-    links: [
-      { label: "About NASL", href: "https://nasl-tech.com/en/about-us/" },
-      { label: "News", href: "https://nasl-tech.com/en/blog/" },
-    ],
-  },
-];
-
 export function Footer() {
   const { openModal } = useDemoModal();
+  const { t } = useI18n();
+
+  const columns: { heading: string; links: { label: string; href: string }[] }[] = [
+    {
+      heading: t("footer.robots"),
+      links: [
+        { label: t("footer.capabilities"), href: "/#capabilities" },
+        { label: t("footer.products"), href: "/fleet" },
+        { label: t("footer.services"), href: "/services" },
+      ],
+    },
+    {
+      heading: t("footer.customers"),
+      links: [
+        { label: t("footer.signIn"), href: "/auth" },
+        { label: t("footer.dashboard"), href: "/dashboard" },
+      ],
+    },
+    {
+      heading: t("footer.company"),
+      links: [
+        { label: t("footer.aboutNasl"), href: "https://nasl-tech.com/en/about-us/" },
+        { label: t("footer.news"), href: "https://nasl-tech.com/en/blog/" },
+      ],
+    },
+  ];
 
   return (
     <footer className="border-t border-border mt-8 pb-24 md:pb-0">
@@ -41,12 +43,10 @@ export function Footer() {
               alt="ROBOTAT by NASL"
               className="h-12 w-auto object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.35)] mb-4"
             />
-            <p className="text-[14px] text-muted-foreground leading-relaxed max-w-xs">
-              Automating the essential for human growth — robotics and AI services.
-            </p>
+            <p className="text-[14px] text-muted-foreground leading-relaxed max-w-xs">{t("footer.tagline")}</p>
           </div>
 
-          {COLUMNS.map((col) => (
+          {columns.map((col) => (
             <div key={col.heading}>
               <h4 className="eyebrow mb-4">{col.heading}</h4>
               <ul className="space-y-2.5">
@@ -73,13 +73,13 @@ export function Footer() {
                     </li>
                   ),
                 )}
-                {col.heading === "Company" && (
+                {col.heading === t("footer.company") && (
                   <li>
                     <button
                       onClick={openModal}
                       className="text-[14px] text-muted-foreground hover:text-foreground transition-colors py-1"
                     >
-                      Contact
+                      {t("footer.contact")}
                     </button>
                   </li>
                 )}
@@ -89,12 +89,8 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-12 pt-6 border-t border-border">
-          <span className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground">
-            © 2026 NASL Technologies. ROBOTAT is a NASL company.
-          </span>
-          <span className="font-mono text-[11px] tracking-[0.08em] text-[#c084fc]">
-            robotat.nasl-tech.com
-          </span>
+          <span className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground">{t("footer.copyright")}</span>
+          <span className="font-mono text-[11px] tracking-[0.08em] text-[#c084fc]">robotat.nasl-tech.com</span>
         </div>
       </div>
     </footer>

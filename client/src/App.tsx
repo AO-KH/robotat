@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 
 // Context & Layout
+import { I18nProvider } from "@/i18n";
 import { DemoModalProvider } from "@/features/booking/DemoModalContext";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
@@ -61,21 +62,23 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <DemoModalProvider>
-          <div className="min-h-screen flex flex-col relative">
-            <BackgroundMesh />
-            <ScrollToTop />
-            <Navigation />
-            <main className="flex-1">
-              <Router />
-            </main>
-            <Footer />
-            <BookDemoModal />
-          </div>
-          <Toaster />
-        </DemoModalProvider>
-      </TooltipProvider>
+      <I18nProvider>
+        <TooltipProvider>
+          <DemoModalProvider>
+            <div className="min-h-screen flex flex-col relative">
+              <BackgroundMesh />
+              <ScrollToTop />
+              <Navigation />
+              <main className="flex-1">
+                <Router />
+              </main>
+              <Footer />
+              <BookDemoModal />
+            </div>
+            <Toaster />
+          </DemoModalProvider>
+        </TooltipProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

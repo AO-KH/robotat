@@ -1,0 +1,198 @@
+export const en = {
+  nav: {
+    home: "Home",
+    products: "Our Products",
+    services: "Services",
+    admin: "Admin",
+    bookDemo: "Book a Demo",
+    signIn: "Sign in",
+    myDashboard: "My dashboard",
+    contact: "Contact",
+  },
+  footer: {
+    tagline: "Automating the essential for human growth — robotics and AI services.",
+    robots: "Robots",
+    customers: "Customers",
+    company: "Company",
+    capabilities: "Capabilities",
+    products: "Products",
+    services: "Services",
+    dashboard: "Dashboard",
+    signIn: "Sign in",
+    aboutNasl: "About NASL",
+    news: "News",
+    contact: "Contact",
+    copyright: "© 2026 NASL Technologies. ROBOTAT is a NASL company.",
+  },
+  home: {
+    heroLine1: "Autonomous robots,",
+    heroLine2: "built to work,",
+    heroLine3: "wherever you need them",
+    heroSub:
+      "One autonomous robot, built and operated by ROBOTAT for orchards, row crops, protected agriculture, and solar sites across the region.",
+    bookAssessment: "Book a site assessment",
+    marqueeLabel: "ROBOTAT · Field",
+
+    capsTag: "What they do",
+    capsTitle1: "Eyes on every row.",
+    capsTitle2: "Action in every hour",
+    capsSub:
+      "Five capabilities the ROBOTAT fleet delivers across orchards, row crops, and protected agriculture — measurable, repeatable, and integrated with your farm operating systems.",
+    capabilities: [
+      {
+        title: "Crop scouting & health",
+        desc: "Multispectral and visual imaging across every row — disease, pests, and nutrient stress flagged before the eye can see them.",
+      },
+      {
+        title: "Precision spraying",
+        desc: "Targeted application of pesticides, herbicides, and fertilizer — plant-by-plant. Less chemical use, lower drift, better outcomes.",
+      },
+      {
+        title: "Irrigation & soil mapping",
+        desc: "Soil moisture, salinity, and topography mapped continuously. Irrigation runs by zone, by need — not by schedule.",
+      },
+      {
+        title: "Yield estimation & harvest support",
+        desc: "Counting, sizing, and ripeness assessment before harvest. Plan logistics, labor, and storage with hard numbers instead of guesses.",
+      },
+      {
+        title: "Greenhouse & livestock monitoring",
+        desc: "Climate inside, animals outside. Continuous welfare and condition checks for protected agriculture and pasture livestock.",
+      },
+    ],
+
+    envTag: "Where it works",
+    envTitle1: "One robot.",
+    envTitle2: "Every environment",
+    envSub:
+      "The MAX T100 doesn't change — the attachment does. One platform covers open fields, protected agriculture, and solar sites.",
+    greenhouseComingSoon: "Greenhouse · Coming soon",
+    environments: [
+      {
+        corner: "01 · Open field",
+        type: "— Orchards, vineyards & row crops",
+        title: "Drives every row, all season.",
+        desc: "Scouts crop health, cultivates soil, and sprays plant-by-plant across orchards, vineyards, and broadacre rows. Low ground pressure, GPS-tight navigation.",
+        specs: [
+          { label: "Row width", value: "0.9 – 2.4 m" },
+          { label: "Tasks", value: "Scout · Cultivate · Spray" },
+          { label: "Attachments", value: "X-Cultivator · X-Sprayer" },
+        ],
+      },
+      {
+        corner: "02 · Greenhouse",
+        type: "— Protected & indoor agriculture",
+        title: "Climate-aware, all day indoors.",
+        desc: "Quiet, compact operation inside greenhouses and vertical farms — scouting and monitoring crop and climate in tight aisles, around the clock.",
+        specs: [
+          { label: "Aisle width", value: "0.5 m min" },
+          { label: "Sensors", value: "RGB + multispectral + temp/RH" },
+          { label: "Runtime", value: "All-day operation" },
+        ],
+      },
+      {
+        corner: "03 · Solar farm",
+        type: "— Solar & infrastructure",
+        title: "Keeps the panel rows clear.",
+        desc: "Manages vegetation under and between panel rows — preventing shading and fire risk with no mowing crews and zero herbicide.",
+        specs: [
+          { label: "Coverage", value: "Utility-scale sites" },
+          { label: "Tasks", value: "Vegetation control" },
+          { label: "Attachment", value: "X-Grass Cutter" },
+        ],
+      },
+    ],
+
+    howTag: "How it works",
+    howTitle1: "Deploy. Inspect.",
+    howTitle2: "Act",
+    howSub:
+      "A three-step program from first farm visit to autonomous operation. Most deployments are live within 60 days.",
+    phases: [
+      {
+        tag: "Phase 01",
+        titlePlain: "We map your",
+        titleAccent: "farm.",
+        desc: "A ROBOTAT agronomy team walks your fields, defines scouting and treatment routes, and tailors the mission to your crop and season. No commitment, no charge for the assessment.",
+        kv: [
+          { label: "Site visit", value: "2–3 days in the field" },
+          { label: "Mission plan", value: "Routes, schedules, KPIs" },
+          { label: "Fleet sizing", value: "Right-sized for the work" },
+        ],
+      },
+      {
+        tag: "Phase 02",
+        titlePlain: "Robots",
+        titleAccent: "go to work.",
+        desc: "Continuous autonomous patrols. Sensors collect inspection data, anomalies are surfaced in real time, and your operators see everything in a single dashboard.",
+        kv: [
+          { label: "Continuous", value: "24 / 7 autonomous operation" },
+          { label: "Data layer", value: "Live to your dashboard" },
+          { label: "Traceable", value: "Every patrol logged" },
+        ],
+      },
+      {
+        tag: "Phase 03",
+        titlePlain: "Findings become",
+        titleAccent: "actions.",
+        desc: "Findings trigger work orders in your farm management system or ERP. Operators intervene only when they need to. The whole loop — detection to dispatch to resolution — closes automatically.",
+        kv: [
+          { label: "Integrations", value: "FMS · ERP" },
+          { label: "Workflows", value: "Owner, SLA, escalation" },
+          { label: "Reports", value: "Weekly to leadership" },
+        ],
+      },
+    ],
+
+    ctaTitle1: "Show us your farm.",
+    ctaTitle2: "We'll show you the robots.",
+    ctaSub:
+      "A ROBOTAT agronomist walks your farm in 2–3 days. No commitment. No charge for the assessment.",
+    emailTeam: "Email the team",
+    metaKingdom: "Available across the Kingdom",
+    metaResponse: "Response within 48 hrs",
+  },
+  auth: {
+    welcomeBack: "Welcome back",
+    createAccount: "Create your account",
+    signInSub: "Sign in to book and track your assessments.",
+    registerSub: "Register to book a site assessment.",
+    fullName: "Full name",
+    email: "Email address",
+    password: "Password",
+    passwordHint: "At least 8 characters",
+    signIn: "Sign in",
+    createAccountBtn: "Create account",
+    toSignUp: "Don't have an account? Sign up",
+    toSignIn: "Already have an account? Sign in",
+  },
+  booking: {
+    title: "Book a site assessment",
+    subtitle: "A ROBOTAT agronomist visits your farm.",
+    howReach: "How would you like to reach us?",
+    howReachSub: "Chat with us now, or send the full details by email.",
+    whatsapp: "WhatsApp",
+    whatsappSub: "Chat with us now",
+    email: "Email",
+    emailSub: "Fill in the details",
+    haveAccount: "Have an account?",
+    signInToTrack: "to track your requests.",
+    individual: "Individual",
+    company: "Company",
+    fullName: "Full name *",
+    contactName: "Contact name *",
+    phone: "Phone",
+    emailLabel: "Email *",
+    companyName: "Company name *",
+    landSize: "Land size (ha)",
+    location: "Location / Maps link",
+    message: "Message",
+    messagePlaceholder: "Tell us about your crop and what you need…",
+    companyNamePlaceholder: "Company name",
+    sendByEmail: "Send by email",
+    companyRequired: "Company name is required",
+  },
+  lang: { en: "EN", ar: "ع" },
+};
+
+export type Dictionary = typeof en;
