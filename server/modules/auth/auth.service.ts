@@ -6,6 +6,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { pool } from "../../lib/db";
+import { env } from "../../lib/env";
 import { getUserByEmail, getUserById } from "./auth.storage";
 import type { User, PublicUser } from "@shared/schema";
 
@@ -39,13 +40,13 @@ export function setupAuth(app: Express): void {
   app.use(
     session({
       store: new PgStore({ pool, tableName: "user_sessions", createTableIfMissing: true }),
-      secret: process.env.SESSION_SECRET || "robotat-dev-secret-change-me",
+      secret: env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
       },
     }),

@@ -3,6 +3,7 @@ import helmet from "helmet";
 import { createServer, type Server } from "http";
 import { registerRoutes } from "./routes";
 import { log } from "./lib/log";
+import { env } from "./lib/env";
 
 declare module "http" {
   interface IncomingMessage {
@@ -10,7 +11,7 @@ declare module "http" {
   }
 }
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = env.NODE_ENV === "production";
 
 /**
  * Build the Express app with all middleware, routes, and the error handler wired,
