@@ -25,6 +25,11 @@ export async function closeDb(): Promise<void> {
   await pool.end();
 }
 
+/** Promote a registered user to the staff role (for admin tests). */
+export async function makeStaff(email: string): Promise<void> {
+  await pool.query("UPDATE users SET role = 'staff' WHERE email = $1", [email.toLowerCase()]);
+}
+
 /** A valid registration payload with a unique-ish email. */
 export function newUser(overrides: Partial<{ name: string; email: string; password: string }> = {}) {
   return {

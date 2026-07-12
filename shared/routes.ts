@@ -5,6 +5,8 @@ import {
   registerSchema,
   loginSchema,
   bookAssessmentSchema,
+  updateAssessmentSchema,
+  ASSESSMENT_STATUSES,
   assessments,
   type PublicUser,
   type Assessment,
@@ -78,6 +80,32 @@ export const api = {
       responses: {
         200: z.array(assessmentSchema),
         401: errorSchemas.unauthorized,
+      },
+    },
+  },
+  admin: {
+    // Staff-only. List every booking, optionally filtered by status.
+    listAssessments: {
+      method: "GET" as const,
+      path: "/api/admin/assessments" as const,
+      query: z.object({ status: z.enum(ASSESSMENT_STATUSES).optional() }),
+      responses: {
+        200: z.array(assessmentSchema),
+        401: errorSchemas.unauthorized,
+        403: errorSchemas.unauthorized,
+      },
+    },
+    // Staff-only. Change a booking's status (and optionally its scheduled date).
+    updateAssessment: {
+      method: "PATCH" as const,
+      path: "/api/admin/assessments/:id" as const,
+      input: updateAssessmentSchema,
+      responses: {
+        200: assessmentSchema,
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+        403: errorSchemas.unauthorized,
+        404: errorSchemas.notFound,
       },
     },
   },

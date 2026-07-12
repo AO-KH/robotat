@@ -26,6 +26,3 @@ Thumbs.db
 # Local Claude Code tooling (machine-specific launch config)
 .claude/
 
-# Drizzle migration artifacts
-/migrations
-/drizzle

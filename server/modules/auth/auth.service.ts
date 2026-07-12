@@ -29,7 +29,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
 /** Strip the password hash before sending a user to the client. */
 export function toPublicUser(user: User): PublicUser {
-  return { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt };
+  return { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt };
 }
 
 export function setupAuth(app: Express): void {
@@ -83,4 +83,15 @@ export function setupAuth(app: Express): void {
 export const requireAuth: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated?.() && req.user) return next();
   res.status(401).json({ message: "You must be signed in to do that." });
+};
+
+/** Guard for staff-only endpoints (must be signed in AND have the staff role). */
+export const requireStaff: RequestHandler = (req, res, next) => {
+  if (!req.isAuthenticated?.() || !req.user) {
+    return res.status(401).json({ message: "You must be signed in to do that." });
+  }
+  if ((req.user as User).role !== "staff") {
+    return res.status(403).json({ message: "Staff access required." });
+  }
+  next();
 };

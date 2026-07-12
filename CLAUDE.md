@@ -40,7 +40,7 @@ book a **site assessment** and track its status. Each booking reaches the busine
 - `client/src/hooks/` — generic hooks (use-toast, use-mobile); `client/src/lib/` — queryClient, utils
 - `server/index.ts` — bootstrap; `server/routes.ts` — mounts the module routers
 - `server/lib/` — db, log, errors, notify (email/WhatsApp delivery)
-- `server/modules/` — `auth/` (service + storage + routes), `assessments/`, `contact/`, `demo-requests/`
+- `server/modules/` — `auth/` (service + storage + routes), `assessments/`, `admin/` (staff-only), `contact/`, `demo-requests/`
 - `server/vite.ts` / `static.ts` — dev (Vite middleware) / prod (static serving)
 - `shared/` — schema.ts, routes.ts
 - `attached_assets/` — images + a product PDF
@@ -55,7 +55,9 @@ Each server module owns `*.storage.ts` (Drizzle queries) + `*.routes.ts` (an Exp
 - `npm run build` — production build (via `script/build.ts`)
 - `npm start` — run production build
 - `npm run check` — TypeScript typecheck (tsc)
-- `npm run db:push` — push Drizzle schema to the database
+- `npm test` — run the Vitest/Supertest integration tests (needs a `robotat_test` DB; see `.env.test`)
+- `npm run db:generate` — generate a Drizzle migration from schema changes
+- `npm run db:migrate` — apply pending migrations (migrations are committed under `migrations/`)
 
 ## Environment
 
@@ -71,7 +73,9 @@ Real, PostgreSQL-backed auth and booking:
 
 1. **Auth** — register/login/logout/me via `server/modules/auth/`; scrypt password
    hashing, passport local strategy, PG-backed sessions. `/dashboard` is protected.
-   Register/login are rate-limited; `helmet` sets security headers.
+   Register/login are rate-limited; `helmet` sets security headers. Users have a
+   `role` (`customer` | `staff`); `server/modules/admin/` is staff-guarded
+   (`requireStaff`) — list/filter all bookings and change status/scheduled date.
 2. **Booking** — `server/modules/assessments/` creates bookings tied to the signed-in
    user; the dashboard lists them from `GET /api/assessments`.
 3. **Delivery** — each booking reaches the business by WhatsApp (`wa.me` link; optional
@@ -80,16 +84,16 @@ Real, PostgreSQL-backed auth and booking:
    `POST /api/demo-requests` remains for anonymous lead capture.
 
 Known cleanup: Replit Vite plugins are still in `vite.config.ts` (`@replit/vite-plugin-*`),
-inert (gated by `REPL_ID`); schema is deployed via `db:push` (no migration history yet).
-See the improvement plan for the roadmap.
+inert (gated by `REPL_ID`). See the improvement plan for the roadmap (the admin UI,
+customer status notifications, and Arabic/RTL are the next big items).
 
 ## Conventions
 
 - **API contract first.** Add an endpoint to `shared/routes.ts` (method, path, Zod
   input, typed responses), then implement it in the matching `server/modules/<feature>/`
   (storage + routes), and consume it from a `client/src/features/<feature>/` hook.
-- **Schema + Zod** live together in `shared/schema.ts`; run `npm run db:push` after
-  changing tables.
+- **Schema + Zod** live together in `shared/schema.ts`; after changing tables run
+  `npm run db:generate` then `npm run db:migrate` (migrations are committed).
 - **Data fetching** goes through TanStack Query hooks under each feature.
 
 ## When starting work
