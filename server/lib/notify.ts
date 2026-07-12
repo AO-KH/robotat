@@ -131,3 +131,96 @@ async function sendWhatsappCloudApi(a: Assessment): Promise<void> {
 export async function deliverAssessment(a: Assessment): Promise<void> {
   await Promise.allSettled([sendEmail(a), sendWhatsappCloudApi(a)]);
 }
+
+/* ============================================================
+ * Customer-facing status notifications
+ * ========================================================== */
+
+/** The message a customer receives when their booking's status changes. Pure/testable. */
+export function customerStatusMessage(a: Assessment): { subject: string; body: string } {
+  const ref = `#${a.id}`;
+  const sign = "\n\n— ROBOTAT by NASL";
+  const when = a.scheduledAt
+    ? new Date(a.scheduledAt).toLocaleString("en-US", {
+        dateStyle: "full",
+        timeStyle: "short",
+      })
+    : null;
+
+  switch (a.status) {
+    case "scheduled":
+      return {
+        subject: "Your ROBOTAT site assessment is scheduled",
+        body:
+          `Hi ${a.name},\n\nGood news — your site assessment (${ref}) has been scheduled` +
+          `${when ? ` for ${when}` : ""}. Our agronomy team will be in touch with the details.` +
+          sign,
+      };
+    case "completed":
+      return {
+        subject: "Your ROBOTAT site assessment is complete",
+        body: `Hi ${a.name},\n\nYour site assessment (${ref}) is now complete. We'll follow up with the findings and recommended next steps.${sign}`,
+      };
+    case "cancelled":
+      return {
+        subject: "Your ROBOTAT site assessment was cancelled",
+        body: `Hi ${a.name},\n\nYour site assessment (${ref}) has been cancelled. If this is unexpected, just reply to this message and we'll help.${sign}`,
+      };
+    default:
+      return {
+        subject: "Update on your ROBOTAT site assessment",
+        body: `Hi ${a.name},\n\nThe status of your site assessment (${ref}) is now: ${a.status}.${sign}`,
+      };
+  }
+}
+
+async function emailCustomer(a: Assessment): Promise<void> {
+  const { subject, body } = customerStatusMessage(a);
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+
+  if (!SMTP_HOST) {
+    log(`[email:dev] would notify ${a.email} — ${subject}\n${body}`, "notify");
+    return;
+  }
+
+  const transport = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT || 587),
+    secure: Number(SMTP_PORT) === 465,
+    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+  });
+
+  await transport.sendMail({
+    from: SMTP_USER || "robotat@nasl-tech.com",
+    to: a.email,
+    subject,
+    text: body,
+  });
+  log(`[email] status notice for #${a.id} (${a.status}) sent to ${a.email}`, "notify");
+}
+
+async function whatsappCustomer(a: Assessment): Promise<void> {
+  const { WHATSAPP_TOKEN, WHATSAPP_PHONE_ID } = process.env;
+  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID || !a.phone) {
+    log(`[whatsapp:dev] customer status notice skipped (needs Cloud API creds + phone)`, "notify");
+    return;
+  }
+  const to = a.phone.replace(/[^\d]/g, "");
+  const { body } = customerStatusMessage(a);
+
+  const res = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body } }),
+  });
+  if (!res.ok) {
+    log(`[whatsapp] customer notice error ${res.status}: ${await res.text()}`, "notify");
+  } else {
+    log(`[whatsapp] status notice for #${a.id} pushed to ${to}`, "notify");
+  }
+}
+
+/** Notify the customer their booking changed status. Best-effort; never throws. */
+export async function notifyCustomerStatusChange(a: Assessment): Promise<void> {
+  await Promise.allSettled([emailCustomer(a), whatsappCustomer(a)]);
+}

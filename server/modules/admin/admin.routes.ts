@@ -2,6 +2,7 @@ import { Router } from "express";
 import { api } from "@shared/routes";
 import { handleZodError } from "../../lib/errors";
 import { requireStaff } from "../auth/auth.service";
+import { notifyCustomerStatusChange } from "../../lib/notify";
 import { listAllAssessments, getAssessmentById, updateAssessment } from "./admin.storage";
 
 export const adminRoutes = Router();
@@ -34,6 +35,12 @@ adminRoutes.patch(api.admin.updateAssessment.path, requireStaff, async (req, res
       input.scheduledAt === undefined ? undefined : input.scheduledAt === null ? null : new Date(input.scheduledAt);
 
     const updated = await updateAssessment(id, { status: input.status, scheduledAt });
+
+    // Notify the customer when the status actually changes (best-effort, never blocks).
+    if (updated && updated.status !== existing.status) {
+      notifyCustomerStatusChange(updated).catch(() => {});
+    }
+
     res.status(200).json(updated);
   } catch (err) {
     if (handleZodError(err, res)) return;

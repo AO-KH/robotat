@@ -76,6 +76,8 @@ Real, PostgreSQL-backed auth and booking:
    Register/login are rate-limited; `helmet` sets security headers. Users have a
    `role` (`customer` | `staff`); `server/modules/admin/` is staff-guarded
    (`requireStaff`) — list/filter all bookings and change status/scheduled date.
+   A status change notifies the customer by email (+ optional WhatsApp) via
+   `notifyCustomerStatusChange` in `server/lib/notify.ts`.
 2. **Booking** — `server/modules/assessments/` creates bookings tied to the signed-in
    user; the dashboard lists them from `GET /api/assessments`.
 3. **Delivery** — each booking reaches the business by WhatsApp (`wa.me` link; optional
