@@ -18,16 +18,20 @@ export function Navigation() {
     setMenuOpen(false);
   }, [location]);
 
+  const isStaff = user?.role === "staff";
+
   const desktopLinks = [
     { href: "/", label: "Home" },
     { href: "/fleet", label: "Our Products" },
     { href: "/services", label: "Services" },
+    ...(isStaff ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   const menuLinks = [
     { href: "/", label: "Home" },
     { href: "/fleet", label: "Our Products" },
     { href: "/services", label: "Services" },
+    ...(isStaff ? [{ href: "/admin", label: "Admin" }] : []),
     user ? { href: "/dashboard", label: "My dashboard" } : { href: "/auth", label: "Sign in" },
   ];
 

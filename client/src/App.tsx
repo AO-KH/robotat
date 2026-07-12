@@ -18,6 +18,7 @@ import Services from "@/features/marketing/Services";
 import Fleet from "@/features/marketing/Fleet";
 import Auth from "@/features/auth/Auth";
 import Dashboard from "@/features/dashboard/Dashboard";
+import Admin from "@/features/admin/Admin";
 import NotFound from "@/features/marketing/not-found";
 
 // Scroll to top on route change
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/fleet" component={Fleet} />
       <Route path="/auth" component={Auth} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );
