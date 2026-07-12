@@ -17,7 +17,9 @@ import Home from "@/features/marketing/Home";
 import Services from "@/features/marketing/Services";
 import Fleet from "@/features/marketing/Fleet";
 import Auth from "@/features/auth/Auth";
+import Profile from "@/features/auth/Profile";
 import Dashboard from "@/features/dashboard/Dashboard";
+import AssessmentDetail from "@/features/dashboard/AssessmentDetail";
 import Admin from "@/features/admin/Admin";
 import NotFound from "@/features/marketing/not-found";
 
@@ -48,6 +50,8 @@ function Router() {
       <Route path="/fleet" component={Fleet} />
       <Route path="/auth" component={Auth} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/assessments/:id" component={AssessmentDetail} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

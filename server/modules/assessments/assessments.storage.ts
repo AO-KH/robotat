@@ -1,6 +1,6 @@
 import { assessments, type Assessment } from "@shared/schema";
 import { db } from "../../lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function createAssessment(input: {
   userId: number;
@@ -22,4 +22,13 @@ export async function listAssessmentsByUser(userId: number): Promise<Assessment[
     .from(assessments)
     .where(eq(assessments.userId, userId))
     .orderBy(desc(assessments.createdAt));
+}
+
+/** A single booking, but only if it belongs to the given user. */
+export async function getAssessmentForUser(id: number, userId: number): Promise<Assessment | undefined> {
+  const [row] = await db
+    .select()
+    .from(assessments)
+    .where(and(eq(assessments.id, id), eq(assessments.userId, userId)));
+  return row;
 }

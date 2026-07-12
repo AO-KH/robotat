@@ -54,6 +54,20 @@ export function useContactSubmit() {
   });
 }
 
+/** A single booking owned by the signed-in user. */
+export function useAssessment(id: number | undefined) {
+  return useQuery<Assessment>({
+    queryKey: [...LIST_KEY, id],
+    enabled: !!id,
+    queryFn: async () => {
+      const res = await fetch(`${api.assessments.list.path}/${id}`, { credentials: "include" });
+      if (res.status === 404) throw new Error("Assessment not found");
+      if (!res.ok) throw new Error("Failed to load assessment");
+      return (await res.json()) as Assessment;
+    },
+  });
+}
+
 export function useBookAssessment() {
   const qc = useQueryClient();
   const { toast } = useToast();

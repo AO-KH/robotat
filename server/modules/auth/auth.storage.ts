@@ -23,3 +23,12 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
   const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
   return user;
 }
+
+export async function updateUserName(id: number, name: string): Promise<User> {
+  const [user] = await db.update(users).set({ name }).where(eq(users.id, id)).returning();
+  return user;
+}
+
+export async function updateUserPassword(id: number, passwordHash: string): Promise<void> {
+  await db.update(users).set({ passwordHash }).where(eq(users.id, id));
+}

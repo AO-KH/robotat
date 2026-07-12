@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard, Settings, LogOut, ChevronRight, ClipboardList, Loader2, MapPin, Plus } from "lucide-react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useCurrentUser, useLogout } from "@/features/auth/use-auth";
 import { useMyAssessments } from "@/features/booking/use-assessments";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
@@ -117,7 +117,11 @@ export default function Dashboard() {
             ) : (
               <div className="glass-card rounded-3xl border border-white/10 divide-y divide-white/5 overflow-hidden">
                 {assessments.map((a) => (
-                  <div key={a.id} className="p-5 md:p-6 flex items-start justify-between gap-4 hover:bg-white/5 transition-colors">
+                  <Link
+                    key={a.id}
+                    href={`/assessments/${a.id}`}
+                    className="p-5 md:p-6 flex items-start justify-between gap-4 hover:bg-white/5 transition-colors cursor-pointer"
+                  >
                     <div className="min-w-0">
                       <div className="flex items-center gap-3 mb-1">
                         <span className="font-semibold">Assessment #{a.id}</span>
@@ -139,8 +143,10 @@ export default function Dashboard() {
                         </p>
                       )}
                     </div>
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">{formatDate(a.createdAt)}</span>
-                  </div>
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+                      {formatDate(a.createdAt)} <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </Link>
                 ))}
               </div>
             )}
@@ -157,6 +163,12 @@ export default function Dashboard() {
                 className="w-full p-6 rounded-3xl bg-primary text-primary-foreground font-bold text-left hover:bg-[#a855f7] transition-colors flex justify-between items-center"
               >
                 Book a site assessment <ChevronRight className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setLocation("/profile")}
+                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground font-bold text-left hover:bg-white/10 transition-all flex justify-between items-center"
+              >
+                Account settings <ChevronRight className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setLocation("/fleet")}

@@ -36,6 +36,17 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2, "Please enter your full name"),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 /* ============================================================
  * Assessment bookings (a logged-in user requests a site visit)
  * ========================================================== */

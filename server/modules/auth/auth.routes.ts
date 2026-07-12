@@ -4,8 +4,8 @@ import passport from "passport";
 import { api } from "@shared/routes";
 import type { User } from "@shared/schema";
 import { handleZodError } from "../../lib/errors";
-import { hashPassword, toPublicUser } from "./auth.service";
-import { createUser, getUserByEmail } from "./auth.storage";
+import { requireAuth, hashPassword, verifyPassword, toPublicUser } from "./auth.service";
+import { createUser, getUserByEmail, getUserById, updateUserName, updateUserPassword } from "./auth.storage";
 
 export const authRoutes = Router();
 
@@ -70,4 +70,38 @@ authRoutes.get(api.auth.me.path, (req, res) => {
     return res.status(200).json(toPublicUser(req.user as User));
   }
   res.status(401).json({ message: "Not signed in" });
+});
+
+// PATCH /api/auth/profile — update the signed-in user's name.
+authRoutes.patch(api.auth.updateProfile.path, requireAuth, async (req, res, next) => {
+  try {
+    const input = api.auth.updateProfile.input.parse(req.body);
+    const user = req.user as User;
+    const updated = await updateUserName(user.id, input.name);
+    res.status(200).json(toPublicUser(updated));
+  } catch (err) {
+    if (handleZodError(err, res)) return;
+    next(err);
+  }
+});
+
+// PATCH /api/auth/password — change password (requires the current password).
+authRoutes.patch(api.auth.changePassword.path, requireAuth, async (req, res, next) => {
+  try {
+    const input = api.auth.changePassword.input.parse(req.body);
+    const user = req.user as User;
+    // Re-load to get the current hash (the session user may be stale).
+    const fresh = await getUserById(user.id);
+    if (!fresh) return res.status(401).json({ message: "Not signed in" });
+
+    const ok = await verifyPassword(input.currentPassword, fresh.passwordHash);
+    if (!ok) {
+      return res.status(400).json({ message: "Current password is incorrect.", field: "currentPassword" });
+    }
+    await updateUserPassword(user.id, await hashPassword(input.newPassword));
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    if (handleZodError(err, res)) return;
+    next(err);
+  }
 });

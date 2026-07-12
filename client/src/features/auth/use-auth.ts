@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type RegisterInput, type LoginInput } from "@shared/routes";
-import type { PublicUser } from "@shared/schema";
+import type { PublicUser, UpdateProfileInput, ChangePasswordInput } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 const ME_KEY = ["/api/auth/me"] as const;
@@ -86,6 +86,52 @@ export function useLogout() {
     onSuccess: () => {
       qc.setQueryData(ME_KEY, null);
       qc.invalidateQueries({ queryKey: ["/api/assessments"] });
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (data: UpdateProfileInput) => {
+      const res = await fetch(api.auth.updateProfile.path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(api.auth.updateProfile.input.parse(data)),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Could not update profile"));
+      return (await res.json()) as PublicUser;
+    },
+    onSuccess: (user) => {
+      qc.setQueryData(ME_KEY, user);
+      toast({ title: "Profile updated" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useChangePassword() {
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (data: ChangePasswordInput) => {
+      const res = await fetch(api.auth.changePassword.path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(api.auth.changePassword.input.parse(data)),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Could not change password"));
+      return true;
+    },
+    onSuccess: () => {
+      toast({ title: "Password changed", description: "Your password has been updated." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Couldn't change password", description: err.message, variant: "destructive" });
     },
   });
 }

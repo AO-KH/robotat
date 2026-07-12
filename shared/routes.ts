@@ -4,6 +4,8 @@ import {
   demoRequests,
   registerSchema,
   loginSchema,
+  updateProfileSchema,
+  changePasswordSchema,
   bookAssessmentSchema,
   updateAssessmentSchema,
   ASSESSMENT_STATUSES,
@@ -58,6 +60,26 @@ export const api = {
         401: errorSchemas.unauthorized,
       },
     },
+    updateProfile: {
+      method: "PATCH" as const,
+      path: "/api/auth/profile" as const,
+      input: updateProfileSchema,
+      responses: {
+        200: publicUserSchema,
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    changePassword: {
+      method: "PATCH" as const,
+      path: "/api/auth/password" as const,
+      input: changePasswordSchema,
+      responses: {
+        200: z.object({ ok: z.literal(true) }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
   },
   assessments: {
     create: {
@@ -80,6 +102,15 @@ export const api = {
       responses: {
         200: z.array(assessmentSchema),
         401: errorSchemas.unauthorized,
+      },
+    },
+    get: {
+      method: "GET" as const,
+      path: "/api/assessments/:id" as const,
+      responses: {
+        200: assessmentSchema,
+        401: errorSchemas.unauthorized,
+        404: errorSchemas.notFound,
       },
     },
   },
