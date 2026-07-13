@@ -1,0 +1,66 @@
+# Production stack for a deploy host. Unlike docker-compose.yml (which builds
+# locally), this PULLS the pre-built image published to GHCR by the CD pipeline
+# (.github/workflows/cd.yml). The host never builds — it just pulls and runs.
+#
+# Usage on the host:
+#   IMAGE=ghcr.io/ao-kh/robotat:latest docker compose -f docker-compose.prod.yml pull
+#   IMAGE=ghcr.io/ao-kh/robotat:latest docker compose -f docker-compose.prod.yml up -d
+#
+# Put real secrets (POSTGRES_PASSWORD, SESSION_SECRET, SMTP/WhatsApp) in a .env
+# file next to this one. IMAGE defaults to :latest but the CD job pins it to the
+# exact commit SHA for reproducible, roll-back-able deploys.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-robotat}
+      POSTGRES_DB: robotat
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Applies committed migrations from the image, then exits (app waits for it).
+  # Uses the bundled runtime migrator — no drizzle-kit / devDependencies needed.
+  migrate:
+    image: ${IMAGE:-ghcr.io/ao-kh/robotat:latest}
+    command: ["node", "dist/migrate.cjs"]
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-robotat}@db:5432/robotat
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    image: ${IMAGE:-ghcr.io/ao-kh/robotat:latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-robotat}@db:5432/robotat
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required in production}
+      WHATSAPP_BUSINESS_NUMBER: ${WHATSAPP_BUSINESS_NUMBER:-}
+      # Optional delivery config (set in .env to enable real delivery):
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      ASSESSMENT_INBOX: ${ASSESSMENT_INBOX:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

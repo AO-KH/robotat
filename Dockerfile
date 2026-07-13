@@ -17,8 +17,10 @@ ENV PORT=5000
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Built client + bundled server, plus what the runtime needs.
+# Built client + bundled server (dist/index.cjs) + bundled migrator (dist/migrate.cjs).
 COPY --from=build /app/dist ./dist
+# Committed SQL migrations, applied at deploy time by `node dist/migrate.cjs`.
+COPY --from=build /app/migrations ./migrations
 
 EXPOSE 5000
 
