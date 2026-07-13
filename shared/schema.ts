@@ -1,5 +1,4 @@
 import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 /** User roles. `customer` is the default; `staff` can access the admin module. */
@@ -120,25 +119,3 @@ export interface AnalyticsSummary {
   topPaths: { path: string; views: number }[];
   funnel: { opened: number; whatsapp: number; email: number; submitted: number };
 }
-
-/* ============================================================
- * Demo requests (legacy public lead-capture — still supported)
- * ========================================================== */
-export const demoRequests = pgTable("demo_requests", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  company: text("company"),
-  message: text("message"),
-  landSize: text("land_size"),
-  location: text("location"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertDemoRequestSchema = createInsertSchema(demoRequests).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
-export type DemoRequest = typeof demoRequests.$inferSelect;

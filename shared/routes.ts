@@ -1,7 +1,5 @@
 import { z } from "zod";
 import {
-  insertDemoRequestSchema,
-  demoRequests,
   registerSchema,
   loginSchema,
   updateProfileSchema,
@@ -182,17 +180,6 @@ export const api = {
       },
     },
   },
-  demoRequests: {
-    create: {
-      method: "POST" as const,
-      path: "/api/demo-requests" as const,
-      input: insertDemoRequestSchema,
-      responses: {
-        201: z.custom<typeof demoRequests.$inferSelect>(),
-        400: errorSchemas.validation,
-      },
-    },
-  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
@@ -211,5 +198,3 @@ export type RegisterInput = z.infer<typeof api.auth.register.input>;
 export type LoginInput = z.infer<typeof api.auth.login.input>;
 export type BookAssessmentInput = z.infer<typeof api.assessments.create.input>;
 export type AssessmentResponse = Assessment;
-export type DemoRequestInput = z.infer<typeof api.demoRequests.create.input>;
-export type DemoRequestResponse = z.infer<typeof api.demoRequests.create.responses[201]>;

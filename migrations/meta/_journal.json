@@ -15,6 +15,13 @@
       "when": 1783971138116,
       "tag": "0001_melodic_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783972281806,
+      "tag": "0002_abandoned_karen_page",
+      "breakpoints": true
     }
   ]
 }
