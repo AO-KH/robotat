@@ -1,5 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
+import { trackPageView } from "@/lib/analytics";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,13 +23,16 @@ import Profile from "@/features/auth/Profile";
 import Dashboard from "@/features/dashboard/Dashboard";
 import AssessmentDetail from "@/features/dashboard/AssessmentDetail";
 import Admin from "@/features/admin/Admin";
+import Analytics from "@/features/admin/Analytics";
 import NotFound from "@/features/marketing/not-found";
 
-// Scroll to top on route change
+// Scroll to top + record a page view on route change
 function ScrollToTop() {
   const [pathname] = useLocation();
-  
+
   useEffect(() => {
+    trackPageView(pathname);
+
     const hash = window.location.hash;
     if (hash) {
       const el = document.querySelector(hash);
@@ -39,7 +43,7 @@ function ScrollToTop() {
     }
     window.scrollTo(0, 0);
   }, [pathname]);
-  
+
   return null;
 }
 
@@ -54,6 +58,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/assessments/:id" component={AssessmentDetail} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/analytics" component={Analytics} />
       <Route component={NotFound} />
     </Switch>
   );

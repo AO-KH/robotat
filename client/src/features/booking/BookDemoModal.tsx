@@ -8,6 +8,7 @@ import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useContactLinks, useContactSubmit, useBookAssessment } from "@/features/booking/use-assessments";
 import { useI18n } from "@/i18n";
+import { track } from "@/lib/analytics";
 import { bookAssessmentSchema, type BookAssessmentInput } from "@shared/schema";
 
 type View = "choose" | "form";
@@ -42,7 +43,13 @@ export function BookDemoModal() {
     }
   }, [isOpen, user, reset]);
 
+  // Funnel: one "opened" event per time the modal is shown.
+  useEffect(() => {
+    if (isOpen) track("booking_open");
+  }, [isOpen]);
+
   const handleWhatsapp = () => {
+    track("booking_whatsapp");
     if (user && !recordedRef.current) {
       recordedRef.current = true;
       recordBooking({ name: user.name, email: user.email }).catch(() => {});
@@ -58,6 +65,7 @@ export function BookDemoModal() {
     const payload = type === "individual" ? { ...data, company: "" } : data;
     try {
       const res = user ? await recordBooking(payload) : await submitContact(payload);
+      track("booking_submitted");
       window.location.href = res.mailtoUrl;
       setTimeout(closeModal, 300);
     } catch {
@@ -137,7 +145,10 @@ export function BookDemoModal() {
                           <span className="text-[11px] text-muted-foreground leading-tight">{t("booking.whatsappSub")}</span>
                         </a>
                         <button
-                          onClick={() => setView("form")}
+                          onClick={() => {
+                            track("booking_email");
+                            setView("form");
+                          }}
                           className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
                         >
                           <Mail className="w-8 h-8 text-[#c084fc]" />

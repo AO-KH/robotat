@@ -18,7 +18,7 @@ export async function resetDb(): Promise<void> {
   await pool.query(
     `DO $$ BEGIN IF to_regclass('public.user_sessions') IS NOT NULL THEN TRUNCATE user_sessions; END IF; END $$;`,
   );
-  await pool.query("TRUNCATE users, assessments, demo_requests RESTART IDENTITY CASCADE");
+  await pool.query("TRUNCATE users, assessments, demo_requests, analytics_events RESTART IDENTITY CASCADE");
 }
 
 export async function closeDb(): Promise<void> {

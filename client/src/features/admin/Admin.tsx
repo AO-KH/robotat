@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, Calendar } from "lucide-react";
+import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, Calendar, BarChart3 } from "lucide-react";
 import { ASSESSMENT_STATUSES, type Assessment, type AssessmentStatus } from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
@@ -133,9 +133,17 @@ export default function Admin() {
   return (
     <div className="min-h-screen pt-28 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-2">
-          <ShieldCheck className="w-7 h-7 text-[#c084fc]" />
-          <h1 className="text-3xl md:text-4xl font-bold">Assessments</h1>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="w-7 h-7 text-[#c084fc]" />
+            <h1 className="text-3xl md:text-4xl font-bold">Assessments</h1>
+          </div>
+          <Link
+            href="/admin/analytics"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-sm font-medium hover:border-[#c084fc] hover:text-[#c084fc] transition-colors whitespace-nowrap"
+          >
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </Link>
         </div>
         <p className="text-muted-foreground mb-8">Manage every site-assessment booking.</p>
 

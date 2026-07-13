@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Assessment, AssessmentStatus, UpdateAssessmentInput } from "@shared/schema";
+import type { Assessment, AssessmentStatus, UpdateAssessmentInput, AnalyticsSummary } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 const LIST_KEY = "/api/admin/assessments";
@@ -13,6 +13,18 @@ export function useAllAssessments(status?: AssessmentStatus) {
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load assessments");
       return (await res.json()) as Assessment[];
+    },
+  });
+}
+
+/** Aggregate analytics summary (staff only). */
+export function useAnalytics() {
+  return useQuery<AnalyticsSummary>({
+    queryKey: ["/api/admin/analytics"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/analytics", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load analytics");
+      return (await res.json()) as AnalyticsSummary;
     },
   });
 }

@@ -93,6 +93,35 @@ export const bookAssessmentSchema = z.object({
 export type BookAssessmentInput = z.infer<typeof bookAssessmentSchema>;
 
 /* ============================================================
+ * Analytics — first-party, anonymous event stream
+ * ========================================================== */
+export const analyticsEvents = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // e.g. page_view, booking_open, booking_whatsapp…
+  path: text("path"),
+  visitorId: text("visitor_id"), // anonymous, client-generated (no PII, no IP stored)
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
+/** What the client sends when recording an event. */
+export const trackEventSchema = z.object({
+  type: z.string().trim().min(1).max(64),
+  path: z.string().max(512).optional(),
+  visitorId: z.string().max(64).optional(),
+});
+export type TrackEventInput = z.infer<typeof trackEventSchema>;
+
+export interface AnalyticsSummary {
+  totalPageViews: number;
+  uniqueVisitors: number;
+  topPaths: { path: string; views: number }[];
+  funnel: { opened: number; whatsapp: number; email: number; submitted: number };
+}
+
+/* ============================================================
  * Demo requests (legacy public lead-capture — still supported)
  * ========================================================== */
 export const demoRequests = pgTable("demo_requests", {

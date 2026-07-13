@@ -10,8 +10,10 @@ import {
   updateAssessmentSchema,
   ASSESSMENT_STATUSES,
   assessments,
+  trackEventSchema,
   type PublicUser,
   type Assessment,
+  type AnalyticsSummary,
 } from "./schema";
 
 export const errorSchemas = {
@@ -137,6 +139,28 @@ export const api = {
         401: errorSchemas.unauthorized,
         403: errorSchemas.unauthorized,
         404: errorSchemas.notFound,
+      },
+    },
+    // Staff-only. Aggregate analytics (page views, unique visitors, booking funnel).
+    analytics: {
+      method: "GET" as const,
+      path: "/api/admin/analytics" as const,
+      responses: {
+        200: z.custom<AnalyticsSummary>(),
+        401: errorSchemas.unauthorized,
+        403: errorSchemas.unauthorized,
+      },
+    },
+  },
+  analytics: {
+    // Public, fire-and-forget event ingest.
+    track: {
+      method: "POST" as const,
+      path: "/api/analytics/events" as const,
+      input: trackEventSchema,
+      responses: {
+        202: z.object({ ok: z.literal(true) }),
+        400: errorSchemas.validation,
       },
     },
   },
