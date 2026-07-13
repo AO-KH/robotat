@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, loginSchema, type RegisterInput, type LoginInput } from "@shared/schema";
 import { useCurrentUser, useLogin, useRegister } from "@/features/auth/use-auth";
 import { useI18n } from "@/i18n";
+import { useSeo } from "@/lib/seo";
 
 const iconClass = "absolute left-4 rtl:left-auto rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground";
 const inputClass =
@@ -19,6 +20,7 @@ export default function Auth() {
   const { t } = useI18n();
   const login = useLogin();
   const register = useRegister();
+  useSeo({ title: "Sign in", noindex: true });
 
   useEffect(() => {
     if (user) setLocation("/dashboard");

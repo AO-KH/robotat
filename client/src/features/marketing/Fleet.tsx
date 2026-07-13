@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Wifi, Target, MonitorPlay, X, ChevronRight, Shield, Battery, Gauge, Box } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useSeo } from "@/lib/seo";
 import { useState } from "react";
 
 import maxT100Img from "@assets/max_t100_robot.png";
@@ -70,6 +71,11 @@ const products = [
 export default function Fleet() {
   const { openModal } = useDemoModal();
   const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
+  useSeo({
+    title: "Products — MAX T100 & Attachments",
+    description:
+      "Meet the MAX T100 autonomous platform and its ecosystem of attachments — X-Grass Cutter, X-Cultivator, and X-Sprayer. One base, every job in the field.",
+  });
 
   return (
     <div className="min-h-screen pt-28 pb-24 md:pb-12">

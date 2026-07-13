@@ -5,6 +5,7 @@ import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, Calendar } from "
 import { ASSESSMENT_STATUSES, type Assessment, type AssessmentStatus } from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
+import { useSeo } from "@/lib/seo";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -109,6 +110,7 @@ export default function Admin() {
   const [, setLocation] = useLocation();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const [filter, setFilter] = useState<AssessmentStatus | "all">("all");
+  useSeo({ title: "Admin", noindex: true });
   const { data: assessments = [], isLoading } = useAllAssessments(filter === "all" ? undefined : filter);
 
   // Guard: only staff. Bounce everyone else.

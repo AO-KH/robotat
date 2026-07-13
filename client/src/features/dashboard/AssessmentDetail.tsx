@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Mail, Phone, Building2, MapPin, Calendar, Check, X,
 import type { Assessment } from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAssessment } from "@/features/booking/use-assessments";
+import { useSeo } from "@/lib/seo";
 
 const STEPS = [
   { key: "pending", label: "Requested", icon: Clock },
@@ -72,6 +73,7 @@ export default function AssessmentDetail() {
   const id = Number(params.id);
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: a, isLoading, isError } = useAssessment(Number.isInteger(id) ? id : undefined);
+  useSeo({ title: "Assessment", noindex: true });
 
   useEffect(() => {
     if (!userLoading && !user) setLocation("/auth");

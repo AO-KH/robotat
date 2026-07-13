@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Mail } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
+import { useSeo } from "@/lib/seo";
 import type { ReactNode } from "react";
 
 import marqueeImg from "@assets/06_1772321886237.png";
@@ -34,6 +35,12 @@ export default function Home() {
   const { openModal } = useDemoModal();
   const { t, dict } = useI18n();
   const home = dict.home;
+
+  useSeo({
+    title: "ROBOTAT — Autonomous Agricultural Robots by NASL",
+    description:
+      "Autonomous robots that scout, spray, cultivate, and maintain — across orchards, row crops, protected agriculture, and solar sites. Book a free site assessment.",
+  });
 
   return (
     <div className="min-h-screen pt-20 pb-24 md:pb-0 hero-gradient">

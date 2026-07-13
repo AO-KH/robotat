@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Cpu, ShieldCheck, Wrench, BarChart3, ArrowRight } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useSeo } from "@/lib/seo";
 
 const services = [
   {
@@ -27,6 +28,11 @@ const services = [
 
 export default function Services() {
   const { openModal } = useDemoModal();
+  useSeo({
+    title: "Services — End-to-End Autonomy",
+    description:
+      "Autonomous grass cutting, precision spraying, soil cultivation, and AI-driven fleet maintenance — from first setup to ongoing optimization.",
+  });
 
   return (
     <div className="min-h-screen pt-28 pb-24 md:pb-12">

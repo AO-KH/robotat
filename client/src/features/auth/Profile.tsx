@@ -11,6 +11,7 @@ import {
   type ChangePasswordInput,
 } from "@shared/schema";
 import { useCurrentUser, useUpdateProfile, useChangePassword } from "@/features/auth/use-auth";
+import { useSeo } from "@/lib/seo";
 
 const inputClass =
   "w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all";
@@ -20,6 +21,7 @@ export default function Profile() {
   const { data: user, isLoading } = useCurrentUser();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
+  useSeo({ title: "Account settings", noindex: true });
 
   useEffect(() => {
     if (!isLoading && !user) setLocation("/auth");

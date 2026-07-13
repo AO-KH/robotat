@@ -4,6 +4,7 @@ import { Link, useLocation } from "wouter";
 import { useCurrentUser, useLogout } from "@/features/auth/use-auth";
 import { useMyAssessments } from "@/features/booking/use-assessments";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useSeo } from "@/lib/seo";
 import { useEffect } from "react";
 
 const statusStyles: Record<string, string> = {
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const { data: assessments = [], isLoading: listLoading } = useMyAssessments(!!user);
   const logout = useLogout();
   const { openModal } = useDemoModal();
+  useSeo({ title: "Dashboard", noindex: true });
 
   // Protect the route: bounce to /auth if not signed in.
   useEffect(() => {
