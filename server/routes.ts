@@ -5,6 +5,7 @@ import { authRoutes } from "./modules/auth/auth.routes";
 import { assessmentRoutes } from "./modules/assessments/assessments.routes";
 import { adminRoutes } from "./modules/admin/admin.routes";
 import { analyticsRoutes } from "./modules/analytics/analytics.routes";
+import { productRoutes } from "./modules/products/products.routes";
 import { contactRoutes } from "./modules/contact/contact.routes";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
@@ -18,6 +19,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.use(assessmentRoutes);
   app.use(adminRoutes);
   app.use(analyticsRoutes);
+  app.use(productRoutes);
   app.use(contactRoutes);
 
   return httpServer;

@@ -12,6 +12,7 @@ import {
   type PublicUser,
   type Assessment,
   type AnalyticsSummary,
+  type Product,
 } from "./schema";
 
 export const errorSchemas = {
@@ -148,6 +149,14 @@ export const api = {
         401: errorSchemas.unauthorized,
         403: errorSchemas.unauthorized,
       },
+    },
+  },
+  products: {
+    // Public — the fleet catalogue, served from the database.
+    list: {
+      method: "GET" as const,
+      path: "/api/products" as const,
+      responses: { 200: z.array(z.custom<Product>()) },
     },
   },
   analytics: {

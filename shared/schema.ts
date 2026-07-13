@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 /** User roles. `customer` is the default; `staff` can access the admin module. */
@@ -112,6 +112,32 @@ export const trackEventSchema = z.object({
   visitorId: z.string().max(64).optional(),
 });
 export type TrackEventInput = z.infer<typeof trackEventSchema>;
+
+/* ============================================================
+ * Products (fleet content — editable in the DB, bilingual)
+ * ========================================================== */
+export interface ProductSpec {
+  labelEn: string;
+  labelAr: string;
+  valueEn: string;
+  valueAr: string;
+}
+
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  kind: text("kind").notNull(), // 'platform' | 'attachment'
+  sortOrder: integer("sort_order").notNull().default(0),
+  name: text("name").notNull(), // brand name, not translated (e.g. "MAX T100")
+  roleEn: text("role_en").notNull(),
+  roleAr: text("role_ar").notNull(),
+  descriptionEn: text("description_en").notNull(),
+  descriptionAr: text("description_ar").notNull(),
+  specs: jsonb("specs").$type<ProductSpec[]>().notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Product = typeof products.$inferSelect;
 
 export interface AnalyticsSummary {
   totalPageViews: number;

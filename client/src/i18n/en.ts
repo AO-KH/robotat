@@ -192,6 +192,22 @@ export const en = {
     sendByEmail: "Send by email",
     companyRequired: "Company name is required",
   },
+  fleet: {
+    ourProducts: "Our products",
+    onePlatform: "One platform.",
+    unlimitedAttachments: "Unlimited attachments",
+    sub: "From agriculture to solar farms — meet the MAX T100 and its specialized ecosystem of attachments. One heavy-duty autonomous base, every job in the field.",
+    basePlatform: "Base Platform",
+    attachmentTool: "Attachment Tool",
+    viewDetails: "View Details",
+    details: "Details",
+    bookDemo: "Book a Demo",
+    commandCenter: "Command Center",
+    commandCenterDesc:
+      "Control the entire fleet from your tablet or desktop. Set boundaries, assign tasks, monitor live camera feeds, and review coverage maps all from one beautiful, intuitive interface.",
+    requestPlatformDemo: "Request Platform Demo",
+    loadError: "Couldn't load products. Please try again.",
+  },
   lang: { en: "EN", ar: "ع" },
 };
 

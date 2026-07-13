@@ -22,6 +22,20 @@
       "when": 1783972281806,
       "tag": "0002_abandoned_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783972442562,
+      "tag": "0003_mute_rhodey",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783972457408,
+      "tag": "0004_seed_products",
+      "breakpoints": true
     }
   ]
 }
