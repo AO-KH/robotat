@@ -5,6 +5,7 @@ import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, Calendar, BarChar
 import { ASSESSMENT_STATUSES, type Assessment, type AssessmentStatus } from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
+import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -14,9 +15,9 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
-function fmtDate(v: string | Date | null): string {
+function fmtDate(v: string | Date | null, locale: string): string {
   if (!v) return "—";
-  return new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(v).toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" });
 }
 
 /** ISO string → value for <input type="datetime-local"> (local time, no seconds). */
@@ -29,6 +30,8 @@ function toLocalInput(iso: string | Date | null): string {
 
 function AssessmentCard({ a }: { a: Assessment }) {
   const { mutate, isPending } = useUpdateAssessment();
+  const { t, lang } = useI18n();
+  const locale = lang === "ar" ? "ar" : "en-US";
   const [status, setStatus] = useState<AssessmentStatus>(a.status as AssessmentStatus);
   const [scheduledAt, setScheduledAt] = useState<string>(toLocalInput(a.scheduledAt));
 
@@ -53,10 +56,10 @@ function AssessmentCard({ a }: { a: Assessment }) {
                 STATUS_STYLES[a.status] ?? "bg-white/10 text-muted-foreground border-white/10"
               }`}
             >
-              {a.status}
+              {t(`status.${a.status}`)}
             </span>
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">Requested {fmtDate(a.createdAt)}</div>
+          <div className="mt-1 text-xs text-muted-foreground">{t("admin.requested", { date: fmtDate(a.createdAt, locale) })}</div>
         </div>
       </div>
 
@@ -72,19 +75,19 @@ function AssessmentCard({ a }: { a: Assessment }) {
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
         <label className="flex-1">
-          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Status</span>
+          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{t("admin.statusLabel")}</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as AssessmentStatus)}
-            className="w-full px-3 py-2.5 rounded-xl bg-black/40 border border-white/10 text-foreground capitalize focus:outline-none focus:border-primary"
+            className="w-full px-3 py-2.5 rounded-xl bg-black/40 border border-white/10 text-foreground focus:outline-none focus:border-primary"
           >
             {ASSESSMENT_STATUSES.map((s) => (
-              <option key={s} value={s} className="bg-[#15101f] capitalize">{s}</option>
+              <option key={s} value={s} className="bg-[#15101f]">{t(`status.${s}`)}</option>
             ))}
           </select>
         </label>
         <label className="flex-1">
-          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Scheduled visit</span>
+          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{t("admin.scheduledVisit")}</span>
           <input
             type="datetime-local"
             value={scheduledAt}
@@ -98,7 +101,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
             disabled={!dirty || isPending}
             className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update"}
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("admin.update")}
           </button>
         </div>
       </div>
@@ -109,6 +112,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
 export default function Admin() {
   const [, setLocation] = useLocation();
   const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { t } = useI18n();
   const [filter, setFilter] = useState<AssessmentStatus | "all">("all");
   useSeo({ title: "Admin", noindex: true });
   const { data: assessments = [], isLoading } = useAllAssessments(filter === "all" ? undefined : filter);
@@ -136,16 +140,16 @@ export default function Admin() {
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-7 h-7 text-[#c084fc]" />
-            <h1 className="text-3xl md:text-4xl font-bold">Assessments</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">{t("admin.assessments")}</h1>
           </div>
           <Link
             href="/admin/analytics"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-sm font-medium hover:border-[#c084fc] hover:text-[#c084fc] transition-colors whitespace-nowrap"
           >
-            <BarChart3 className="w-4 h-4" /> Analytics
+            <BarChart3 className="w-4 h-4" /> {t("admin.analytics")}
           </Link>
         </div>
-        <p className="text-muted-foreground mb-8">Manage every site-assessment booking.</p>
+        <p className="text-muted-foreground mb-8">{t("admin.manageBookings")}</p>
 
         {/* Status filter chips */}
         <div className="flex flex-wrap gap-2 mb-8">
@@ -153,13 +157,13 @@ export default function Admin() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors border ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
                 filter === f
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
               }`}
             >
-              {f}
+              {t(`status.${f}`)}
             </button>
           ))}
         </div>
@@ -169,8 +173,8 @@ export default function Admin() {
         ) : assessments.length === 0 ? (
           <div className="glass-card rounded-2xl border border-white/10 p-12 text-center">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-            <p className="font-medium">No {filter === "all" ? "" : filter} bookings</p>
-            <p className="text-sm text-muted-foreground mt-1">Bookings will appear here as customers request assessments.</p>
+            <p className="font-medium">{t("admin.noBookings")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("admin.bookingsAppear")}</p>
           </div>
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">

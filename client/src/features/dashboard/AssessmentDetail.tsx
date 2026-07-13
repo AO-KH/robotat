@@ -5,17 +5,18 @@ import { ArrowLeft, Loader2, Mail, Phone, Building2, MapPin, Calendar, Check, X,
 import type { Assessment } from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAssessment } from "@/features/booking/use-assessments";
+import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 
 const STEPS = [
-  { key: "pending", label: "Requested", icon: Clock },
-  { key: "scheduled", label: "Scheduled", icon: Calendar },
-  { key: "completed", label: "Completed", icon: Check },
+  { key: "pending", labelKey: "detail.stepRequested", icon: Clock },
+  { key: "scheduled", labelKey: "detail.stepScheduled", icon: Calendar },
+  { key: "completed", labelKey: "detail.stepCompleted", icon: Check },
 ] as const;
 
-function fmt(v: string | Date | null, withTime = false): string {
+function fmt(v: string | Date | null, locale: string, withTime = false): string {
   if (!v) return "—";
-  return new Date(v).toLocaleString("en-US", {
+  return new Date(v).toLocaleString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -24,11 +25,12 @@ function fmt(v: string | Date | null, withTime = false): string {
 }
 
 function Timeline({ a }: { a: Assessment }) {
+  const { t } = useI18n();
   if (a.status === "cancelled") {
     return (
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
         <X className="w-5 h-5 shrink-0" />
-        <span className="font-medium">This assessment was cancelled.</span>
+        <span className="font-medium">{t("detail.cancelledMsg")}</span>
       </div>
     );
   }
@@ -54,7 +56,7 @@ function Timeline({ a }: { a: Assessment }) {
                 <Icon className="w-5 h-5" />
               </div>
               <span className={`text-xs font-medium ${done || current ? "text-foreground" : "text-muted-foreground"}`}>
-                {step.label}
+                {t(step.labelKey)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -73,6 +75,8 @@ export default function AssessmentDetail() {
   const id = Number(params.id);
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: a, isLoading, isError } = useAssessment(Number.isInteger(id) ? id : undefined);
+  const { t, lang } = useI18n();
+  const locale = lang === "ar" ? "ar" : "en-US";
   useSeo({ title: "Assessment", noindex: true });
 
   useEffect(() => {
@@ -90,30 +94,30 @@ export default function AssessmentDetail() {
   if (isError || !a) {
     return (
       <div className="min-h-screen pt-28 px-4 text-center">
-        <p className="text-lg font-medium mb-2">Assessment not found</p>
-        <Link href="/dashboard" className="text-[#c084fc] hover:underline">Back to dashboard</Link>
+        <p className="text-lg font-medium mb-2">{t("detail.notFound")}</p>
+        <Link href="/dashboard" className="text-[#c084fc] hover:underline">{t("detail.backToDashboard")}</Link>
       </div>
     );
   }
 
   const details: [typeof Mail, string, string | null][] = [
-    [Mail, "Email", a.email],
-    [Phone, "Phone", a.phone],
-    [Building2, "Company", a.company],
-    [MapPin, "Location", a.location],
+    [Mail, t("fields.email"), a.email],
+    [Phone, t("fields.phone"), a.phone],
+    [Building2, t("fields.company"), a.company],
+    [MapPin, t("fields.location"), a.location],
   ];
 
   return (
     <div className="min-h-screen pt-28 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to dashboard
+          <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("detail.backToDashboard")}
         </Link>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8">
           <div className="mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold mb-1">Assessment #{a.id}</h1>
-            <p className="text-sm text-muted-foreground">Requested {fmt(a.createdAt)}</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-1">{t("detail.assessment")} #{a.id}</h1>
+            <p className="text-sm text-muted-foreground">{t("detail.requested", { date: fmt(a.createdAt, locale) })}</p>
           </div>
 
           <div className="mb-8">
@@ -124,8 +128,8 @@ export default function AssessmentDetail() {
             <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#a855f7]/10 border border-[#a855f7]/20 mb-8">
               <Calendar className="w-5 h-5 text-[#c084fc] shrink-0" />
               <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Scheduled visit</div>
-                <div className="font-medium">{fmt(a.scheduledAt, true)}</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("detail.scheduledVisit")}</div>
+                <div className="font-medium">{fmt(a.scheduledAt, locale, true)}</div>
               </div>
             </div>
           )}
@@ -133,7 +137,7 @@ export default function AssessmentDetail() {
           <div className="grid sm:grid-cols-2 gap-4 mb-6">
             {a.landSize && (
               <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Land size</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t("fields.landSize")}</div>
                 <div className="text-sm">{a.landSize} ha</div>
               </div>
             )}
@@ -147,7 +151,7 @@ export default function AssessmentDetail() {
 
           {a.message && (
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Message</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t("fields.message")}</div>
               <p className="text-sm text-muted-foreground bg-black/20 rounded-xl p-3">{a.message}</p>
             </div>
           )}

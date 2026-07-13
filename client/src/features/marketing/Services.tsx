@@ -1,33 +1,14 @@
 import { motion } from "framer-motion";
 import { Cpu, ShieldCheck, Wrench, BarChart3, ArrowRight } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
+import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 
-const services = [
-  {
-    title: "Cutting Grass",
-    description: "Low-profile autonomous mowing for orchards, vineyards, and large estates. Maintains perfect turf height without manual labor.",
-    icon: Wrench,
-  },
-  {
-    title: "Spraying Fertilizer and Compost",
-    description: "Precision application of liquid nutrients and compost tea. Reduces waste and ensures every plant gets exactly what it needs.",
-    icon: BarChart3,
-  },
-  {
-    title: "Cultivate Your Land",
-    description: "Smart soil preparation and weeding. Our robots adapt to soil conditions to create the ideal environment for your crops.",
-    icon: Cpu,
-  },
-  {
-    title: "Schedule a Maintenance",
-    description: "AI-driven diagnostics predict hardware needs before they fail, keeping your fleet operational.",
-    icon: ShieldCheck,
-  }
-];
+const SERVICE_ICONS = [Wrench, BarChart3, Cpu, ShieldCheck];
 
 export default function Services() {
   const { openModal } = useDemoModal();
+  const { t, dict } = useI18n();
   useSeo({
     title: "Services — End-to-End Autonomy",
     description:
@@ -40,49 +21,50 @@ export default function Services() {
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-5xl font-bold tracking-tight mb-6"
           >
-            End-to-End <span className="text-primary">Autonomy Services</span>
+            {t("services.endToEnd")} <span className="text-primary">{t("services.autonomyServices")}</span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="text-lg text-muted-foreground"
           >
-            From initial setup to ongoing optimization, NASL provides a comprehensive service wrapper around the ROBOTAT platform.
+            {t("services.sub")}
           </motion.p>
         </div>
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {services.map((service, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="glass-card p-8 rounded-3xl group hover:-translate-y-1 transition-all duration-300 hover:border-primary/30 flex flex-col"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
-                <service.icon className="w-7 h-7" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-3">{service.title}</h3>
-              <p className="text-muted-foreground leading-relaxed flex-1 mb-8">
-                {service.description}
-              </p>
-              <button 
-                onClick={openModal}
-                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-primary font-bold hover:bg-primary hover:text-white transition-all duration-300"
+          {dict.services.items.map((service, index) => {
+            const Icon = SERVICE_ICONS[index];
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="glass-card p-8 rounded-3xl group hover:-translate-y-1 transition-all duration-300 hover:border-primary/30 flex flex-col"
               >
-                Request Service
-              </button>
-            </motion.div>
-          ))}
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+                  <Icon className="w-7 h-7" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-3">{service.title}</h3>
+                <p className="text-muted-foreground leading-relaxed flex-1 mb-8">{service.description}</p>
+                <button
+                  onClick={openModal}
+                  className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-primary font-bold hover:bg-primary hover:text-white transition-all duration-300"
+                >
+                  {t("services.requestService")}
+                </button>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Closing CTA */}
@@ -93,15 +75,13 @@ export default function Services() {
           className="bg-gradient-to-br from-primary/20 to-secondary/30 rounded-3xl p-12 text-center border border-primary/20 relative overflow-hidden"
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,0.3)_0%,transparent_70%)] pointer-events-none" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 relative z-10">Ready to transform your operations?</h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto relative z-10">
-            Our robotics experts are ready to evaluate your farm's needs and design a custom deployment strategy.
-          </p>
-          <button 
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 relative z-10">{t("services.ctaTitle")}</h2>
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto relative z-10">{t("services.ctaSub")}</p>
+          <button
             onClick={openModal}
             className="relative z-10 inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-foreground text-background font-bold text-lg hover:bg-white hover:scale-105 transition-all duration-300"
           >
-            Contact Sales <ArrowRight className="w-5 h-5" />
+            {t("services.contactSales")} <ArrowRight className="w-5 h-5 rtl:rotate-180" />
           </button>
         </motion.div>
 
