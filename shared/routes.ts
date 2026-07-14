@@ -50,6 +50,17 @@ export const api = {
         401: errorSchemas.unauthorized,
       },
     },
+    // Exchange credentials for a stateless bearer token (native app / API clients).
+    token: {
+      method: "POST" as const,
+      path: "/api/auth/token" as const,
+      input: loginSchema,
+      responses: {
+        200: z.object({ token: z.string(), user: publicUserSchema }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
     logout: {
       method: "POST" as const,
       path: "/api/auth/logout" as const,

@@ -77,17 +77,26 @@ Real, PostgreSQL-backed auth and booking:
    `role` (`customer` | `staff`); `server/modules/admin/` is staff-guarded
    (`requireStaff`) — list/filter all bookings and change status/scheduled date.
    A status change notifies the customer by email (+ optional WhatsApp) via
-   `notifyCustomerStatusChange` in `server/lib/notify.ts`.
+   `notifyCustomerStatusChange` in `server/lib/notify.ts`. Password reset + email
+   verification use single-use hashed tokens (`auth_tokens` table); email degrades
+   to a console log when SMTP is unset. `POST /api/auth/token` issues a stateless
+   30-day HMAC bearer token (signed with `SESSION_SECRET`) for native/API clients;
+   a global `bearerAuth` middleware accepts `Authorization: Bearer …` alongside
+   sessions, so the guards work for both.
 2. **Booking** — `server/modules/assessments/` creates bookings tied to the signed-in
    user; the dashboard lists them from `GET /api/assessments`.
 3. **Delivery** — each booking reaches the business by WhatsApp (`wa.me` link; optional
    Cloud API) and email (SMTP, or console log in dev). See `server/lib/notify.ts`.
-4. `POST /api/contact` builds WhatsApp/email links for guests (no record); legacy
-   `POST /api/demo-requests` remains for anonymous lead capture.
+4. `POST /api/contact` builds WhatsApp/email links for guests (no record). The
+   legacy `demo_requests` pipeline has been retired — bookings are the one funnel.
+5. **Logging** — pino (`server/lib/log.ts`): JSON in prod, pretty in dev, silent in
+   test. **Analytics** — first-party, anonymous events (`server/modules/analytics/`).
+   **Products** — the fleet is DB-driven and bilingual (`server/modules/products/`).
 
 Known cleanup: Replit Vite plugins are still in `vite.config.ts` (`@replit/vite-plugin-*`),
-inert (gated by `REPL_ID`). See the improvement plan for the roadmap (the admin UI,
-customer status notifications, and Arabic/RTL are the next big items).
+inert (gated by `REPL_ID`) — left in place deliberately. Remaining roadmap: Phase 4
+(native iOS via Capacitor) — bearer-token auth is done; Capacitor shell, native
+push, and App Store submission still need a Mac + Apple Developer account.
 
 ## Conventions
 

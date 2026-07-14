@@ -10,6 +10,7 @@ import {
   hashPassword,
   verifyPassword,
   toPublicUser,
+  issueToken,
   generateToken,
   hashToken,
   PASSWORD_RESET_TTL_MS,
@@ -113,6 +114,21 @@ authRoutes.post(api.auth.login.path, authLimiter, (req, res, next) => {
       res.status(200).json(toPublicUser(user));
     });
   })(req, res, next);
+});
+
+// POST /api/auth/token — exchange credentials for a bearer token (no session cookie).
+authRoutes.post(api.auth.token.path, authLimiter, async (req, res, next) => {
+  try {
+    const input = api.auth.token.input.parse(req.body);
+    const user = await getUserByEmail(input.email);
+    if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    res.status(200).json({ token: issueToken(user.id), user: toPublicUser(user) });
+  } catch (err) {
+    if (handleZodError(err, res)) return;
+    next(err);
+  }
 });
 
 authRoutes.post(api.auth.logout.path, (req, res, next) => {
