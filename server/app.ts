@@ -2,7 +2,7 @@ import express, { type Express, type Request, Response, NextFunction } from "exp
 import helmet from "helmet";
 import { createServer, type Server } from "http";
 import { registerRoutes } from "./routes";
-import { log } from "./lib/log";
+import { logger } from "./lib/log";
 import { env } from "./lib/env";
 
 declare module "http" {
@@ -54,27 +54,20 @@ export async function buildApp(): Promise<{ app: Express; httpServer: Server }> 
   );
   app.use(express.urlencoded({ extended: false }));
 
-  // Concise per-request logging for /api routes.
+  // Structured per-request logging for /api routes. Response bodies are NOT logged
+  // (they carry PII — emails — and secrets like dev/reset tokens); only metadata.
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;
-    let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-    const originalResJson = res.json;
-    res.json = function (bodyJson, ...args) {
-      capturedJsonResponse = bodyJson;
-      return originalResJson.apply(res, [bodyJson, ...args]);
-    };
 
     res.on("finish", () => {
-      const duration = Date.now() - start;
-      if (path.startsWith("/api")) {
-        let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-        if (capturedJsonResponse) {
-          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-        }
-        log(logLine);
-      }
+      if (!path.startsWith("/api")) return;
+      const durationMs = Date.now() - start;
+      const level = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+      logger[level](
+        { source: "api", method: req.method, path, status: res.statusCode, durationMs },
+        `${req.method} ${path} ${res.statusCode} ${durationMs}ms`,
+      );
     });
 
     next();
@@ -82,11 +75,11 @@ export async function buildApp(): Promise<{ app: Express; httpServer: Server }> 
 
   await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error("Internal Server Error:", err);
+    logger.error({ err, status, method: req.method, path: req.path }, "unhandled request error");
 
     if (res.headersSent) {
       return next(err);
