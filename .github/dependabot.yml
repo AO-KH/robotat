@@ -19,8 +19,16 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # Keep the GitHub Actions themselves current (fixes the Node-20 action deprecation).
+  # Keep the GitHub Actions themselves current (the Node-20 deprecation is already
+  # cleared). Ignore majors here too — action major bumps (docker/* v4, appleboy 1.0)
+  # are handled deliberately, not auto-opened.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
