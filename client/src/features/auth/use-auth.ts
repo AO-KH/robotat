@@ -114,6 +114,92 @@ export function useUpdateProfile() {
   });
 }
 
+export function useForgotPassword() {
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (data: { email: string }) => {
+      const res = await fetch(api.auth.forgotPassword.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(api.auth.forgotPassword.input.parse(data)),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Could not send the reset link"));
+      return (await res.json()) as { ok: true; devToken?: string };
+    },
+    onError: (err: Error) => {
+      toast({ title: "Something went wrong", description: err.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useResetPassword() {
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (data: { token: string; newPassword: string }) => {
+      const res = await fetch(api.auth.resetPassword.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(api.auth.resetPassword.input.parse(data)),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Could not reset your password"));
+      return true;
+    },
+    onSuccess: () => {
+      toast({ title: "Password updated", description: "You can now sign in with your new password." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Couldn't reset password", description: err.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useVerifyEmail() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      const res = await fetch(api.auth.verifyEmail.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(api.auth.verifyEmail.input.parse({ token })),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Could not verify your email"));
+      return (await res.json()) as PublicUser;
+    },
+    onSuccess: (user) => {
+      // If the user happens to be signed in, reflect the verified state immediately.
+      qc.setQueryData(ME_KEY, (prev: PublicUser | null | undefined) => (prev ? user : prev));
+    },
+  });
+}
+
+export function useResendVerification() {
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(api.auth.resendVerification.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Could not resend the email"));
+      return (await res.json()) as { ok: true; alreadyVerified?: boolean; devToken?: string };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.alreadyVerified ? "Already verified" : "Verification email sent",
+        description: data.alreadyVerified
+          ? "Your email is already confirmed."
+          : "Check your inbox for the confirmation link.",
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Couldn't resend", description: err.message, variant: "destructive" });
+    },
+  });
+}
+
 export function useChangePassword() {
   const { toast } = useToast();
   return useMutation({

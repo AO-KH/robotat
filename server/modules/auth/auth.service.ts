@@ -3,7 +3,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual, createHash } from "crypto";
 import { promisify } from "util";
 import { pool } from "../../lib/db";
 import { env } from "../../lib/env";
@@ -28,9 +28,31 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return hashBuf.length === derived.length && timingSafeEqual(hashBuf, derived);
 }
 
+/** SHA-256 of a raw token — only the hash is ever stored, the raw token is emailed. */
+export function hashToken(raw: string): string {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
+/** Mint a random URL-safe token and its storage hash. */
+export function generateToken(): { token: string; tokenHash: string } {
+  const token = randomBytes(32).toString("hex");
+  return { token, tokenHash: hashToken(token) };
+}
+
+/** Token lifetimes. */
+export const PASSWORD_RESET_TTL_MS = 1000 * 60 * 60; // 1 hour
+export const EMAIL_VERIFY_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+
 /** Strip the password hash before sending a user to the client. */
 export function toPublicUser(user: User): PublicUser {
-  return { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+    emailVerified: user.emailVerifiedAt != null,
+  };
 }
 
 export function setupAuth(app: Express): void {

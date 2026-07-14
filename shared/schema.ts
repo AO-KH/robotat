@@ -14,13 +14,54 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("customer"),
+  // Null until the user confirms their email via a verification link.
+  emailVerifiedAt: timestamp("email_verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export type User = typeof users.$inferSelect;
 
 /** Public-safe user shape (never expose the password hash). */
-export type PublicUser = Pick<User, "id" | "name" | "email" | "role" | "createdAt">;
+export type PublicUser = Pick<User, "id" | "name" | "email" | "role" | "createdAt"> & {
+  emailVerified: boolean;
+};
+
+/* ============================================================
+ * Auth tokens — single-use, hashed tokens for password reset
+ * and email verification (the raw token is emailed, never stored).
+ * ========================================================== */
+export const AUTH_TOKEN_KINDS = ["password_reset", "email_verification"] as const;
+export type AuthTokenKind = (typeof AUTH_TOKEN_KINDS)[number];
+
+export const authTokens = pgTable("auth_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(), // AuthTokenKind
+  tokenHash: text("token_hash").notNull(), // sha256 of the raw token
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"), // null until redeemed; enforces single use
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AuthToken = typeof authTokens.$inferSelect;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address"),
+});
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+});
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Verification token is required"),
+});
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
 export const registerSchema = z.object({
   name: z.string().trim().min(2, "Please enter your full name"),

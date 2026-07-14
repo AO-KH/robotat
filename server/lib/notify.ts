@@ -224,3 +224,51 @@ async function whatsappCustomer(a: Assessment): Promise<void> {
 export async function notifyCustomerStatusChange(a: Assessment): Promise<void> {
   await Promise.allSettled([emailCustomer(a), whatsappCustomer(a)]);
 }
+
+/* ============================================================
+ * Account emails — password reset & email verification
+ * ========================================================== */
+
+const SIGN = "\n\n— ROBOTAT by NASL";
+
+/** Password-reset email body. Pure/testable. */
+export function passwordResetMessage(name: string, link: string): { subject: string; body: string } {
+  return {
+    subject: "Reset your ROBOTAT password",
+    body:
+      `Hi ${name},\n\nWe received a request to reset your password. ` +
+      `Open the link below to choose a new one — it expires in 1 hour:\n\n${link}\n\n` +
+      `If you didn't request this, you can safely ignore this email.${SIGN}`,
+  };
+}
+
+/** Email-verification email body. Pure/testable. */
+export function emailVerificationMessage(name: string, link: string): { subject: string; body: string } {
+  return {
+    subject: "Confirm your ROBOTAT email",
+    body:
+      `Hi ${name},\n\nWelcome to ROBOTAT! Please confirm your email address by opening ` +
+      `the link below (valid for 24 hours):\n\n${link}\n\n` +
+      `If you didn't create an account, you can ignore this email.${SIGN}`,
+  };
+}
+
+/** Send a transactional email to a user. Degrades to a console log when SMTP is unset. */
+export async function sendUserEmail(to: string, subject: string, body: string): Promise<void> {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+
+  if (!SMTP_HOST) {
+    log(`[email:dev] would send to ${to} — ${subject}\n${body}`, "notify");
+    return;
+  }
+
+  const transport = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT || 587),
+    secure: Number(SMTP_PORT) === 465,
+    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+  });
+
+  await transport.sendMail({ from: SMTP_USER || "robotat@nasl-tech.com", to, subject, text: body });
+  log(`[email] "${subject}" sent to ${to}`, "notify");
+}

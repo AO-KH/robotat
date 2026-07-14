@@ -4,6 +4,9 @@ import {
   loginSchema,
   updateProfileSchema,
   changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
   bookAssessmentSchema,
   updateAssessmentSchema,
   ASSESSMENT_STATUSES,
@@ -78,6 +81,47 @@ export const api = {
       responses: {
         200: z.object({ ok: z.literal(true) }),
         400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    // Request a password-reset link. Always 200 (never reveals whether the
+    // email exists). `devToken` is only present outside production, for tests.
+    forgotPassword: {
+      method: "POST" as const,
+      path: "/api/auth/forgot-password" as const,
+      input: forgotPasswordSchema,
+      responses: {
+        200: z.object({ ok: z.literal(true), devToken: z.string().optional() }),
+        400: errorSchemas.validation,
+      },
+    },
+    // Redeem a reset token and set a new password.
+    resetPassword: {
+      method: "POST" as const,
+      path: "/api/auth/reset-password" as const,
+      input: resetPasswordSchema,
+      responses: {
+        200: z.object({ ok: z.literal(true) }),
+        400: errorSchemas.validation,
+      },
+    },
+    // Redeem an email-verification token. Returns the updated user.
+    verifyEmail: {
+      method: "POST" as const,
+      path: "/api/auth/verify-email" as const,
+      input: verifyEmailSchema,
+      responses: {
+        200: publicUserSchema,
+        400: errorSchemas.validation,
+      },
+    },
+    // Re-send the verification email to the signed-in user.
+    resendVerification: {
+      method: "POST" as const,
+      path: "/api/auth/resend-verification" as const,
+      input: z.object({}),
+      responses: {
+        200: z.object({ ok: z.literal(true), alreadyVerified: z.boolean().optional(), devToken: z.string().optional() }),
         401: errorSchemas.unauthorized,
       },
     },

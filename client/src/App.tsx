@@ -19,6 +19,9 @@ import Home from "@/features/marketing/Home";
 import Services from "@/features/marketing/Services";
 import Fleet from "@/features/marketing/Fleet";
 import Auth from "@/features/auth/Auth";
+import ForgotPassword from "@/features/auth/ForgotPassword";
+import ResetPassword from "@/features/auth/ResetPassword";
+import VerifyEmail from "@/features/auth/VerifyEmail";
 import Profile from "@/features/auth/Profile";
 import Dashboard from "@/features/dashboard/Dashboard";
 import AssessmentDetail from "@/features/dashboard/AssessmentDetail";
@@ -54,6 +57,9 @@ function Router() {
       <Route path="/services" component={Services} />
       <Route path="/fleet" component={Fleet} />
       <Route path="/auth" component={Auth} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/assessments/:id" component={AssessmentDetail} />

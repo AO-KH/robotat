@@ -165,6 +165,37 @@ export const en = {
     createAccountBtn: "Create account",
     toSignUp: "Don't have an account? Sign up",
     toSignIn: "Already have an account? Sign in",
+    forgotLink: "Forgot your password?",
+  },
+  recover: {
+    // Forgot-password request page
+    forgotTitle: "Reset your password",
+    forgotSub: "Enter your email and we'll send you a link to choose a new password.",
+    sendLink: "Send reset link",
+    backToSignIn: "Back to sign in",
+    checkInbox: "Check your inbox",
+    checkInboxSub: "If an account exists for {email}, a reset link is on its way. The link expires in 1 hour.",
+    // Reset-password page
+    resetTitle: "Choose a new password",
+    resetSub: "Enter a new password for your account.",
+    newPassword: "New password",
+    updatePassword: "Update password",
+    resetDone: "Password updated",
+    resetDoneSub: "Your password has been changed. You can sign in now.",
+    goToSignIn: "Go to sign in",
+    badLink: "This link is invalid or has expired.",
+    requestNewLink: "Request a new link",
+    // Email verification page
+    verifyingTitle: "Verifying your email…",
+    verifiedTitle: "Email verified",
+    verifiedSub: "Thanks — your email address is confirmed.",
+    verifyFailedTitle: "Verification failed",
+    verifyFailedSub: "This confirmation link is invalid or has expired.",
+    continueToDashboard: "Continue to dashboard",
+    // Unverified-email banner (dashboard)
+    bannerText: "Please confirm your email address to secure your account.",
+    bannerResend: "Resend confirmation",
+    missingToken: "No token provided.",
   },
   booking: {
     title: "Book a site assessment",

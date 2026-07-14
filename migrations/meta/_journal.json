@@ -36,6 +36,13 @@
       "when": 1783972457408,
       "tag": "0004_seed_products",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784100000000,
+      "tag": "0005_auth_tokens",
+      "breakpoints": true
     }
   ]
 }

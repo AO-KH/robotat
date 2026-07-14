@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { LayoutDashboard, Settings, LogOut, ChevronRight, ClipboardList, Loader2, MapPin, Plus } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut, ChevronRight, ClipboardList, Loader2, MapPin, Plus, MailWarning } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useCurrentUser, useLogout } from "@/features/auth/use-auth";
+import { useCurrentUser, useLogout, useResendVerification } from "@/features/auth/use-auth";
 import { useMyAssessments } from "@/features/booking/use-assessments";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: assessments = [], isLoading: listLoading } = useMyAssessments(!!user);
   const logout = useLogout();
+  const resendVerification = useResendVerification();
   const { openModal } = useDemoModal();
   const { t, lang } = useI18n();
   useSeo({ title: "Dashboard", noindex: true });
@@ -66,6 +67,24 @@ export default function Dashboard() {
             <LogOut className="w-5 h-5" /> {t("dashboard.signOut")}
           </button>
         </div>
+
+        {/* Unverified-email banner */}
+        {!user.emailVerified && (
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 justify-between p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
+            <div className="flex items-center gap-3 text-yellow-200/90">
+              <MailWarning className="w-5 h-5 shrink-0" />
+              <span className="text-sm">{t("recover.bannerText")}</span>
+            </div>
+            <button
+              onClick={() => resendVerification.mutate()}
+              disabled={resendVerification.isPending}
+              className="shrink-0 px-4 py-2 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {resendVerification.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {t("recover.bannerResend")}
+            </button>
+          </div>
+        )}
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-10">

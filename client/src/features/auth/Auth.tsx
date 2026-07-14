@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { User, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, loginSchema, type RegisterInput, type LoginInput } from "@shared/schema";
@@ -67,6 +67,11 @@ export default function Auth() {
               {loginForm.formState.errors.password && (
                 <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
               )}
+              <div className="text-end">
+                <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                  {t("auth.forgotLink")}
+                </Link>
+              </div>
             </div>
             <button
               type="submit"
