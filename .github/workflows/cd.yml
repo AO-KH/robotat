@@ -28,7 +28,7 @@ jobs:
       image: ${{ steps.meta.outputs.image }}
       digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # GHCR image names must be lowercase; the repo owner (AO-KH) is not.
       - name: Compute lowercase image name
@@ -74,7 +74,7 @@ jobs:
     if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Copy production compose to host
         uses: appleboy/scp-action@v0.1.7

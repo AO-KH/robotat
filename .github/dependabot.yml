@@ -13,6 +13,11 @@ updates:
       development-dependencies:
         dependency-type: development
         update-types: ["minor", "patch"]
+    # Majors are breaking (Tailwind 4, Vite 8, TS 7, React 19, framer-motion 12…)
+    # and need a deliberate, tested migration — don't auto-open PRs for them.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Keep the GitHub Actions themselves current (fixes the Node-20 action deprecation).
   - package-ecosystem: github-actions
