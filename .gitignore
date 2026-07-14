@@ -26,3 +26,12 @@ Thumbs.db
 # Local Claude Code tooling (machine-specific launch config)
 .claude/
 
+# Capacitor — generated native iOS artifacts (the ios/ project is created on a Mac
+# with `npx cap add ios`; these bits are build output, not source)
+/ios/App/App/public/
+/ios/App/Pods/
+/ios/App/build/
+/ios/DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+
