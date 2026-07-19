@@ -92,12 +92,12 @@
     "zod-validation-error": "^3.5.4"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.6.7",
+    "@capacitor/cli": "^7.6.8",
     "@replit/vite-plugin-cartographer": "^0.6.0",
     "@replit/vite-plugin-dev-banner": "^0.1.2",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.6",
     "@tailwindcss/typography": "^0.5.20",
-    "@tailwindcss/vite": "^4.3.2",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.19.0",
@@ -110,7 +110,7 @@
     "@types/supertest": "^7.2.1",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.5.2",
+    "autoprefixer": "^10.5.4",
     "drizzle-kit": "^0.31.10",
     "esbuild": "^0.28.1",
     "pino-pretty": "^13.1.3",
