@@ -5,6 +5,7 @@ import passport from "passport";
 import { api } from "@shared/routes";
 import type { User } from "@shared/schema";
 import { handleZodError } from "../../lib/errors";
+import { env } from "../../lib/env";
 import {
   requireAuth,
   hashPassword,
@@ -39,9 +40,17 @@ import { log } from "../../lib/log";
 // tests (and local manual testing) can complete the flow without a real inbox.
 const EXPOSE_DEV_TOKEN = process.env.NODE_ENV !== "production";
 
-/** Absolute app origin for building emailed links (proxy-aware; env override wins). */
+/**
+ * Absolute app origin for building emailed links.
+ *
+ * `PUBLIC_APP_URL` is REQUIRED in production (enforced at boot by lib/env.ts), so the
+ * request-derived fallback below is only ever reachable in development and test. That
+ * matters: `req.get("host")` is attacker-controlled, so without the boot guard anyone
+ * could send `Host: attacker.example` to /forgot-password and have a genuine reset
+ * token emailed to the victim pointing at their own domain.
+ */
 function appOrigin(req: Request): string {
-  return process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get("host")}`;
+  return env.PUBLIC_APP_URL ?? `${req.protocol}://${req.get("host")}`;
 }
 
 /** Mint + store a verification token for a user and email them the link. Best-effort. */

@@ -52,11 +52,26 @@ docker compose -f docker-compose.prod.yml up -d
 
 ```dotenv
 POSTGRES_PASSWORD=<strong-db-password>
-SESSION_SECRET=<32+ random chars>   # app refuses to boot in prod without a strong one
+SESSION_SECRET=<32+ random chars>            # openssl rand -base64 32
+PUBLIC_APP_URL=https://your-domain.example   # must be https://
 # Optional delivery (logs to console until set):
 # SMTP_HOST=  SMTP_PORT=  SMTP_USER=  SMTP_PASS=  ASSESSMENT_INBOX=
 # WHATSAPP_BUSINESS_NUMBER=  WHATSAPP_TOKEN=  WHATSAPP_PHONE_ID=
 ```
+
+Both required variables are enforced twice, and the stack will not start without
+them. Compose fails first (`${VAR:?}`), and if the app is started some other way,
+`server/lib/env.ts` refuses to boot in production and prints what is wrong.
+
+- **`SESSION_SECRET`** signs session cookies **and** bearer tokens. The guard rejects
+  the development secret, anything that looks like a placeholder (`change-me`,
+  `example`, `placeholder`, …) and anything shorter than 32 characters. A committed
+  placeholder booting as production would let anyone forge a token for any account.
+- **`PUBLIC_APP_URL`** is the origin used to build emailed password-reset and
+  verification links. Without it those links would be built from the request's `Host`
+  header, which an attacker controls — they could have a genuine reset token emailed
+  to a victim pointing at their own domain. Outside production it falls back to the
+  request origin for local development only.
 
 ## Enabling automated deploy
 

@@ -1,6 +1,15 @@
 # Production-ish stack: Postgres + one-shot migration + the app.
 # Usage:  docker compose up --build
-# Put a real SESSION_SECRET (and any SMTP/WhatsApp vars) in a .env file next to this.
+#
+# This stack sets NODE_ENV=production, so it enforces the production guards in
+# server/lib/env.ts. SESSION_SECRET and PUBLIC_APP_URL are REQUIRED — put them in a
+# .env file next to this one (along with any SMTP/WhatsApp vars):
+#
+#   SESSION_SECRET=$(openssl rand -base64 32)
+#   PUBLIC_APP_URL=https://localhost:5000
+#
+# They are deliberately NOT defaulted. A committed placeholder that boots as
+# production is a forgeable session-cookie and bearer-token signing key.
 
 services:
   db:
@@ -38,7 +47,10 @@ services:
       NODE_ENV: production
       PORT: 5000
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-robotat}@db:5432/robotat
-      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      # No defaults: this stack runs as production, and a defaulted secret here signs
+      # both session cookies and bearer tokens.
+      SESSION_SECRET: "${SESSION_SECRET:?SESSION_SECRET is required - generate one with openssl rand -base64 32}"
+      PUBLIC_APP_URL: "${PUBLIC_APP_URL:?PUBLIC_APP_URL is required - emailed reset links are built from it}"
       WHATSAPP_BUSINESS_NUMBER: ${WHATSAPP_BUSINESS_NUMBER:-}
       # Optional delivery config (uncomment / set in .env to enable):
       # SMTP_HOST: ${SMTP_HOST:-}

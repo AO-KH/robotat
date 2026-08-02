@@ -1,7 +1,8 @@
 name: CD
 
 # Continuous delivery: build a Docker image and publish it to GHCR on every
-# push to main and on version tags. The optional deploy job ships it to a host
+# push to main and on version tags — but ONLY after the shared checks pass
+# (.github/workflows/checks.yml). The optional deploy job ships it to a host
 # over SSH — it stays inert until you set the `DEPLOY_ENABLED` repo variable to
 # "true" and add the DEPLOY_* secrets (see docs/DEPLOYMENT.md), so this workflow
 # is safe to merge with no infrastructure configured yet.
@@ -18,8 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Gate: never publish or deploy a commit that fails audit, typecheck, migrations,
+  # tests or the production build. Same definition ci.yml runs, so there is one
+  # source of truth rather than two that can drift.
+  checks:
+    uses: ./.github/workflows/checks.yml
+
   image:
     name: Build & publish image
+    needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
