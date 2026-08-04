@@ -21,7 +21,22 @@ describe("cors over HTTP", () => {
     expect(res.headers["access-control-allow-origin"]).toBe(NATIVE);
     expect(res.headers["access-control-allow-credentials"]).toBe("true");
     expect(res.headers["access-control-allow-headers"]).toContain("Authorization");
+    expect(res.headers["access-control-allow-methods"]).toBe("GET,POST,PATCH,DELETE,OPTIONS");
+    expect(res.headers["access-control-max-age"]).toBe("600");
     expect(res.headers["vary"]).toContain("Origin");
+  });
+
+  it("does not answer a preflight from an unlisted origin with CORS headers", async () => {
+    const res = await request(app)
+      .options("/api/auth/me")
+      .set("Origin", "https://evil.example")
+      .set("Access-Control-Request-Method", "GET");
+
+    // Falls through to Express's default OPTIONS handler rather than our 204.
+    // Safe either way: with no Access-Control-Allow-Origin the browser blocks the
+    // real request regardless of status.
+    expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+    expect(res.headers["access-control-allow-methods"]).toBeUndefined();
   });
 
   it("echoes the origin on a real request", async () => {
