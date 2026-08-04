@@ -32,7 +32,28 @@ const allowlist = [
   "zod-validation-error",
 ];
 
+/**
+ * The native iOS build bakes VITE_API_URL into the bundle. iOS App Transport Security
+ * blocks plaintext HTTP on a real device, and the failure surfaces as a generic
+ * network error — login just reports "Could not sign in", with nothing pointing at a
+ * mis-set build variable. That is invisible in CI and in the simulator, so it would
+ * only appear during TestFlight. Fail the build instead.
+ */
+function assertApiUrlIsHttps(): void {
+  const url = process.env.VITE_API_URL;
+  if (!url) return; // unset is correct for the web build — the client is same-origin
+  if (!url.startsWith("https://")) {
+    throw new Error(
+      `VITE_API_URL must use https:// — got "${url}". iOS App Transport Security ` +
+        `blocks plaintext HTTP, so a native build against this origin would fail on ` +
+        `device with an opaque network error.`,
+    );
+  }
+}
+
 async function buildAll() {
+  assertApiUrlIsHttps();
+
   await rm("dist", { recursive: true, force: true });
 
   console.log("building client...");

@@ -396,19 +396,32 @@ export interface TokenPersistence {
 
 let token: string | null = null;
 let persistence: TokenPersistence | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
 
 export function getAuthToken(): string | null {
   return token;
 }
 
-/** Set (or clear, with null) the token. Persistence is best-effort and never throws. */
+/**
+ * Set (or clear, with null) the token.
+ *
+ * Persistence writes are queued rather than fired in parallel: they must land in the
+ * order they were requested, or a slow save could overwrite a later clear and leave a
+ * token in the Keychain after an explicit sign-out. Failures are swallowed — a failed
+ * write must not break sign-in, since the in-memory token still works.
+ */
 export function setAuthToken(next: string | null): void {
   token = next;
   if (!persistence) return;
-  const write = next === null ? persistence.clear() : persistence.save(next);
-  void write.catch(() => {
-    /* a failed write must not break sign-in; the in-memory token still works */
-  });
+
+  const impl = persistence;
+  writeQueue = writeQueue
+    .then(() => (next === null ? impl.clear() : impl.save(next)))
+    .catch((err) => {
+      // Otherwise a Keychain failure is invisible until the user is mysteriously
+      // signed out on next launch.
+      console.warn("[auth] could not persist the auth token", err);
+    });
 }
 
 export function registerTokenPersistence(impl: TokenPersistence): void {
@@ -430,6 +443,7 @@ export async function restoreAuthToken(): Promise<string | null> {
 export function resetAuthTokenForTests(): void {
   token = null;
   persistence = null;
+  writeQueue = Promise.resolve();
 }
 ```
 
@@ -568,8 +582,13 @@ export function createApiFetch(opts: {
   const { base, getToken, fetchImpl } = opts;
 
   return ((input: RequestInfo | URL, init?: RequestInit) => {
-    const path = typeof input === "string" ? input : input instanceof URL ? input.toString() : null;
-    if (path === null || !path.startsWith("/api")) {
+    // Only string paths are rewritten. `URL` and `Request` inputs pass through
+    // untouched and unauthenticated — deliberately. Deriving a pathname from them
+    // would let `fetch(new URL("https://elsewhere.example/api/x"))` be silently
+    // redirected to our API base with the user's bearer token attached, which is a
+    // worse failure than not supporting the shape. Every call site in this codebase
+    // passes a literal "/api/…" string from shared/routes.ts.
+    if (typeof input !== "string" || !input.startsWith("/api")) {
       return fetchImpl(input, init);
     }
 
@@ -581,7 +600,7 @@ export function createApiFetch(opts: {
     }
 
     // `headers` last so the merged value wins over any copy inside init.
-    return fetchImpl(base + path, { credentials: "include", ...init, headers });
+    return fetchImpl(base + input, { credentials: "include", ...init, headers });
   }) as typeof fetch;
 }
 

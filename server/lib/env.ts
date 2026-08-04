@@ -36,6 +36,10 @@ const schema = z.object({
     (v) => (v === "" ? undefined : v),
     z.string().url("PUBLIC_APP_URL must be an absolute URL, e.g. https://robotat.nasl-tech.com").optional(),
   ),
+  // Comma-separated extra origins allowed to call the API cross-origin, e.g. a
+  // separately-hosted web client. The Capacitor origins are always allowed and do
+  // not need listing here.
+  CORS_ORIGINS: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

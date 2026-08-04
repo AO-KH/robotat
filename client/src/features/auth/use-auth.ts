@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type RegisterInput, type LoginInput } from "@shared/routes";
 import type { PublicUser, UpdateProfileInput, ChangePasswordInput } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { isNativeApiMode } from "@/lib/api-base";
+import { setAuthToken } from "@/lib/auth-token";
 
 const ME_KEY = ["/api/auth/me"] as const;
 
@@ -13,6 +15,36 @@ async function readError(res: Response, fallback: string): Promise<string> {
     /* ignore */
   }
   return fallback;
+}
+
+/**
+ * The account was created but the follow-up token exchange failed — which the shared
+ * auth rate limiter makes reachable, since register and token draw on the same bucket.
+ * Distinct from a registration failure because retrying registration would 409, and
+ * the user simply needs to sign in.
+ */
+class RegisteredButNotSignedInError extends Error {
+  constructor() {
+    super("Your account was created, but signing in failed. Please sign in.");
+    this.name = "RegisteredButNotSignedInError";
+  }
+}
+
+/**
+ * Exchange credentials for a bearer token and store it. Used only in the native
+ * build, where the session cookie the website relies on is not dependable from the
+ * capacitor:// origin. Returns the user so callers can treat it like a normal login.
+ */
+async function loginWithToken(data: LoginInput): Promise<PublicUser> {
+  const res = await fetch(api.auth.token.path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(api.auth.token.input.parse(data)),
+  });
+  if (!res.ok) throw new Error(await readError(res, "Could not sign in"));
+  const body = (await res.json()) as { token: string; user: PublicUser };
+  setAuthToken(body.token);
+  return body.user;
 }
 
 /** Current user (null when signed out). */
@@ -41,14 +73,32 @@ export function useRegister() {
         body: JSON.stringify(api.auth.register.input.parse(data)),
       });
       if (!res.ok) throw new Error(await readError(res, "Could not create account"));
-      return (await res.json()) as PublicUser;
+      const user = (await res.json()) as PublicUser;
+
+      // Registration signs the user in via cookie, which the native shell cannot use;
+      // exchange the same credentials for a token so the app is actually authenticated.
+      if (isNativeApiMode()) {
+        try {
+          await loginWithToken({ email: data.email, password: data.password });
+        } catch {
+          throw new RegisteredButNotSignedInError();
+        }
+      }
+      return user;
     },
     onSuccess: (user) => {
       qc.setQueryData(ME_KEY, user);
       toast({ title: "Welcome to ROBOTAT", description: "Your account is ready." });
     },
     onError: (err: Error) => {
-      toast({ title: "Sign up failed", description: err.message, variant: "destructive" });
+      // The account may exist even though the mutation rejected; saying "Sign up
+      // failed" there would send the user back into a retry that can only 409.
+      const created = err instanceof RegisteredButNotSignedInError;
+      toast({
+        title: created ? "Account created" : "Sign up failed",
+        description: err.message,
+        variant: created ? "default" : "destructive",
+      });
     },
   });
 }
@@ -58,6 +108,8 @@ export function useLogin() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (data: LoginInput) => {
+      if (isNativeApiMode()) return loginWithToken(data);
+
       const res = await fetch(api.auth.login.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,6 +136,7 @@ export function useLogout() {
       await fetch(api.auth.logout.path, { method: "POST", credentials: "include" });
     },
     onSuccess: () => {
+      setAuthToken(null);
       qc.setQueryData(ME_KEY, null);
       qc.invalidateQueries({ queryKey: ["/api/assessments"] });
     },
@@ -201,6 +254,7 @@ export function useResendVerification() {
 }
 
 export function useChangePassword() {
+  const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (data: ChangePasswordInput) => {
@@ -211,6 +265,19 @@ export function useChangePassword() {
         body: JSON.stringify(api.auth.changePassword.input.parse(data)),
       });
       if (!res.ok) throw new Error(await readError(res, "Could not change password"));
+
+      // The server revokes every bearer token for this user on a password change, the
+      // one this app is holding included. Swap it for a fresh one; if that fails, drop
+      // it so the app fails closed and prompts a sign-in rather than 401ing silently.
+      if (isNativeApiMode()) {
+        const me = qc.getQueryData<PublicUser | null>(ME_KEY);
+        try {
+          if (!me?.email) throw new Error("no cached user");
+          await loginWithToken({ email: me.email, password: data.newPassword });
+        } catch {
+          setAuthToken(null);
+        }
+      }
       return true;
     },
     onSuccess: () => {

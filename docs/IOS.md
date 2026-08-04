@@ -14,9 +14,14 @@ App Store Guideline 4.2 ("not just a website in a wrapper").
 - API base shim ([`client/src/lib/api-base.ts`](../client/src/lib/api-base.ts)):
   when the client is built with `VITE_API_URL` set, relative `/api` calls are
   rewritten to that absolute origin. No-op on the web.
-- Bearer-token auth (`POST /api/auth/token` + `Authorization: Bearer …`) — the app
-  authenticates with a token instead of cookies (cookies are unreliable from the
-  `capacitor://` origin). See the auth module and `bearer-auth.test.ts`.
+- Bearer-token auth, wired end to end: the native build signs in via
+  `POST /api/auth/token` (`client/src/features/auth/use-auth.ts`), stores the token in
+  `client/src/lib/auth-token.ts`, and `client/src/lib/api-base.ts` attaches it as
+  `Authorization: Bearer …` on every `/api` call. The server allows the
+  `capacitor://localhost` origin via `server/lib/cors.ts`.
+- **Not yet done:** the token is held in memory only, so relaunching the app requires
+  signing in again. Register a `TokenPersistence` backed by the iOS Keychain (see the
+  interface in `auth-token.ts`) — not `@capacitor/preferences`, which is not secure.
 - npm scripts: `cap:copy`, `cap:sync`, `cap:sync:ios`.
 
 ## Hard prerequisites (not in this repo — need a Mac)
