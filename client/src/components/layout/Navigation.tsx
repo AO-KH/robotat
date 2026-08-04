@@ -65,7 +65,7 @@ export function Navigation() {
   return (
     <>
       {/* Top Header (Sticky) */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-card rounded-none border-t-0 border-x-0 bg-[#06040d]/80">
+      <header className="fixed top-0 left-0 right-0 z-50 surface rounded-none border-t-0 border-x-0 bg-[#06040d]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -173,7 +173,7 @@ export function Navigation() {
       </AnimatePresence>
 
       {/* Bottom Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card rounded-none border-b-0 border-x-0 pb-safe bg-[#06040d]/95">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 surface rounded-none border-b-0 border-x-0 pb-safe bg-[#06040d]/95">
         <div className="flex items-center justify-around h-16 px-2">
           {mobileLinks.map((link) => {
             const isActive = location === link.href;

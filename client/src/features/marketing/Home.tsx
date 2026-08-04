@@ -183,7 +183,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {home.phases.map((phase, i) => (
-              <motion.div {...riseIn} key={i} className="glass-card rounded-2xl p-7 flex flex-col">
+              <motion.div {...riseIn} key={i} className="surface rounded-2xl p-7 flex flex-col">
                 <div className="eyebrow mb-4">{phase.tag}</div>
                 <h3 className="text-[24px] font-medium tracking-[-0.015em] mb-3">
                   {phase.titlePlain} <span className="text-[#c084fc] italic">{phase.titleAccent}</span>

@@ -56,7 +56,7 @@ export default function Profile() {
         <h1 className="text-3xl font-bold mb-8">{t("profile.accountSettings")}</h1>
 
         {/* Profile */}
-        <motion.section {...riseOnMount} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8 mb-6">
+        <motion.section {...riseOnMount} className="surface rounded-3xl p-6 md:p-8 mb-6">
           <div className="flex items-center gap-2 mb-5">
             <UserIcon className="w-5 h-5 text-[#c084fc]" />
             <h2 className="text-xl font-semibold">{t("profile.profile")}</h2>
@@ -85,7 +85,7 @@ export default function Profile() {
         </motion.section>
 
         {/* Password */}
-        <motion.section {...riseOnMount} transition={{ ...riseOnMount.transition, delay: 0.05 }} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8">
+        <motion.section {...riseOnMount} transition={{ ...riseOnMount.transition, delay: 0.05 }} className="surface rounded-3xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
             <Lock className="w-5 h-5 text-[#c084fc]" />
             <h2 className="text-xl font-semibold">{t("profile.changePassword")}</h2>

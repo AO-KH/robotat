@@ -75,7 +75,7 @@ export default function Fleet() {
                 key={product.slug}
                 {...riseIn}
                 transition={{ ...riseIn.transition, delay: i * 0.1 }}
-                className="glass-card rounded-3xl overflow-hidden border-white/10 hover:border-primary/50 transition-colors duration-500 group flex flex-col cursor-pointer"
+                className="surface rounded-3xl overflow-hidden hover:border-primary/50 transition-colors duration-500 group flex flex-col cursor-pointer"
                 onClick={() => setSelected(product)}
               >
                 <div className={`h-64 relative overflow-hidden ${isPlatform(product) ? "bg-[radial-gradient(ellipse_80%_70%_at_50%_40%,rgba(124,58,237,0.22),transparent_70%)]" : "bg-black/50"}`}>
@@ -193,7 +193,7 @@ export default function Fleet() {
         {/* Command Center */}
         <motion.div
           {...riseIn}
-          className="relative rounded-3xl overflow-hidden glass-card p-1"
+          className="relative rounded-3xl overflow-hidden surface p-1"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-secondary/40 to-primary/20 mix-blend-overlay" />
           <div className="bg-[#06040d] rounded-[1.35rem] p-8 md:p-16 relative z-10 border border-white/5">
@@ -210,7 +210,7 @@ export default function Fleet() {
               </div>
               <div className="relative h-64 md:h-80 rounded-2xl border border-white/10 bg-[#15101f] overflow-hidden shadow-2xl flex items-center justify-center">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-                <div className="relative z-10 glass-card p-6 rounded-xl w-3/4 shadow-2xl border-primary/30">
+                <div className="relative z-10 surface p-6 rounded-xl w-3/4 shadow-2xl">
                   <div className="flex gap-2 mb-4">
                     <div className="w-3 h-3 rounded-full bg-red-500" />
                     <div className="w-3 h-3 rounded-full bg-yellow-500" />

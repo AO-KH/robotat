@@ -46,7 +46,7 @@ export default function Services() {
                 key={index}
                 {...riseIn}
                 transition={{ ...riseIn.transition, delay: index * 0.1 }}
-                className="glass-card p-8 rounded-3xl group hover:-translate-y-1 transition-all duration-300 hover:border-primary/30 flex flex-col"
+                className="surface p-8 rounded-3xl group hover:-translate-y-1 transition-all duration-300 hover:border-primary/30 flex flex-col"
               >
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
                   <Icon className="w-7 h-7" />

@@ -39,7 +39,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-28 md:py-12 hero-gradient">
       <motion.div
         {...riseOnMount}
-        className="w-full max-w-md glass-card rounded-3xl p-8 border border-white/10 shadow-2xl"
+        className="w-full max-w-md surface rounded-3xl p-8 shadow-2xl"
       >
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">{isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}</h1>

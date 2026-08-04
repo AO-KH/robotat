@@ -35,7 +35,7 @@ export default function ForgotPassword() {
     <div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-28 md:py-12 hero-gradient">
       <motion.div
         {...riseOnMount}
-        className="w-full max-w-md glass-card rounded-3xl p-8 border border-white/10 shadow-2xl"
+        className="w-full max-w-md surface rounded-3xl p-8 shadow-2xl"
       >
         {sentTo ? (
           <div className="text-center">
