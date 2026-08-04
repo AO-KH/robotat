@@ -641,6 +641,32 @@ git commit -m "chore(ui): honest font stack, non-blocking load, drop dead tokens
 - `npm run check`, `npm test` and `npm run build` are green, and both EN and AR render correctly.
 - **No hue changed anywhere.** `git diff main -- client/src/index.css` shows no edit to any `--purple*`, `--primary`, `--accent`, `--background` or `--foreground` value.
 
+## Execution log
+
+Executing subagent-driven on branch `design/de-slop` (branched from `main` at `1952e15`).
+Each task: fresh implementer → spec-compliance review → code-quality review.
+
+| Task | State | Commits |
+| --- | --- | --- |
+| 1 — visibility | **Done.** Spec ✅, quality APPROVED, verified live in browser | `96db5e0`, `3f7d455`, `47be0a1` |
+| 2 — surfaces | **Implemented, spec review ✅. Code-quality review still owed.** | `8677dd5` |
+| 3–8 | Not started | — |
+
+**Resume here:** run the code-quality review for Task 2 (`git diff 47be0a1..8677dd5`), then continue to Task 3.
+
+Notes carried forward:
+
+- Task 1's guard needed two hardening passes beyond what this plan specified — a
+  line-scoped regex was evaded by a multi-line reformat, and the `(?!\.\d)` lookahead
+  wrongly exempted `opacity: 0.0`. Both fixed; the guard now scans brace-matched spans.
+- Task 2's implementer flagged the `/auth` card as possibly too low-contrast. Measured
+  rather than eyeballed: the card sits 20 units (euclidean RGB) off the page background
+  and its border 28 units off the card, both well above the ~6 threshold of perceptibility.
+  **No tuning applied — the specified values are correct.** Do not revisit without new evidence.
+- `Fleet.tsx:213` lost a deliberately stronger `border-primary/30` in favour of the uniform
+  edge. Judged in scope, but it is the one place the sweep changed intent rather than
+  mechanism — worth a look during the final visual pass.
+
 ## Explicitly not done
 
 The licensed typeface (blocked on a Dalton Maag web licence and the missing weights); the 75+ hardcoded hex literals; the fake dashboard mockup with traffic-light dots at `Fleet.tsx:217-231`; the radius scale, which is defined, overridden in Tailwind, then bypassed by arbitrary values almost everywhere. Each is a separate decision, and the last two are worth their own pass once these land.
