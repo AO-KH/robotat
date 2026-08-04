@@ -4,8 +4,7 @@ import type { PublicUser, UpdateProfileInput, ChangePasswordInput } from "@share
 import { useToast } from "@/hooks/use-toast";
 import { isNativeApiMode } from "@/lib/api-base";
 import { setAuthToken } from "@/lib/auth-token";
-
-const ME_KEY = ["/api/auth/me"] as const;
+import { ME_KEY, clearSignedInState } from "./auth-state";
 
 async function readError(res: Response, fallback: string): Promise<string> {
   try {
@@ -136,9 +135,9 @@ export function useLogout() {
       await fetch(api.auth.logout.path, { method: "POST", credentials: "include" });
     },
     onSuccess: () => {
-      setAuthToken(null);
-      qc.setQueryData(ME_KEY, null);
-      qc.invalidateQueries({ queryKey: ["/api/assessments"] });
+      // Wipes the whole cache, not just the assessments key — see auth-state.ts for
+      // why invalidation alone leaked the previous user's data on a shared device.
+      clearSignedInState(qc);
     },
   });
 }
