@@ -16,6 +16,10 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("customer"),
   // Null until the user confirms their email via a verification link.
   emailVerifiedAt: timestamp("email_verified_at"),
+  // Embedded as a claim in bearer tokens and checked on every bearer request.
+  // Bumping it revokes every token previously issued to this user — the only way
+  // to evict a stolen token, since the tokens themselves are stateless.
+  tokenVersion: integer("token_version").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

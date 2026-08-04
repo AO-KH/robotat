@@ -1,0 +1,22 @@
+# TLS terminator for the production stack.
+#
+# The app issues Secure-only session cookies in production (auth.service.ts), so a
+# browser silently discards them over plain HTTP — login returns 200 and the next
+# request is still 401. Something must terminate HTTPS in front of it; Caddy does so
+# with automatic Let's Encrypt certificates and renewal.
+#
+# DOMAIN comes from the host .env (see docker-compose.caddy.yml). Certificate
+# issuance requires that name to already resolve to this host over ports 80 and 443.
+
+{$DOMAIN} {
+	encode gzip
+
+	header {
+		# Now that TLS is guaranteed, tell browsers never to try plaintext again.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	# `app` is the compose service name, reachable on the internal network. The app
+	# itself should not publish a public port — set APP_PORT=127.0.0.1:5000.
+	reverse_proxy app:5000
+}

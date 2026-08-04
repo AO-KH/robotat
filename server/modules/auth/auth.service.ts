@@ -55,15 +55,23 @@ function b64url(input: Buffer | string): string {
   return Buffer.from(input).toString("base64url");
 }
 
-/** Mint a signed bearer token for a user id. */
-export function issueToken(userId: number): string {
-  const payload = b64url(JSON.stringify({ sub: userId, exp: Date.now() + BEARER_TTL_MS }));
+/**
+ * Mint a signed bearer token for a user.
+ *
+ * `ver` pins the token to the user's current `tokenVersion`. Because the token is
+ * stateless there is nothing to delete server-side, so revocation works by bumping
+ * that column (see revokeUserTokens): every token carrying an older `ver` stops
+ * verifying immediately. Without it, resetting a password left a stolen token valid
+ * for the rest of its 30 days.
+ */
+export function issueToken(userId: number, tokenVersion: number): string {
+  const payload = b64url(JSON.stringify({ sub: userId, ver: tokenVersion, exp: Date.now() + BEARER_TTL_MS }));
   const sig = b64url(createHmac("sha256", env.SESSION_SECRET).update(payload).digest());
   return `${payload}.${sig}`;
 }
 
 /** Verify a bearer token; throws if malformed, tampered, or expired. */
-export function verifyToken(token: string): { sub: number } {
+export function verifyToken(token: string): { sub: number; ver: number } {
   const [payload, sig] = token.split(".");
   if (!payload || !sig) throw new Error("Malformed token");
 
@@ -72,11 +80,20 @@ export function verifyToken(token: string): { sub: number } {
   const want = Buffer.from(expected);
   if (got.length !== want.length || !timingSafeEqual(got, want)) throw new Error("Bad signature");
 
-  const data = JSON.parse(Buffer.from(payload, "base64url").toString()) as { sub?: unknown; exp?: unknown };
-  if (typeof data.sub !== "number" || typeof data.exp !== "number" || Date.now() > data.exp) {
+  const data = JSON.parse(Buffer.from(payload, "base64url").toString()) as {
+    sub?: unknown;
+    ver?: unknown;
+    exp?: unknown;
+  };
+  if (
+    typeof data.sub !== "number" ||
+    typeof data.ver !== "number" ||
+    typeof data.exp !== "number" ||
+    Date.now() > data.exp
+  ) {
     throw new Error("Expired or invalid token");
   }
-  return { sub: data.sub };
+  return { sub: data.sub, ver: data.ver };
 }
 
 /** Strip the password hash before sending a user to the client. */
@@ -151,9 +168,11 @@ export const bearerAuth: RequestHandler = async (req, _res, next) => {
   if (!header?.startsWith("Bearer ")) return next();
 
   try {
-    const { sub } = verifyToken(header.slice(7).trim());
+    const { sub, ver } = verifyToken(header.slice(7).trim());
     const user = await getUserById(sub);
-    if (user) {
+    // Reject tokens minted before the user's last revocation (password change or
+    // reset). Free: getUserById already runs, so this costs no extra query.
+    if (user && user.tokenVersion === ver) {
       req.user = user;
       // Make req.isAuthenticated() true so requireAuth/requireStaff/me work unchanged.
       req.isAuthenticated = (() => true) as typeof req.isAuthenticated;

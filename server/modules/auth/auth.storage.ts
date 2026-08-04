@@ -33,6 +33,36 @@ export async function updateUserPassword(id: number, passwordHash: string): Prom
   await db.update(users).set({ passwordHash }).where(eq(users.id, id));
 }
 
+/**
+ * Invalidate every credential the user currently holds:
+ *   - bumps token_version, so all previously-issued bearer tokens stop verifying
+ *   - deletes their server-side sessions, so cookies elsewhere stop working
+ *
+ * Call after a password change or reset. `keepSessionId` preserves the session that
+ * performed the change, so a signed-in user changing their own password isn't logged
+ * out of the tab they're using.
+ *
+ * The session delete reaches into connect-pg-simple's `user_sessions` table (it owns
+ * that schema and creates it lazily, hence to_regclass). Passport stores the user id
+ * at sess->'passport'->>'user'.
+ */
+export async function revokeUserCredentials(id: number, keepSessionId?: string): Promise<void> {
+  await db.update(users).set({ tokenVersion: sql`${users.tokenVersion} + 1` }).where(eq(users.id, id));
+
+  // Separate existence check rather than a DO block: bind parameters cannot cross
+  // into a dollar-quoted body, so `$1` inside DO $$ … $$ would be literal text.
+  const present = await db.execute<{ present: boolean }>(
+    sql`SELECT to_regclass('public.user_sessions') IS NOT NULL AS present`,
+  );
+  if (!present.rows[0]?.present) return;
+
+  await db.execute(
+    sql`DELETE FROM user_sessions
+        WHERE sess -> 'passport' ->> 'user' = ${String(id)}
+          AND sid <> ${keepSessionId ?? ""}`,
+  );
+}
+
 export async function markEmailVerified(id: number): Promise<User> {
   const [user] = await db
     .update(users)

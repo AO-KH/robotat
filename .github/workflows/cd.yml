@@ -81,18 +81,26 @@ jobs:
     # Inert until you opt in: set repo variable DEPLOY_ENABLED=true.
     if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     environment: production
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v7
 
-      - name: Copy production compose to host
+      - name: Copy compose files and Caddyfile to host
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          source: docker-compose.prod.yml
+          # The HTTPS overlay and its Caddyfile ship too; which of them compose
+          # actually uses is decided by COMPOSE_FILE in the host .env.
+          source: docker-compose.prod.yml,docker-compose.caddy.yml,deploy/Caddyfile
           target: ${{ secrets.DEPLOY_PATH }}
+          # Default is --keep-old-files, which would silently leave a stale compose
+          # file in place on every deploy after the first.
+          overwrite: true
 
       - name: Pull image & restart stack
         uses: appleboy/ssh-action@v1
@@ -108,8 +116,12 @@ jobs:
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            # No -f here on purpose: COMPOSE_FILE in the host .env selects the files
+            # (e.g. docker-compose.prod.yml:docker-compose.caddy.yml). Hardcoding a
+            # single -f would ignore the HTTPS overlay, and --remove-orphans would
+            # then tear the Caddy container down on every deploy.
+            docker compose pull
+            docker compose up -d --remove-orphans
             docker image prune -f
             docker logout ghcr.io
         env:

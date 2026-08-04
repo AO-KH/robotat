@@ -23,6 +23,7 @@ import {
   getUserById,
   updateUserName,
   updateUserPassword,
+  revokeUserCredentials,
   markEmailVerified,
   createAuthToken,
   getValidAuthToken,
@@ -133,7 +134,7 @@ authRoutes.post(api.auth.token.path, authLimiter, async (req, res, next) => {
     if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    res.status(200).json({ token: issueToken(user.id), user: toPublicUser(user) });
+    res.status(200).json({ token: issueToken(user.id, user.tokenVersion), user: toPublicUser(user) });
   } catch (err) {
     if (handleZodError(err, res)) return;
     next(err);
@@ -181,6 +182,10 @@ authRoutes.patch(api.auth.changePassword.path, requireAuth, async (req, res, nex
       return res.status(400).json({ message: "Current password is incorrect.", field: "currentPassword" });
     }
     await updateUserPassword(user.id, await hashPassword(input.newPassword));
+    // Changing a password must evict anyone else holding a credential for this
+    // account — bearer tokens and sessions on other devices. Keep the caller's own
+    // session so they aren't signed out of the tab they just used.
+    await revokeUserCredentials(user.id, req.sessionID);
     res.status(200).json({ ok: true });
   } catch (err) {
     if (handleZodError(err, res)) return;
@@ -227,6 +232,9 @@ authRoutes.post(api.auth.resetPassword.path, authLimiter, async (req, res, next)
     }
 
     await updateUserPassword(token.userId, await hashPassword(input.newPassword));
+    // A reset is the "I think I'm compromised" path, so it must evict everything:
+    // no session to preserve here, since the caller isn't signed in.
+    await revokeUserCredentials(token.userId);
     await markAuthTokenUsed(token.id);
     // A successful reset proves control of the inbox → treat the email as verified.
     await markEmailVerified(token.userId);

@@ -77,6 +77,82 @@ describe("bearer token auth", () => {
     expect(bad.status).toBe(401);
   });
 
+  it("a password reset revokes tokens issued before it", async () => {
+    const token = await tokenFor();
+    expect((await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`)).status).toBe(200);
+
+    // Full forgot → reset cycle, as a user who thinks they've been compromised would.
+    const forgot = await request(app).post("/api/auth/forgot-password").send({ email: "test.user@example.com" });
+    const reset = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: forgot.body.devToken, newPassword: "brand-new-pass" });
+    expect(reset.status).toBe(200);
+
+    // The attacker's stolen token must now be dead — this was valid for 30 days before.
+    expect((await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`)).status).toBe(401);
+
+    // ...and a freshly minted one still works.
+    const fresh = await request(app)
+      .post("/api/auth/token")
+      .send({ email: "test.user@example.com", password: "brand-new-pass" });
+    expect(fresh.status).toBe(200);
+    expect((await request(app).get("/api/auth/me").set("Authorization", `Bearer ${fresh.body.token}`)).status).toBe(
+      200,
+    );
+  });
+
+  it("a password change revokes tokens issued before it", async () => {
+    const agent = request.agent(app);
+    const creds = newUser();
+    await agent.post("/api/auth/register").send(creds);
+    const token = (
+      await request(app).post("/api/auth/token").send({ email: creds.email, password: creds.password })
+    ).body.token as string;
+
+    const changed = await agent
+      .patch("/api/auth/password")
+      .send({ currentPassword: creds.password, newPassword: "changed-pass-1" });
+    expect(changed.status).toBe(200);
+
+    expect((await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`)).status).toBe(401);
+    // The session that performed the change is deliberately preserved.
+    expect((await agent.get("/api/auth/me")).status).toBe(200);
+  });
+
+  it("a password change evicts sessions on other devices but not the current one", async () => {
+    const creds = newUser();
+    const phone = request.agent(app);
+    const laptop = request.agent(app);
+
+    await phone.post("/api/auth/register").send(creds);
+    await laptop.post("/api/auth/login").send({ email: creds.email, password: creds.password });
+    expect((await phone.get("/api/auth/me")).status).toBe(200);
+    expect((await laptop.get("/api/auth/me")).status).toBe(200);
+
+    // The user changes their password on the laptop.
+    const changed = await laptop
+      .patch("/api/auth/password")
+      .send({ currentPassword: creds.password, newPassword: "changed-pass-2" });
+    expect(changed.status).toBe(200);
+
+    // The other device's session is gone — this is what makes a password change a
+    // real remediation rather than a cosmetic one.
+    expect((await phone.get("/api/auth/me")).status).toBe(401);
+    expect((await laptop.get("/api/auth/me")).status).toBe(200);
+  });
+
+  it("rejects a token whose version claim is forged", async () => {
+    const token = await tokenFor();
+    const [payload] = token.split(".");
+    const claims = JSON.parse(Buffer.from(payload, "base64url").toString());
+    expect(claims.ver).toBe(0); // pinned to the user's current tokenVersion
+
+    // Re-signing is impossible without SESSION_SECRET, so a bumped ver fails the HMAC.
+    const forged = Buffer.from(JSON.stringify({ ...claims, ver: 99 })).toString("base64url");
+    const res = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${forged}.${token.split(".")[1]}`);
+    expect(res.status).toBe(401);
+  });
+
   it("carries the staff role through a bearer token", async () => {
     const creds = newUser({ email: "staff.user@example.com" });
     await request(app).post("/api/auth/register").send(creds);

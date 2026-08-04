@@ -40,13 +40,40 @@ migrator — no `drizzle-kit`/devDependencies needed) and run as a one-shot
 published image instead of building:
 
 ```bash
-# On the host, next to docker-compose.prod.yml, with a real .env (see below):
+# On the host, next to the compose files, with a real .env (see below):
 export IMAGE=ghcr.io/ao-kh/robotat:latest
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+docker compose pull
+docker compose up -d
 ```
 
-`docker-compose.yml` (build-locally) is still there for local end-to-end runs.
+`docker compose` is invoked without `-f` because `COMPOSE_FILE` in the host `.env`
+selects the files — see the next section. `docker-compose.yml` (build-locally) is
+still there for local end-to-end runs.
+
+### HTTPS is mandatory, not optional
+
+In production the app issues **`Secure`-only session cookies**. Served over plain
+HTTP the browser silently discards them, so `POST /api/auth/login` returns 200 and
+the very next request is 401 — the web app cannot log in at all. (Bearer tokens are
+unaffected, so a native client would appear to work while the website is broken.)
+
+[`docker-compose.caddy.yml`](../docker-compose.caddy.yml) is an overlay that puts
+Caddy in front of the app and obtains and renews Let's Encrypt certificates
+automatically. Enable it by setting `COMPOSE_FILE` in the host `.env`:
+
+```dotenv
+COMPOSE_FILE=docker-compose.prod.yml:docker-compose.caddy.yml
+DOMAIN=robotat.example.com    # must already resolve to this host
+APP_PORT=127.0.0.1:5000       # keep the app off the public interface
+```
+
+`APP_PORT` matters: without it the app service still publishes `0.0.0.0:5000`, so
+the plaintext origin stays reachable and bypasses TLS. It also makes the hard-coded
+`trust proxy` setting correct, since a real proxy is now the only path in.
+
+If you terminate TLS some other way (an existing nginx, a cloud load balancer),
+leave `COMPOSE_FILE` at just `docker-compose.prod.yml`, still set
+`APP_PORT=127.0.0.1:5000`, and point your terminator at that port.
 
 ### Required host `.env`
 
@@ -54,6 +81,9 @@ docker compose -f docker-compose.prod.yml up -d
 POSTGRES_PASSWORD=<strong-db-password>
 SESSION_SECRET=<32+ random chars>            # openssl rand -base64 32
 PUBLIC_APP_URL=https://your-domain.example   # must be https://
+COMPOSE_FILE=docker-compose.prod.yml:docker-compose.caddy.yml
+DOMAIN=your-domain.example                   # for the Caddy overlay
+APP_PORT=127.0.0.1:5000                      # app not publicly exposed
 # Optional delivery (logs to console until set):
 # SMTP_HOST=  SMTP_PORT=  SMTP_USER=  SMTP_PASS=  ASSESSMENT_INBOX=
 # WHATSAPP_BUSINESS_NUMBER=  WHATSAPP_TOKEN=  WHATSAPP_PHONE_ID=

@@ -1,0 +1,36 @@
+# HTTPS overlay for the production stack. Layer it on top of docker-compose.prod.yml:
+#
+#   COMPOSE_FILE=docker-compose.prod.yml:docker-compose.caddy.yml docker compose up -d
+#
+# (or pass both with -f). Set COMPOSE_FILE in the host .env so every later
+# `docker compose` command — including the one CD runs — picks up both files.
+#
+# Required in that .env:
+#   DOMAIN=robotat.example.com     # must already resolve to this host
+#   APP_PORT=127.0.0.1:5000        # keeps the app off the public interface
+#
+# Without APP_PORT the app service still publishes 0.0.0.0:5000, so the plaintext
+# origin stays reachable and bypasses TLS entirely.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      DOMAIN: "${DOMAIN:?DOMAIN is required - the hostname Caddy requests a certificate for}"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and ACME account state. Losing caddy_data means re-issuing
+      # certificates on every restart, which will hit Let's Encrypt rate limits.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:
