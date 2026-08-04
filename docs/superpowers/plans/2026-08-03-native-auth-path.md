@@ -396,19 +396,32 @@ export interface TokenPersistence {
 
 let token: string | null = null;
 let persistence: TokenPersistence | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
 
 export function getAuthToken(): string | null {
   return token;
 }
 
-/** Set (or clear, with null) the token. Persistence is best-effort and never throws. */
+/**
+ * Set (or clear, with null) the token.
+ *
+ * Persistence writes are queued rather than fired in parallel: they must land in the
+ * order they were requested, or a slow save could overwrite a later clear and leave a
+ * token in the Keychain after an explicit sign-out. Failures are swallowed — a failed
+ * write must not break sign-in, since the in-memory token still works.
+ */
 export function setAuthToken(next: string | null): void {
   token = next;
   if (!persistence) return;
-  const write = next === null ? persistence.clear() : persistence.save(next);
-  void write.catch(() => {
-    /* a failed write must not break sign-in; the in-memory token still works */
-  });
+
+  const impl = persistence;
+  writeQueue = writeQueue
+    .then(() => (next === null ? impl.clear() : impl.save(next)))
+    .catch((err) => {
+      // Otherwise a Keychain failure is invisible until the user is mysteriously
+      // signed out on next launch.
+      console.warn("[auth] could not persist the auth token", err);
+    });
 }
 
 export function registerTokenPersistence(impl: TokenPersistence): void {
@@ -430,6 +443,7 @@ export async function restoreAuthToken(): Promise<string | null> {
 export function resetAuthTokenForTests(): void {
   token = null;
   persistence = null;
+  writeQueue = Promise.resolve();
 }
 ```
 

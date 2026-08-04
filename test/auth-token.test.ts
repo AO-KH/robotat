@@ -55,4 +55,34 @@ describe("auth token store", () => {
     });
     expect(await restoreAuthToken()).toBeNull();
   });
+
+  it("persists writes in call order even when an earlier write is slower", async () => {
+    const calls: string[] = [];
+    registerTokenPersistence({
+      load: async () => null,
+      save: async (t) => {
+        await new Promise((r) => setTimeout(r, 20));
+        calls.push(`save:${t}`);
+      },
+      clear: async () => void calls.push("clear"),
+    });
+
+    // Sign in then immediately sign out. Without a queue the fast clear lands first
+    // and the slow save then rewrites the token that was just cleared.
+    setAuthToken("tok");
+    setAuthToken(null);
+    await new Promise((r) => setTimeout(r, 60));
+
+    expect(calls).toEqual(["save:tok", "clear"]);
+  });
+
+  it("does not attempt a write when no persistence is registered", () => {
+    expect(() => setAuthToken("tok")).not.toThrow();
+    expect(getAuthToken()).toBe("tok");
+  });
+
+  it("returns null from restore when no persistence is registered", async () => {
+    setAuthToken("in-memory-only");
+    expect(await restoreAuthToken()).toBeNull();
+  });
 });
