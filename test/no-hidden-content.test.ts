@@ -14,8 +14,8 @@ import { join } from "path";
  *
  * This scans *spans*, not lines: it finds each `initial={{`, walks forward tracking
  * brace depth to the matching close, and tests the whole span. A reformat that
- * spreads the prop across several lines therefore cannot evade the guard. The
- * `(?!\.\d)` lookahead keeps a legitimate partial fade like `opacity: 0.5` passing.
+ * spreads the prop across several lines therefore cannot evade the guard, while a
+ * legitimate partial fade like `opacity: 0.5` still passes.
  */
 function tsxFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -41,8 +41,13 @@ function spanEnd(src: string, openIdx: number): number {
   return src.length;
 }
 
-/** Starts fully transparent. `opacity: 0.5` is a partial fade, not hidden content. */
-const HIDDEN = /opacity:\s*0(?!\.\d)/;
+/**
+ * Starts fully transparent. `opacity: 0.5` is a partial fade, not hidden content, so
+ * the lookahead lets it through — but it must still catch `0.0` and `0.00`, which are
+ * spelled differently and hide just as completely. Hence `\d*[1-9]`: exempt only when
+ * some non-zero digit follows the decimal point.
+ */
+const HIDDEN = /opacity:\s*0(?!\.\d*[1-9])/;
 
 const GUIDANCE = `
 Content listed below starts at opacity 0, so it is invisible until an animation runs.
