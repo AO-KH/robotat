@@ -582,8 +582,13 @@ export function createApiFetch(opts: {
   const { base, getToken, fetchImpl } = opts;
 
   return ((input: RequestInfo | URL, init?: RequestInit) => {
-    const path = typeof input === "string" ? input : input instanceof URL ? input.toString() : null;
-    if (path === null || !path.startsWith("/api")) {
+    // Only string paths are rewritten. `URL` and `Request` inputs pass through
+    // untouched and unauthenticated — deliberately. Deriving a pathname from them
+    // would let `fetch(new URL("https://elsewhere.example/api/x"))` be silently
+    // redirected to our API base with the user's bearer token attached, which is a
+    // worse failure than not supporting the shape. Every call site in this codebase
+    // passes a literal "/api/…" string from shared/routes.ts.
+    if (typeof input !== "string" || !input.startsWith("/api")) {
       return fetchImpl(input, init);
     }
 
@@ -595,7 +600,7 @@ export function createApiFetch(opts: {
     }
 
     // `headers` last so the merged value wins over any copy inside init.
-    return fetchImpl(base + path, { credentials: "include", ...init, headers });
+    return fetchImpl(base + input, { credentials: "include", ...init, headers });
   }) as typeof fetch;
 }
 

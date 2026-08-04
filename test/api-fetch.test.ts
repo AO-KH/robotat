@@ -50,6 +50,17 @@ describe("createApiFetch", () => {
     expect(calls[0].init?.body).toBe('{"a":1}');
   });
 
+  it("passes URL and Request inputs through untouched, without a token", async () => {
+    const { calls, impl } = spyFetch();
+    const f = createApiFetch({ base: BASE, getToken: () => "tok123", fetchImpl: impl });
+
+    // Deriving a pathname from these would let a deliberately cross-origin request be
+    // rewritten to our API base with the user's token attached.
+    await f(new URL("https://elsewhere.example/api/x"));
+    expect(calls[0].url).toBe("https://elsewhere.example/api/x");
+    expect(new Headers(calls[0].init?.headers).get("Authorization")).toBeNull();
+  });
+
   it("leaves non-/api requests alone", async () => {
     const { calls, impl } = spyFetch();
     const f = createApiFetch({ base: BASE, getToken: () => "tok123", fetchImpl: impl });
