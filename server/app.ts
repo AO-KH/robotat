@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { registerRoutes } from "./routes";
 import { logger } from "./lib/log";
 import { env } from "./lib/env";
+import { allowedOrigins, createCors } from "./lib/cors";
 
 declare module "http" {
   interface IncomingMessage {
@@ -44,6 +45,11 @@ export async function buildApp(): Promise<{ app: Express; httpServer: Server }> 
       crossOriginEmbedderPolicy: false,
     }),
   );
+
+  // Cross-origin access for the Capacitor iOS shell. Mounted before body parsing,
+  // sessions and the rate limiters so a preflight is answered without touching them —
+  // an OPTIONS request carries no credentials to authenticate anyway.
+  app.use(createCors(allowedOrigins(env.CORS_ORIGINS)));
 
   app.use(
     express.json({
