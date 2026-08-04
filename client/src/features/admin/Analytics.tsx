@@ -6,6 +6,7 @@ import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAnalytics } from "@/features/admin/use-admin";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 export default function Analytics() {
   const [, setLocation] = useLocation();
@@ -70,7 +71,7 @@ export default function Analytics() {
             { label: t("adminAnalytics.pageViews"), value: summary.totalPageViews, icon: Eye },
             { label: t("adminAnalytics.uniqueVisitors"), value: summary.uniqueVisitors, icon: Users },
           ].map((s) => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl border border-white/10 p-6">
+            <motion.div key={s.label} {...riseOnMount} className="glass-card rounded-3xl border border-white/10 p-6">
               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 text-[#c084fc]">
                 <s.icon className="w-6 h-6" />
               </div>

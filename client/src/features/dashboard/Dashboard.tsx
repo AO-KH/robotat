@@ -7,6 +7,7 @@ import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 import { useEffect } from "react";
+import { riseOnMount } from "@/lib/motion";
 
 const statusStyles: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-400",
@@ -95,9 +96,8 @@ export default function Dashboard() {
           ].map((stat, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
+              {...riseOnMount}
+              transition={{ ...riseOnMount.transition, delay: i * 0.08 }}
               className={`glass-card p-6 rounded-3xl border border-white/10 ${stat.wide ? "col-span-2 md:col-span-1" : ""}`}
             >
               <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${stat.color}`}>

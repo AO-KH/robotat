@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAssessment } from "@/features/booking/use-assessments";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 const STEPS = [
   { key: "pending", labelKey: "detail.stepRequested", icon: Clock },
@@ -114,7 +115,7 @@ export default function AssessmentDetail() {
           <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("detail.backToDashboard")}
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8">
+        <motion.div {...riseOnMount} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8">
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-bold mb-1">{t("detail.assessment")} #{a.id}</h1>
             <p className="text-sm text-muted-foreground">{t("detail.requested", { date: fmt(a.createdAt, locale) })}</p>

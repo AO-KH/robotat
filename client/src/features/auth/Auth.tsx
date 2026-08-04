@@ -8,6 +8,7 @@ import { registerSchema, loginSchema, type RegisterInput, type LoginInput } from
 import { useCurrentUser, useLogin, useRegister } from "@/features/auth/use-auth";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 const iconClass = "absolute left-4 rtl:left-auto rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground";
 const inputClass =
@@ -37,8 +38,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-28 md:py-12 hero-gradient">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...riseOnMount}
         className="w-full max-w-md glass-card rounded-3xl p-8 border border-white/10 shadow-2xl"
       >
         <div className="text-center mb-8">

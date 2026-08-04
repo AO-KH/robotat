@@ -128,14 +128,14 @@ export function Navigation() {
         {menuOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 0 }} // overlay-ok
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
               className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, y: -12 }}
+              initial={{ opacity: 0, y: -12 }} // overlay-ok
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.22 }}

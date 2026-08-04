@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -177,7 +178,7 @@ export default function Admin() {
             <p className="text-sm text-muted-foreground mt-1">{t("admin.bookingsAppear")}</p>
           </div>
         ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <motion.div {...riseOnMount} className="space-y-4">
             {assessments.map((a) => (
               <AssessmentCard key={a.id} a={a} />
             ))}

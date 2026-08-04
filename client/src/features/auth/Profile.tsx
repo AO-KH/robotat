@@ -13,6 +13,7 @@ import {
 import { useCurrentUser, useUpdateProfile, useChangePassword } from "@/features/auth/use-auth";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 const inputClass =
   "w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all";
@@ -55,7 +56,7 @@ export default function Profile() {
         <h1 className="text-3xl font-bold mb-8">{t("profile.accountSettings")}</h1>
 
         {/* Profile */}
-        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8 mb-6">
+        <motion.section {...riseOnMount} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8 mb-6">
           <div className="flex items-center gap-2 mb-5">
             <UserIcon className="w-5 h-5 text-[#c084fc]" />
             <h2 className="text-xl font-semibold">{t("profile.profile")}</h2>
@@ -84,7 +85,7 @@ export default function Profile() {
         </motion.section>
 
         {/* Password */}
-        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8">
+        <motion.section {...riseOnMount} transition={{ ...riseOnMount.transition, delay: 0.05 }} className="glass-card rounded-3xl border border-white/10 p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
             <Lock className="w-5 h-5 text-[#c084fc]" />
             <h2 className="text-xl font-semibold">{t("profile.changePassword")}</h2>

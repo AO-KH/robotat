@@ -4,24 +4,18 @@ import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 import type { ReactNode } from "react";
+import { riseIn, riseOnMount } from "@/lib/motion";
 
 import marqueeImg from "@assets/06_1772321886237.png";
 import fieldImg from "@assets/05_1771963956072.jpeg";
 import solarImg from "@assets/solar_farm.jpeg";
-
-const fadeUp = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.5 },
-};
 
 // Environment images, aligned by index with dict.home.environments (greenhouse has none yet).
 const ENV_IMAGES: (string | null)[] = [fieldImg, null, solarImg];
 
 function SectionHead({ tag, title, sub }: { tag: string; title: ReactNode; sub?: string }) {
   return (
-    <motion.div {...fadeUp} className="text-center max-w-3xl mx-auto mb-12 md:mb-16 px-4">
+    <motion.div {...riseIn} className="text-center max-w-3xl mx-auto mb-12 md:mb-16 px-4">
       <h2 className="text-gradient text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block">
         {tag}
       </h2>
@@ -47,9 +41,8 @@ export default function Home() {
       {/* ===== HERO ===== */}
       <section className="px-4 sm:px-6 lg:px-8 pt-14 md:pt-24 pb-16 md:pb-20 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          {...riseOnMount}
+          transition={{ ...riseOnMount.transition, duration: 0.6 }}
           className="max-w-4xl mx-auto flex flex-col items-center gap-7"
         >
           <h1 className="text-[44px] md:text-7xl lg:text-[84px] font-light tracking-[-0.035em] leading-[1.02]">
@@ -75,7 +68,7 @@ export default function Home() {
 
       {/* ===== MARQUEE ===== */}
       <section className="px-4 sm:px-6 lg:px-8 pb-20 md:pb-24">
-        <motion.div {...fadeUp} className="max-w-6xl mx-auto">
+        <motion.div {...riseIn} className="max-w-6xl mx-auto">
           <div className="relative aspect-[16/10] md:aspect-[21/9] border border-[#a855f7]/[0.22] overflow-hidden bg-gradient-to-b from-[#281c40]/40 to-[#140e20]/20">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#c084fc] to-transparent z-10" />
             <img src={marqueeImg} alt="ROBOTAT" className="w-full h-full object-cover" />
@@ -102,7 +95,7 @@ export default function Home() {
           <div className="border-t border-border">
             {home.capabilities.map((cap, i) => (
               <motion.div
-                {...fadeUp}
+                {...riseIn}
                 key={i}
                 className="grid grid-cols-1 md:grid-cols-[90px_1fr] items-baseline gap-3 md:gap-8 py-8 md:py-9 border-b border-border transition-colors hover:bg-[#a855f7]/[0.03]"
               >
@@ -131,7 +124,7 @@ export default function Home() {
           />
 
           <motion.div
-            {...fadeUp}
+            {...riseIn}
             className="grid grid-cols-1 md:grid-cols-3 border border-[#a855f7]/[0.22] bg-gradient-to-b from-[#281c40]/40 to-[#140e20]/25"
           >
             {home.environments.map((env, i) => {
@@ -190,7 +183,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {home.phases.map((phase, i) => (
-              <motion.div {...fadeUp} key={i} className="glass-card rounded-2xl p-7 flex flex-col">
+              <motion.div {...riseIn} key={i} className="glass-card rounded-2xl p-7 flex flex-col">
                 <div className="eyebrow mb-4">{phase.tag}</div>
                 <h3 className="text-[24px] font-medium tracking-[-0.015em] mb-3">
                   {phase.titlePlain} <span className="text-[#c084fc] italic">{phase.titleAccent}</span>
@@ -212,7 +205,7 @@ export default function Home() {
 
       {/* ===== CTA BAND ===== */}
       <section className="px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
-        <motion.div {...fadeUp} className="max-w-3xl mx-auto flex flex-col items-center gap-6">
+        <motion.div {...riseIn} className="max-w-3xl mx-auto flex flex-col items-center gap-6">
           <h2 className="text-gradient text-4xl md:text-[56px] font-semibold tracking-[-0.02em] leading-[1.08] inline-block">
             {t("home.ctaTitle1")}
             <br />

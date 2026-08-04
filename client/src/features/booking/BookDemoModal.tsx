@@ -81,7 +81,7 @@ export function BookDemoModal() {
       {isOpen && (
         <>
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0 }} // overlay-ok
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeModal}
@@ -89,7 +89,7 @@ export function BookDemoModal() {
           />
           <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} // overlay-ok
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-md bg-[#15101f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto max-h-[90vh] flex flex-col"
