@@ -13,7 +13,7 @@
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
     /* ROBOTAT dark purple theme (nasl-tech.com) */
-    --background: 253 53% 3%; /* #06040d */
+    --background: 253 53% 3%; /* #05040c — the iOS launch screen and webview match this */
     --foreground: 252 100% 97%; /* #f3f0ff */
 
     --primary: 262 83% 58%; /* #7c3aed purple-deep */

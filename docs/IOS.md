@@ -60,13 +60,24 @@ under it are ignored: `App/Pods`, `App/App/public` (the copied web build),
 
 | Setting | Value | Why |
 | --- | --- | --- |
-| Launch screen | solid `#06040d` | The default was Capacitor's white placeholder, which flashed white on every launch of a near-black app |
-| Webview background | `#06040d` | Shows between the launch screen dismissing and React's first paint |
-| Status bar | `UIStatusBarStyleLightContent`, app-wide | Left to the system it renders dark glyphs on a light-mode device — invisible here. There is no light theme to switch to |
+| Launch screen images | solid `#05040c`, sRGB-tagged | The default was Capacitor's white placeholder. The storyboard's `imageView` is `scaleAspectFill` over the full screen, so **the images are what fixes the flash** — the storyboard's own background colour is only a fallback for a failed asset lookup |
+| Webview background | `#05040c` | The second flash point: between the launch screen dismissing and React's first paint. Capacitor parses 8-digit hex here as RGBA, not ARGB |
+| `UIUserInterfaceStyle` | `Dark` | The app has one theme and no `prefers-color-scheme` anywhere. Without this the *native* layer stays light on a light-mode device — keyboard, pickers, action sheets — and `prefers-color-scheme` inside the webview reports `light` |
+| Status bar | `UIStatusBarStyleLightContent` with `UIViewControllerBasedStatusBarAppearance` **`true`** | Capacitor's `CAPBridgeViewController` reads `UIStatusBarStyle` from this plist and returns it from `preferredStatusBarStyle` — which is the view-controller path, so the key must stay `true`. Setting it `false` looks identical but silently turns `StatusBar.setStyle()` into a no-op if `@capacitor/status-bar` is ever added |
 | Line endings | LF for `.pbxproj`/`.plist`/`.storyboard`/`.swift` | Repo is developed on Windows with `autocrlf=true`; see [.gitattributes](../.gitattributes) |
 
-**Not yet done — the app icon is still Capacitor's placeholder.** `AppIcon-512@2x.png`
-needs replacing with real ROBOTAT artwork before submission.
+`#05040c` is what `--background: 253 53% 3%` in `client/src/index.css` actually
+resolves to. If that token ever changes, these three native surfaces must change with it.
+
+**Not yet done:**
+
+- **The app icon is still Capacitor's placeholder.** `AppIcon-512@2x.png` needs real
+  ROBOTAT artwork before submission — this alone will fail review.
+- **Code signing is unconfigured.** `project.pbxproj` has `CODE_SIGN_STYLE = Automatic`
+  but no `DEVELOPMENT_TEAM`, so the first build fails until you select a team under
+  Signing & Capabilities in Xcode.
+- **`Podfile.lock` does not exist yet** because `pod install` has never run. Commit it
+  once it does — it is not ignored, and `.gitattributes` already pins it to LF.
 
 ## Dev loop
 
@@ -87,11 +98,14 @@ can be prototyped anywhere, but building/signing/submitting is Mac-only:
    token with the backend, and fan out assessment status-change notifications to it
    (reuses the Phase 2 notification logic). This is the primary native value for
    Guideline 4.2.
-2. **Secure token storage** — keep the bearer token in the iOS Keychain (e.g.
-   `@capacitor/preferences` is *not* secure; use a keychain plugin), not localStorage.
-3. **App polish** — launch screen, app icon, safe-area/notch layout, offline states.
-4. **App Store** — bundle id `com.nasl.robotat`, screenshots, privacy labels,
-   TestFlight beta, then submit for review.
+2. **Secure token storage** — the bearer token is held in memory only, so the app
+   signs you out on every relaunch. `client/src/lib/auth-token.ts` already exposes a
+   `TokenPersistence` adapter for this; it needs a Keychain-backed implementation.
+   `@capacitor/preferences` is *not* secure and is not an acceptable stopgap.
+3. **App polish** — app icon, offline states. (Launch screen and dark appearance are
+   done — see the table above.)
+4. **App Store** — bundle id `com.nasl.robotat`, code signing team, screenshots,
+   privacy labels, TestFlight beta, then submit for review.
 
 ## Config reference
 

@@ -43,14 +43,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<!-- The UI is permanently dark (#06040d), so the status bar is set app-wide rather
-	     than per view controller. Left at the default, iOS picks a style from the system
-	     appearance and renders dark glyphs for a light-mode device — invisible against
-	     this background. There is no light theme to switch to, so a global light style
-	     is correct rather than a shortcut. -->
 	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
+	<true/>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleLightContent</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
 </dict>
 </plist>
