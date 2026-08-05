@@ -319,6 +319,7 @@ export const en = {
     stepCompleted: "Completed",
     scheduledVisit: "Scheduled visit",
     notFound: "Assessment not found",
+    notFoundBody: "This booking doesn't exist, or it isn't on your account.",
   },
   profile: {
     accountSettings: "Account settings",
@@ -349,6 +350,11 @@ export const en = {
     requestPlatformDemo: "Request Platform Demo",
     emptyTitle: "No products to show yet",
     emptyBody: "Our catalogue is being updated. Please check back shortly.",
+  },
+  notFound: {
+    title: "This page doesn't exist",
+    body: "The link may be out of date, or the page may have moved. Everything else is still where you left it.",
+    backHome: "Back to home",
   },
   // Shared by every screen that renders a fetched list — see components/QueryState.tsx.
   state: {

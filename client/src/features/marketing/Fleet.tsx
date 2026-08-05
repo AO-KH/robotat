@@ -207,7 +207,7 @@ export default function Fleet() {
           <div className="bg-[#06040d] rounded-[1.35rem] p-8 md:p-16 relative z-10 border border-white/5">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-heading font-semibold mb-6">{t("fleet.commandCenter")}</h2>
+                <h2 className="text-subhead font-semibold mb-6">{t("fleet.commandCenter")}</h2>
                 <p className="text-body text-muted-foreground mb-8">{t("fleet.commandCenterDesc")}</p>
                 <button
                   onClick={openModal}

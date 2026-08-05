@@ -316,6 +316,7 @@ export const ar: Dictionary = {
     stepCompleted: "مكتمل",
     scheduledVisit: "زيارة مجدولة",
     notFound: "التقييم غير موجود",
+    notFoundBody: "هذا الحجز غير موجود، أو أنه ليس ضمن حسابك.",
   },
   profile: {
     accountSettings: "إعدادات الحساب",
@@ -346,6 +347,11 @@ export const ar: Dictionary = {
     requestPlatformDemo: "اطلب عرض المنصّة",
     emptyTitle: "لا توجد منتجات لعرضها بعد",
     emptyBody: "يجري تحديث الكتالوج. يُرجى المراجعة قريبًا.",
+  },
+  notFound: {
+    title: "هذه الصفحة غير موجودة",
+    body: "قد يكون الرابط قديمًا، أو أن الصفحة قد نُقلت. كل شيء آخر ما زال في مكانه.",
+    backHome: "العودة إلى الرئيسية",
   },
   state: {
     loading: "جارٍ التحميل",

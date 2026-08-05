@@ -109,7 +109,15 @@ export default function Dashboard() {
               <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${stat.color}`}>
                 <stat.icon className="w-6 h-6" />
               </div>
-              <p className={`font-semibold ${stat.wide ? "text-body break-all" : "text-heading"}`}>{stat.value}</p>
+              {/*
+                A stat figure is a display number inside a card, not a heading. At
+                `.text-heading` it tied with this page's own h1 (52px on desktop) and
+                with the section headings below, so four different things rendered at
+                one size. `.text-subhead` sits it under the title and one step above
+                the `wide` variant's email, which reads as siblings rather than as two
+                unrelated treatments.
+              */}
+              <p className={`font-semibold ${stat.wide ? "text-body break-all" : "text-subhead"}`}>{stat.value}</p>
               <p className="text-label font-normal text-muted-foreground">{stat.label}</p>
             </motion.div>
           ))}
@@ -119,12 +127,15 @@ export default function Dashboard() {
           {/* Assessments list */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-heading font-semibold flex items-center gap-2">
+              <h2 className="text-subhead font-semibold flex items-center gap-2">
                 <LayoutDashboard className="w-6 h-6 text-primary" /> {t("dashboard.myAssessments")}
               </h2>
               <button
                 onClick={openModal}
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
+                // Same padding-derived shortfall as the header CTA: `py-2` over
+                // `text-body` measured 43.2px, and `hidden md:` kept it out of the
+                // 375px audit. Found by sweeping the breakpoint widths.
+                className="hidden md:flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
               >
                 <Plus className="w-4 h-4" /> {t("dashboard.book")}
               </button>
@@ -189,7 +200,7 @@ export default function Dashboard() {
 
           {/* Quick actions */}
           <div className="space-y-6">
-            <h2 className="text-heading font-semibold flex items-center gap-2">
+            <h2 className="text-subhead font-semibold flex items-center gap-2">
               <Settings className="w-6 h-6 text-primary" /> {t("dashboard.quickActions")}
             </h2>
             <div className="space-y-4">
