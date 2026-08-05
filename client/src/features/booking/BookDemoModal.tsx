@@ -106,8 +106,8 @@ export function BookDemoModal() {
                     </button>
                   )}
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">{t("booking.title")}</h2>
-                    <p className="text-sm text-muted-foreground mt-1">{t("booking.subtitle")}</p>
+                    <h2 className="text-body font-bold text-foreground">{t("booking.title")}</h2>
+                    <p className="text-label text-muted-foreground mt-1">{t("booking.subtitle")}</p>
                   </div>
                 </div>
                 <button
@@ -123,8 +123,8 @@ export function BookDemoModal() {
                 {view === "choose" ? (
                   <div className="p-6">
                     <div className="text-center mb-6">
-                      <h3 className="text-lg font-semibold">{t("booking.howReach")}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{t("booking.howReachSub")}</p>
+                      <h3 className="text-body font-semibold">{t("booking.howReach")}</h3>
+                      <p className="text-label text-muted-foreground mt-1">{t("booking.howReachSub")}</p>
                     </div>
 
                     {isLoading || !links ? (
@@ -141,8 +141,8 @@ export function BookDemoModal() {
                           className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366]/20 transition-colors"
                         >
                           <SiWhatsapp className="w-8 h-8 text-[#25D366]" />
-                          <span className="text-sm font-semibold">{t("booking.whatsapp")}</span>
-                          <span className="text-[11px] text-muted-foreground leading-tight">{t("booking.whatsappSub")}</span>
+                          <span className="text-body font-semibold">{t("booking.whatsapp")}</span>
+                          <span className="text-label text-muted-foreground leading-tight">{t("booking.whatsappSub")}</span>
                         </a>
                         <button
                           onClick={() => {
@@ -152,14 +152,14 @@ export function BookDemoModal() {
                           className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
                         >
                           <Mail className="w-8 h-8 text-[#c084fc]" />
-                          <span className="text-sm font-semibold">{t("booking.email")}</span>
-                          <span className="text-[11px] text-muted-foreground leading-tight">{t("booking.emailSub")}</span>
+                          <span className="text-body font-semibold">{t("booking.email")}</span>
+                          <span className="text-label text-muted-foreground leading-tight">{t("booking.emailSub")}</span>
                         </button>
                       </div>
                     )}
 
                     {!user && (
-                      <p className="text-center text-xs text-muted-foreground mt-5">
+                      <p className="text-center text-label text-muted-foreground mt-5">
                         {t("booking.haveAccount")}{" "}
                         <a href="/auth" className="text-[#c084fc] hover:underline">{t("auth.signIn")}</a>{" "}
                         {t("booking.signInToTrack")}
@@ -179,7 +179,7 @@ export function BookDemoModal() {
                           type="button"
                           key={opt.key}
                           onClick={() => setType(opt.key as AccountType)}
-                          className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                          className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-body font-medium transition-colors ${
                             type === opt.key
                               ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:text-foreground"
@@ -192,45 +192,45 @@ export function BookDemoModal() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">
+                        <label className="text-label font-medium text-foreground/80">
                           {type === "company" ? t("booking.contactName") : t("booking.fullName")}
                         </label>
                         <input {...register("name")} className={inputClass} placeholder="John Doe" />
-                        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+                        {errors.name && <p className="text-label text-destructive">{errors.name.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">{t("booking.phone")}</label>
+                        <label className="text-label font-medium text-foreground/80">{t("booking.phone")}</label>
                         <input {...register("phone")} className={inputClass} placeholder="+966…" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/80">{t("booking.emailLabel")}</label>
+                      <label className="text-label font-medium text-foreground/80">{t("booking.emailLabel")}</label>
                       <input {...register("email")} type="email" className={inputClass} placeholder="you@example.com" />
-                      {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                      {errors.email && <p className="text-label text-destructive">{errors.email.message}</p>}
                     </div>
 
                     {type === "company" && (
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">{t("booking.companyName")}</label>
+                        <label className="text-label font-medium text-foreground/80">{t("booking.companyName")}</label>
                         <input {...register("company")} className={inputClass} placeholder={t("booking.companyNamePlaceholder")} />
-                        {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
+                        {errors.company && <p className="text-label text-destructive">{errors.company.message}</p>}
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">{t("booking.landSize")}</label>
+                        <label className="text-label font-medium text-foreground/80">{t("booking.landSize")}</label>
                         <input {...register("landSize")} className={inputClass} placeholder="e.g. 50" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground/80">{t("booking.location")}</label>
+                        <label className="text-label font-medium text-foreground/80">{t("booking.location")}</label>
                         <input {...register("location")} className={inputClass} placeholder="https://goo.gl/…" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/80">{t("booking.message")}</label>
+                      <label className="text-label font-medium text-foreground/80">{t("booking.message")}</label>
                       <textarea
                         {...register("message")}
                         rows={3}
@@ -242,7 +242,7 @@ export function BookDemoModal() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Mail className="w-4 h-4" /> {t("booking.sendByEmail")}</>}
                     </button>

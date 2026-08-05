@@ -31,7 +31,7 @@ function Timeline({ a }: { a: Assessment }) {
     return (
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
         <X className="w-5 h-5 shrink-0" />
-        <span className="font-medium">{t("detail.cancelledMsg")}</span>
+        <span className="text-body font-medium">{t("detail.cancelledMsg")}</span>
       </div>
     );
   }
@@ -56,7 +56,7 @@ function Timeline({ a }: { a: Assessment }) {
               >
                 <Icon className="w-5 h-5" />
               </div>
-              <span className={`text-xs font-medium ${done || current ? "text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-label font-medium ${done || current ? "text-foreground" : "text-muted-foreground"}`}>
                 {t(step.labelKey)}
               </span>
             </div>
@@ -95,8 +95,8 @@ export default function AssessmentDetail() {
   if (isError || !a) {
     return (
       <div className="min-h-screen pt-28 px-4 text-center">
-        <p className="text-lg font-medium mb-2">{t("detail.notFound")}</p>
-        <Link href="/dashboard" className="text-[#c084fc] hover:underline">{t("detail.backToDashboard")}</Link>
+        <p className="text-body font-medium mb-2">{t("detail.notFound")}</p>
+        <Link href="/dashboard" className="text-body text-[#c084fc] hover:underline">{t("detail.backToDashboard")}</Link>
       </div>
     );
   }
@@ -111,14 +111,14 @@ export default function AssessmentDetail() {
   return (
     <div className="min-h-screen pt-28 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("detail.backToDashboard")}
         </Link>
 
         <motion.div {...riseOnMount} className="surface rounded-3xl p-6 md:p-8">
           <div className="mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold mb-1">{t("detail.assessment")} #{a.id}</h1>
-            <p className="text-sm text-muted-foreground">{t("detail.requested", { date: fmt(a.createdAt, locale) })}</p>
+            <h1 className="text-heading font-bold mb-1">{t("detail.assessment")} #{a.id}</h1>
+            <p className="text-label text-muted-foreground">{t("detail.requested", { date: fmt(a.createdAt, locale) })}</p>
           </div>
 
           <div className="mb-8">
@@ -129,8 +129,8 @@ export default function AssessmentDetail() {
             <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#a855f7]/10 border border-[#a855f7]/20 mb-8">
               <Calendar className="w-5 h-5 text-[#c084fc] shrink-0" />
               <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("detail.scheduledVisit")}</div>
-                <div className="font-medium">{fmt(a.scheduledAt, locale, true)}</div>
+                <div className="text-label uppercase tracking-wider text-muted-foreground">{t("detail.scheduledVisit")}</div>
+                <div className="text-body font-medium">{fmt(a.scheduledAt, locale, true)}</div>
               </div>
             </div>
           )}
@@ -138,22 +138,22 @@ export default function AssessmentDetail() {
           <div className="grid sm:grid-cols-2 gap-4 mb-6">
             {a.landSize && (
               <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t("fields.landSize")}</div>
-                <div className="text-sm">{a.landSize} ha</div>
+                <div className="text-label uppercase tracking-wider text-muted-foreground mb-1">{t("fields.landSize")}</div>
+                <div className="text-body">{a.landSize} ha</div>
               </div>
             )}
             {details.filter(([, , v]) => v).map(([Icon, label, value]) => (
               <div key={label}>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{label}</div>
-                <div className="text-sm flex items-center gap-2 break-all"><Icon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" /> {value}</div>
+                <div className="text-label uppercase tracking-wider text-muted-foreground mb-1">{label}</div>
+                <div className="text-body flex items-center gap-2 break-all"><Icon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" /> {value}</div>
               </div>
             ))}
           </div>
 
           {a.message && (
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t("fields.message")}</div>
-              <p className="text-sm text-muted-foreground bg-black/20 rounded-xl p-3">{a.message}</p>
+              <div className="text-label uppercase tracking-wider text-muted-foreground mb-1">{t("fields.message")}</div>
+              <p className="text-body text-muted-foreground bg-black/20 rounded-xl p-3">{a.message}</p>
             </div>
           )}
         </motion.div>

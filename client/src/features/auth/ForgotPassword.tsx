@@ -40,41 +40,41 @@ export default function ForgotPassword() {
         {sentTo ? (
           <div className="text-center">
             <CheckCircle2 className="w-12 h-12 text-[#5eead4] mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-2">{t("recover.checkInbox")}</h1>
-            <p className="text-muted-foreground mb-6">{t("recover.checkInboxSub", { email: sentTo })}</p>
+            <h1 className="text-heading font-bold mb-2">{t("recover.checkInbox")}</h1>
+            <p className="text-body text-muted-foreground mb-6">{t("recover.checkInboxSub", { email: sentTo })}</p>
             {devToken && (
               <Link
                 href={`/reset-password?token=${devToken}`}
-                className="block mb-6 text-xs text-[#c084fc] underline break-all"
+                className="block mb-6 text-label text-[#c084fc] underline break-all"
               >
                 dev: /reset-password?token={devToken}
               </Link>
             )}
-            <Link href="/auth" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/auth" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("recover.backToSignIn")}
             </Link>
           </div>
         ) : (
           <>
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2">{t("recover.forgotTitle")}</h1>
-              <p className="text-muted-foreground">{t("recover.forgotSub")}</p>
+              <h1 className="text-heading font-bold mb-2">{t("recover.forgotTitle")}</h1>
+              <p className="text-body text-muted-foreground">{t("recover.forgotSub")}</p>
             </div>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/80">{t("auth.email")}</label>
+                <label className="text-label font-medium text-foreground/80">{t("auth.email")}</label>
                 <div className="relative">
                   <Mail className={iconClass} />
                   <input type="email" placeholder="you@company.com" className={inputClass} {...form.register("email")} />
                 </div>
                 {form.formState.errors.email && (
-                  <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+                  <p className="text-label text-destructive">{form.formState.errors.email.message}</p>
                 )}
               </div>
               <button
                 type="submit"
                 disabled={forgot.isPending}
-                className="w-full py-4 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 {forgot.isPending ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -83,7 +83,7 @@ export default function ForgotPassword() {
                 )}
               </button>
             </form>
-            <div className="mt-8 text-center text-sm">
+            <div className="mt-8 text-center text-body">
               <Link href="/auth" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                 <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("recover.backToSignIn")}
               </Link>

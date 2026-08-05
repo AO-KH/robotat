@@ -42,33 +42,33 @@ export default function Auth() {
         className="w-full max-w-md surface rounded-3xl p-8 shadow-2xl"
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">{isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}</h1>
-          <p className="text-muted-foreground">{isLogin ? t("auth.signInSub") : t("auth.registerSub")}</p>
+          <h1 className="text-heading font-bold mb-2">{isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}</h1>
+          <p className="text-body text-muted-foreground">{isLogin ? t("auth.signInSub") : t("auth.registerSub")}</p>
         </div>
 
         {isLogin ? (
           <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">{t("auth.email")}</label>
+              <label className="text-label font-medium text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
                 <input type="email" placeholder="you@company.com" className={inputClass} {...loginForm.register("email")} />
               </div>
               {loginForm.formState.errors.email && (
-                <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
+                <p className="text-label text-destructive">{loginForm.formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">{t("auth.password")}</label>
+              <label className="text-label font-medium text-foreground/80">{t("auth.password")}</label>
               <div className="relative">
                 <Lock className={iconClass} />
                 <input type="password" placeholder="••••••••" className={inputClass} {...loginForm.register("password")} />
               </div>
               {loginForm.formState.errors.password && (
-                <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
+                <p className="text-label text-destructive">{loginForm.formState.errors.password.message}</p>
               )}
               <div className="text-end">
-                <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/forgot-password" className="text-label text-muted-foreground hover:text-primary transition-colors">
                   {t("auth.forgotLink")}
                 </Link>
               </div>
@@ -76,7 +76,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={pending}
-              className="w-full py-4 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {pending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t("auth.signIn")} <ArrowRight className="w-5 h-5 rtl:rotate-180" /></>}
             </button>
@@ -84,46 +84,46 @@ export default function Auth() {
         ) : (
           <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">{t("auth.fullName")}</label>
+              <label className="text-label font-medium text-foreground/80">{t("auth.fullName")}</label>
               <div className="relative">
                 <User className={iconClass} />
                 <input type="text" placeholder="John Doe" className={inputClass} {...registerForm.register("name")} />
               </div>
               {registerForm.formState.errors.name && (
-                <p className="text-xs text-destructive">{registerForm.formState.errors.name.message}</p>
+                <p className="text-label text-destructive">{registerForm.formState.errors.name.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">{t("auth.email")}</label>
+              <label className="text-label font-medium text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
                 <input type="email" placeholder="you@company.com" className={inputClass} {...registerForm.register("email")} />
               </div>
               {registerForm.formState.errors.email && (
-                <p className="text-xs text-destructive">{registerForm.formState.errors.email.message}</p>
+                <p className="text-label text-destructive">{registerForm.formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">{t("auth.password")}</label>
+              <label className="text-label font-medium text-foreground/80">{t("auth.password")}</label>
               <div className="relative">
                 <Lock className={iconClass} />
                 <input type="password" placeholder={t("auth.passwordHint")} className={inputClass} {...registerForm.register("password")} />
               </div>
               {registerForm.formState.errors.password && (
-                <p className="text-xs text-destructive">{registerForm.formState.errors.password.message}</p>
+                <p className="text-label text-destructive">{registerForm.formState.errors.password.message}</p>
               )}
             </div>
             <button
               type="submit"
               disabled={pending}
-              className="w-full py-4 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {pending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t("auth.createAccountBtn")} <ArrowRight className="w-5 h-5 rtl:rotate-180" /></>}
             </button>
           </form>
         )}
 
-        <div className="mt-8 text-center text-sm">
+        <div className="mt-8 text-center text-body">
           <button
             onClick={() => setIsLogin((v) => !v)}
             className="text-muted-foreground hover:text-primary transition-colors"

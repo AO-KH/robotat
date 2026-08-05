@@ -50,8 +50,8 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 text-[#c084fc]">
               <s.icon className="w-6 h-6" />
             </div>
-            <p className="text-3xl font-bold">{s.value.toLocaleString()}</p>
-            <p className="text-sm font-medium text-muted-foreground">{s.label}</p>
+            <p className="text-heading font-bold">{s.value.toLocaleString()}</p>
+            <p className="text-label font-medium text-muted-foreground">{s.label}</p>
           </motion.div>
         ))}
       </div>
@@ -59,16 +59,16 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Top pages */}
         <div className="surface rounded-3xl p-6">
-          <h2 className="text-lg font-semibold mb-5">{t("adminAnalytics.topPages")}</h2>
+          <h2 className="text-body font-semibold mb-5">{t("adminAnalytics.topPages")}</h2>
           {summary.topPaths.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("adminAnalytics.noViews")}</p>
+            <p className="text-body text-muted-foreground">{t("adminAnalytics.noViews")}</p>
           ) : (
             <div className="space-y-3">
               {summary.topPaths.map((p) => (
                 <div key={p.path}>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-body mb-1">
                     <span className="truncate">{pathLabel(p.path)}</span>
-                    <span className="text-muted-foreground font-mono text-xs">{p.views}</span>
+                    <span className="text-muted-foreground font-mono text-label">{p.views}</span>
                   </div>
                   <div className="h-2 rounded-full bg-white/5 overflow-hidden">
                     <div className="h-full bg-primary rounded-full" style={{ width: `${(p.views / pathMax) * 100}%` }} />
@@ -81,16 +81,16 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
 
         {/* Booking funnel */}
         <div className="surface rounded-3xl p-6">
-          <h2 className="text-lg font-semibold mb-5">{t("adminAnalytics.bookingFunnel")}</h2>
+          <h2 className="text-body font-semibold mb-5">{t("adminAnalytics.bookingFunnel")}</h2>
           <div className="space-y-3">
             {funnelSteps.map((step) => {
               const value = summary.funnel[step.key];
               const pct = summary.funnel.opened > 0 ? Math.round((value / summary.funnel.opened) * 100) : 0;
               return (
                 <div key={step.key}>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-body mb-1">
                     <span>{step.label}</span>
-                    <span className="text-muted-foreground font-mono text-xs">
+                    <span className="text-muted-foreground font-mono text-label">
                       {value}
                       {step.key !== "opened" && summary.funnel.opened > 0 ? ` · ${pct}%` : ""}
                     </span>
@@ -105,7 +105,7 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mt-6">{t("adminAnalytics.privacyNote")}</p>
+      <p className="text-label text-muted-foreground mt-6">{t("adminAnalytics.privacyNote")}</p>
     </>
   );
 }
@@ -139,13 +139,13 @@ export default function Analytics() {
   return (
     <div className="min-h-screen pt-28 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("adminAnalytics.backToAssessments")}
         </Link>
 
         <div className="flex items-center gap-3 mb-8">
           <BarChart3 className="w-7 h-7 text-[#c084fc]" />
-          <h1 className="text-3xl md:text-4xl font-bold">{t("adminAnalytics.title")}</h1>
+          <h1 className="text-heading font-bold">{t("adminAnalytics.title")}</h1>
         </div>
 
         <QueryState

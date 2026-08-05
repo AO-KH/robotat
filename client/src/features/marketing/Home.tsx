@@ -19,11 +19,11 @@ function SectionHead({ tag, title, sub }: { tag: string; title: ReactNode; sub?:
       {/* The editorial line leads. `tag` is a connective label and sits under it,
           quiet — it was previously set as the giant gradient headline while the real
           sentence was demoted to muted body text. */}
-      <h2 className="text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-3">
+      <h2 className="text-heading font-semibold mb-3">
         {title}
       </h2>
-      <p className="text-[15px] text-muted-foreground/70 mb-4">{tag}</p>
-      {sub && <p className="text-[16px] md:text-[17px] text-muted-foreground leading-relaxed">{sub}</p>}
+      <p className="text-body text-muted-foreground/70 mb-4">{tag}</p>
+      {sub && <p className="text-body text-muted-foreground">{sub}</p>}
     </motion.div>
   );
 }
@@ -48,18 +48,18 @@ export default function Home() {
           transition={{ ...riseOnMount.transition, duration: 0.6 }}
           className="max-w-4xl mx-auto flex flex-col items-center gap-7"
         >
-          <h1 className="text-[44px] md:text-7xl lg:text-[84px] font-light tracking-[-0.035em] leading-[1.02]">
+          <h1 className="text-display font-light">
             {t("home.heroLine1")}
             <br />
             <span className="font-medium">{t("home.heroLine2")}</span>
           </h1>
 
-          <p className="text-[17px] md:text-lg text-muted-foreground leading-relaxed max-w-2xl">{t("home.heroSub")}</p>
+          <p className="text-body text-muted-foreground max-w-2xl">{t("home.heroSub")}</p>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
               onClick={openModal}
-              className="px-7 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors duration-200 flex items-center justify-center gap-2"
+              className="px-7 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-body hover:bg-[#a855f7] transition-colors duration-200 flex items-center justify-center gap-2"
             >
               {t("home.bookAssessment")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </button>
@@ -73,7 +73,7 @@ export default function Home() {
           <div className="relative aspect-[16/10] md:aspect-[21/9] border border-[#a855f7]/[0.22] overflow-hidden bg-gradient-to-b from-[#281c40]/40 to-[#140e20]/20">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#c084fc] to-transparent z-10" />
             <img src={marqueeImg} alt="ROBOTAT" className="w-full h-full object-cover" />
-            <div className="absolute bottom-4 md:bottom-6 inset-x-4 md:inset-x-6 z-10 flex justify-between items-end font-mono text-[11px] uppercase tracking-[0.14em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+            <div className="absolute bottom-4 md:bottom-6 inset-x-4 md:inset-x-6 z-10 flex justify-between items-end font-mono text-label uppercase tracking-[0.14em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
               <span>{t("home.marqueeLabel")}</span>
             </div>
           </div>
@@ -96,10 +96,10 @@ export default function Home() {
                 key={i}
                 className="grid grid-cols-1 md:grid-cols-[90px_1fr] items-baseline gap-3 md:gap-8 py-8 md:py-9 border-b border-border transition-colors hover:bg-[#a855f7]/[0.03]"
               >
-                <div className="font-mono text-[13px] text-[#c084fc] tracking-[0.16em]">— {String(i + 1).padStart(2, "0")}</div>
+                <div className="font-mono text-label text-[#c084fc] tracking-[0.16em]">— {String(i + 1).padStart(2, "0")}</div>
                 <div>
-                  <h3 className="text-[22px] md:text-[28px] font-medium tracking-[-0.015em] mb-2">{cap.title}</h3>
-                  <p className="text-[15px] md:text-[15.5px] text-muted-foreground leading-relaxed max-w-2xl">{cap.desc}</p>
+                  <h3 className="text-heading font-medium mb-2">{cap.title}</h3>
+                  <p className="text-body text-muted-foreground max-w-2xl">{cap.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -137,18 +137,18 @@ export default function Home() {
                         </span>
                       </div>
                     )}
-                    <span className="absolute top-3 left-3 font-mono text-[10px] text-[#c084fc] tracking-[0.14em] bg-black/50 px-2 py-1">
+                    <span className="absolute top-3 left-3 font-mono text-label text-[#c084fc] tracking-[0.14em] bg-black/50 px-2 py-1">
                       {env.corner}
                     </span>
                   </div>
 
                   <div className="eyebrow mb-2.5">{env.type}</div>
-                  <h4 className="text-[22px] md:text-2xl font-semibold tracking-[-0.015em] mb-3">{env.title}</h4>
-                  <p className="text-[14.5px] text-muted-foreground leading-relaxed mb-5 flex-1">{env.desc}</p>
+                  <h4 className="text-heading font-semibold mb-3">{env.title}</h4>
+                  <p className="text-body text-muted-foreground mb-5 flex-1">{env.desc}</p>
 
                   <div className="grid gap-2.5 pt-4 border-t border-border">
                     {env.specs.map((s) => (
-                      <div key={s.label} className="flex justify-between gap-3 text-[12.5px]">
+                      <div key={s.label} className="flex justify-between gap-3 text-label">
                         <b className="font-medium">{s.label}</b>
                         <span className="data-label text-right">{s.value}</span>
                       </div>
@@ -174,13 +174,13 @@ export default function Home() {
             {home.phases.map((phase, i) => (
               <motion.div {...riseIn} key={i} className="surface rounded-2xl p-7 flex flex-col">
                 <div className="eyebrow mb-4">{phase.tag}</div>
-                <h3 className="text-[24px] font-medium tracking-[-0.015em] mb-3">
+                <h3 className="text-heading font-medium mb-3">
                   {phase.titlePlain} <span className="text-[#c084fc] italic">{phase.titleAccent}</span>
                 </h3>
-                <p className="text-[14.5px] text-muted-foreground leading-relaxed mb-6 flex-1">{phase.desc}</p>
+                <p className="text-body text-muted-foreground mb-6 flex-1">{phase.desc}</p>
                 <div className="grid gap-2.5 pt-4 border-t border-border">
                   {phase.kv.map((k) => (
-                    <div key={k.label} className="flex justify-between gap-3 text-[12.5px]">
+                    <div key={k.label} className="flex justify-between gap-3 text-label">
                       <b className="font-medium">{k.label}</b>
                       <span className="data-label text-right">{k.value}</span>
                     </div>
@@ -195,22 +195,22 @@ export default function Home() {
       {/* ===== CTA BAND ===== */}
       <section className="px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
         <motion.div {...riseIn} className="max-w-3xl mx-auto flex flex-col items-center gap-6">
-          <h2 className="text-4xl md:text-[56px] font-semibold tracking-[-0.02em] leading-[1.08] inline-block">
+          <h2 className="text-heading font-semibold inline-block">
             {t("home.ctaTitle1")}{" "}
             <br />
             {t("home.ctaTitle2")}
           </h2>
-          <p className="text-[16px] md:text-[17px] text-muted-foreground leading-relaxed">{t("home.ctaSub")}</p>
+          <p className="text-body text-muted-foreground">{t("home.ctaSub")}</p>
           <div className="flex flex-col sm:flex-row items-center gap-5">
             <button
               onClick={openModal}
-              className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors duration-200"
+              className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-body hover:bg-[#a855f7] transition-colors duration-200"
             >
               {t("home.bookAssessment")}
             </button>
             <a
               href="mailto:info@nasl-tech.com"
-              className="text-[15px] text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+              className="text-body text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
             >
               {t("home.emailTeam")}
             </a>
