@@ -3,6 +3,7 @@ import { Cpu, ShieldCheck, Wrench, BarChart3, ArrowRight } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseIn, riseOnMount } from "@/lib/motion";
 
 const SERVICE_ICONS = [Wrench, BarChart3, Cpu, ShieldCheck];
 
@@ -22,16 +23,14 @@ export default function Services() {
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto">
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...riseOnMount}
             className="text-4xl md:text-5xl font-bold tracking-tight mb-6"
           >
             {t("services.endToEnd")} <span className="text-primary">{t("services.autonomyServices")}</span>
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            {...riseOnMount}
+            transition={{ ...riseOnMount.transition, delay: 0.1 }}
             className="text-lg text-muted-foreground"
           >
             {t("services.sub")}
@@ -45,11 +44,9 @@ export default function Services() {
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-card p-8 rounded-3xl group hover:-translate-y-1 transition-all duration-300 hover:border-primary/30 flex flex-col"
+                {...riseIn}
+                transition={{ ...riseIn.transition, delay: index * 0.1 }}
+                className="surface p-8 rounded-3xl group hover:-translate-y-1 transition-all duration-300 hover:border-primary/30 flex flex-col"
               >
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
                   <Icon className="w-7 h-7" />
@@ -68,10 +65,8 @@ export default function Services() {
         </div>
 
         {/* Closing CTA */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        <motion.div
+          {...riseIn}
           className="bg-gradient-to-br from-primary/20 to-secondary/30 rounded-3xl p-12 text-center border border-primary/20 relative overflow-hidden"
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,0.3)_0%,transparent_70%)] pointer-events-none" />

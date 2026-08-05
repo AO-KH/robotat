@@ -641,6 +641,43 @@ git commit -m "chore(ui): honest font stack, non-blocking load, drop dead tokens
 - `npm run check`, `npm test` and `npm run build` are green, and both EN and AR render correctly.
 - **No hue changed anywhere.** `git diff main -- client/src/index.css` shows no edit to any `--purple*`, `--primary`, `--accent`, `--background` or `--foreground` value.
 
+## Execution log
+
+Executing subagent-driven on branch `design/de-slop` (branched from `main` at `1952e15`).
+Each task: fresh implementer → spec-compliance review → code-quality review.
+
+| Task | State | Commits |
+| --- | --- | --- |
+| 1 — visibility | Done. Spec ✅, quality APPROVED, verified live | `96db5e0`, `3f7d455`, `47be0a1` |
+| 2 — surfaces | Done. Spec ✅, quality found a real cascade bug, fixed | `8677dd5`, `18013ac` |
+| 3 — background | Done. Reviewed ✅ | `8a0698b` |
+| 4 — hero | Done. Reviewed ✅ | `e70bc96` |
+| 5 — section heads | Done. Reviewed ✅ | `7c1f083` |
+| 6 — CTA | Done. Reviewed ✅ | `1921f64` |
+| 7 — labels/nav | Done. Review found a WCAG regression, fixed | `096db20`, `f788919` |
+| 8 — font stack | Done. Reviewed ✅ | `6506cb3` |
+
+**All eight tasks complete.** 87 tests green, typecheck clean, production build succeeds.
+`:root` verified byte-identical for every colour token — the theme is untouched.
+
+**One open decision for the user:** `.eyebrow` previously rendered in `--purple-bright`;
+it is now `--muted-foreground` like `.data-label`. That was the intent of Task 7 (quiet
+labels), but it removes purple from every section-label touchpoint site-wide. A middle
+ground is `hsl(var(--purple) / 0.7)`. One-line change either way — see the notes below.
+
+Notes carried forward:
+
+- Task 1's guard needed two hardening passes beyond what this plan specified — a
+  line-scoped regex was evaded by a multi-line reformat, and the `(?!\.\d)` lookahead
+  wrongly exempted `opacity: 0.0`. Both fixed; the guard now scans brace-matched spans.
+- Task 2's implementer flagged the `/auth` card as possibly too low-contrast. Measured
+  rather than eyeballed: the card sits 20 units (euclidean RGB) off the page background
+  and its border 28 units off the card, both well above the ~6 threshold of perceptibility.
+  **No tuning applied — the specified values are correct.** Do not revisit without new evidence.
+- `Fleet.tsx:213` lost a deliberately stronger `border-primary/30` in favour of the uniform
+  edge. Judged in scope, but it is the one place the sweep changed intent rather than
+  mechanism — worth a look during the final visual pass.
+
 ## Explicitly not done
 
 The licensed typeface (blocked on a Dalton Maag web licence and the missing weights); the 75+ hardcoded hex literals; the fake dashboard mockup with traffic-light dots at `Fleet.tsx:217-231`; the radius scale, which is defined, overridden in Tailwind, then bypassed by arbitrary values almost everywhere. Each is a separate decision, and the last two are worth their own pass once these land.

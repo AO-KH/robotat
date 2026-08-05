@@ -65,7 +65,7 @@ export function Navigation() {
   return (
     <>
       {/* Top Header (Sticky) */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-card rounded-none border-t-0 border-x-0 bg-[#06040d]/80">
+      <header className="fixed top-0 left-0 right-0 z-50 surface rounded-none border-t-0 border-x-0 bg-[#06040d]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -87,14 +87,15 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-[18px] py-2.5 text-[13px] font-medium uppercase tracking-[0.14em] transition-colors hover:text-foreground ${
-                  location === link.href ? "text-foreground" : "text-foreground/60"
+                className={`relative px-[18px] py-2.5 text-[14px] font-medium tracking-[-0.005em] transition-colors hover:text-foreground ${
+                  // Inactive links must stay legible in their own right, not just be
+                  // "the dim ones": at 14px/500 WCAG AA wants 4.5:1, and /45 measured
+                  // 4.09 against this background. /55 gives 5.69 while the active link
+                  // sits at 18.19, so the current page still reads unmistakably.
+                  location === link.href ? "text-foreground" : "text-foreground/55"
                 }`}
               >
                 {link.label}
-                {location === link.href && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#c084fc] shadow-[0_0_8px_#c084fc]" />
-                )}
               </Link>
             ))}
           </nav>
@@ -128,14 +129,14 @@ export function Navigation() {
         {menuOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 0 }} // overlay-ok
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
               className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, y: -12 }}
+              initial={{ opacity: 0, y: -12 }} // overlay-ok
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.22 }}
@@ -173,7 +174,7 @@ export function Navigation() {
       </AnimatePresence>
 
       {/* Bottom Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card rounded-none border-b-0 border-x-0 pb-safe bg-[#06040d]/95">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 surface rounded-none border-b-0 border-x-0 pb-safe bg-[#06040d]/95">
         <div className="flex items-center justify-around h-16 px-2">
           {mobileLinks.map((link) => {
             const isActive = location === link.href;

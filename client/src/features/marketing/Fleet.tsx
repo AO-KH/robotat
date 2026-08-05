@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 import { useState } from "react";
 import type { Product } from "@shared/schema";
+import { riseIn, riseOnMount } from "@/lib/motion";
 
 import maxT100Img from "@assets/max_t100_robot.png";
 import grassCutterImg from "@assets/XMachines_GC02_1771963974422.JPG";
@@ -41,24 +42,21 @@ export default function Fleet() {
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto">
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-gradient text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block"
+            {...riseOnMount}
+            className="text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block"
           >
             {t("fleet.ourProducts")}
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
+            {...riseOnMount}
+            transition={{ ...riseOnMount.transition, delay: 0.05 }}
             className="text-xl md:text-[26px] text-muted-foreground font-medium leading-snug mb-4"
           >
             {t("fleet.onePlatform")} <span className="text-[#c084fc] italic">{t("fleet.unlimitedAttachments")}</span>
           </motion.p>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            {...riseOnMount}
+            transition={{ ...riseOnMount.transition, delay: 0.1 }}
             className="text-[16px] md:text-[17px] text-muted-foreground leading-relaxed"
           >
             {t("fleet.sub")}
@@ -75,11 +73,9 @@ export default function Fleet() {
             {products.map((product, i) => (
               <motion.div
                 key={product.slug}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-card rounded-3xl overflow-hidden border-white/10 hover:border-primary/50 transition-colors duration-500 group flex flex-col cursor-pointer"
+                {...riseIn}
+                transition={{ ...riseIn.transition, delay: i * 0.1 }}
+                className="surface rounded-3xl overflow-hidden hover:border-primary/50 transition-colors duration-500 group flex flex-col cursor-pointer"
                 onClick={() => setSelected(product)}
               >
                 <div className={`h-64 relative overflow-hidden ${isPlatform(product) ? "bg-[radial-gradient(ellipse_80%_70%_at_50%_40%,rgba(124,58,237,0.22),transparent_70%)]" : "bg-black/50"}`}>
@@ -106,7 +102,7 @@ export default function Fleet() {
                 </div>
                 <div className="p-8 relative z-20 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-bold font-mono">{product.name}</h3>
+                    <h3 className="text-2xl font-bold">{product.name}</h3>
                     <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       <Target className="w-5 h-5" />
                     </span>
@@ -130,7 +126,7 @@ export default function Fleet() {
           {selected && (
             <>
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 0 }} // overlay-ok
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelected(null)}
@@ -138,7 +134,7 @@ export default function Fleet() {
               />
               <div className="fixed inset-0 z-[111] flex items-center justify-center p-4 pointer-events-none">
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                  initial={{ opacity: 0, scale: 0.9, y: 40 }} // overlay-ok
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 40 }}
                   className="w-full max-w-4xl bg-[#15101f] border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden pointer-events-auto max-h-[90vh] flex flex-col"
@@ -161,7 +157,7 @@ export default function Fleet() {
                   <div className="p-8 md:p-12 overflow-y-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                       <div>
-                        <h2 className="text-4xl font-bold font-mono mb-2">{selected.name}</h2>
+                        <h2 className="text-4xl font-bold mb-2">{selected.name}</h2>
                         <p className="text-primary font-bold tracking-widest uppercase text-sm">{role(selected)}</p>
                       </div>
                       <button
@@ -180,7 +176,7 @@ export default function Fleet() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {selected.specs.map((spec, i) => (
                         <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                          <h4 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
+                          <h4 className="data-label mb-2">
                             {lang === "ar" ? spec.labelAr : spec.labelEn}
                           </h4>
                           <p className="font-bold text-foreground">{lang === "ar" ? spec.valueAr : spec.valueEn}</p>
@@ -196,10 +192,8 @@ export default function Fleet() {
 
         {/* Command Center */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative rounded-3xl overflow-hidden glass-card p-1"
+          {...riseIn}
+          className="relative rounded-3xl overflow-hidden surface p-1"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-secondary/40 to-primary/20 mix-blend-overlay" />
           <div className="bg-[#06040d] rounded-[1.35rem] p-8 md:p-16 relative z-10 border border-white/5">
@@ -216,7 +210,7 @@ export default function Fleet() {
               </div>
               <div className="relative h-64 md:h-80 rounded-2xl border border-white/10 bg-[#15101f] overflow-hidden shadow-2xl flex items-center justify-center">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-                <div className="relative z-10 glass-card p-6 rounded-xl w-3/4 shadow-2xl border-primary/30">
+                <div className="relative z-10 surface p-6 rounded-xl w-3/4 shadow-2xl">
                   <div className="flex gap-2 mb-4">
                     <div className="w-3 h-3 rounded-full bg-red-500" />
                     <div className="w-3 h-3 rounded-full bg-yellow-500" />

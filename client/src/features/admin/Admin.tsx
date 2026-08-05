@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -46,7 +47,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
   };
 
   return (
-    <div className="glass-card rounded-2xl border border-white/10 p-5 md:p-6">
+    <div className="surface rounded-2xl p-5 md:p-6">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -171,13 +172,13 @@ export default function Admin() {
         {isLoading ? (
           <div className="py-16 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
         ) : assessments.length === 0 ? (
-          <div className="glass-card rounded-2xl border border-white/10 p-12 text-center">
+          <div className="surface rounded-2xl p-12 text-center">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
             <p className="font-medium">{t("admin.noBookings")}</p>
             <p className="text-sm text-muted-foreground mt-1">{t("admin.bookingsAppear")}</p>
           </div>
         ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <motion.div {...riseOnMount} className="space-y-4">
             {assessments.map((a) => (
               <AssessmentCard key={a.id} a={a} />
             ))}

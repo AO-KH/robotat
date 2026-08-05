@@ -5,6 +5,7 @@ import { Loader2, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
 import { useVerifyEmail } from "@/features/auth/use-auth";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
+import { riseOnMount } from "@/lib/motion";
 
 export default function VerifyEmail() {
   const { t } = useI18n();
@@ -26,9 +27,8 @@ export default function VerifyEmail() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-28 md:py-12 hero-gradient">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md glass-card rounded-3xl p-8 border border-white/10 shadow-2xl text-center"
+        {...riseOnMount}
+        className="w-full max-w-md surface rounded-3xl p-8 shadow-2xl text-center"
       >
         {verify.isSuccess ? (
           <>

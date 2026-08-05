@@ -4,6 +4,7 @@ import { trackPageView } from "@/lib/analytics";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { MotionConfig } from "framer-motion";
 import { useEffect } from "react";
 
 // Context & Layout
@@ -73,23 +74,25 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <TooltipProvider>
-          <DemoModalProvider>
-            <div className="min-h-screen flex flex-col relative">
-              <BackgroundMesh />
-              <ScrollToTop />
-              <Navigation />
-              <main className="flex-1">
-                <Router />
-              </main>
-              <Footer />
-              <BookDemoModal />
-            </div>
-            <Toaster />
-          </DemoModalProvider>
-        </TooltipProvider>
-      </I18nProvider>
+      <MotionConfig reducedMotion="user">
+        <I18nProvider>
+          <TooltipProvider>
+            <DemoModalProvider>
+              <div className="min-h-screen flex flex-col relative">
+                <BackgroundMesh />
+                <ScrollToTop />
+                <Navigation />
+                <main className="flex-1">
+                  <Router />
+                </main>
+                <Footer />
+                <BookDemoModal />
+              </div>
+              <Toaster />
+            </DemoModalProvider>
+          </TooltipProvider>
+        </I18nProvider>
+      </MotionConfig>
     </QueryClientProvider>
   );
 }
