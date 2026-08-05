@@ -15,11 +15,14 @@ const ENV_IMAGES: (string | null)[] = [fieldImg, null, solarImg];
 
 function SectionHead({ tag, title, sub }: { tag: string; title: ReactNode; sub?: string }) {
   return (
-    <motion.div {...riseIn} className="text-center max-w-3xl mx-auto mb-12 md:mb-16 px-4">
-      <h2 className="text-gradient text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block">
-        {tag}
+    <motion.div {...riseIn} className="max-w-3xl mb-12 md:mb-16 px-4">
+      {/* The editorial line leads. `tag` is a connective label and sits under it,
+          quiet — it was previously set as the giant gradient headline while the real
+          sentence was demoted to muted body text. */}
+      <h2 className="text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-3">
+        {title}
       </h2>
-      <p className="text-xl md:text-[26px] text-muted-foreground font-medium leading-snug mb-4">{title}</p>
+      <p className="text-[15px] text-muted-foreground/70 mb-4">{tag}</p>
       {sub && <p className="text-[16px] md:text-[17px] text-muted-foreground leading-relaxed">{sub}</p>}
     </motion.div>
   );
@@ -82,11 +85,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <SectionHead
             tag={t("home.capsTag")}
-            title={
-              <>
-                {t("home.capsTitle1")} <span className="text-[#c084fc] italic">{t("home.capsTitle2")}</span>
-              </>
-            }
+            title={<>{t("home.capsTitle1")} {t("home.capsTitle2")}</>}
             sub={t("home.capsSub")}
           />
 
@@ -113,11 +112,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <SectionHead
             tag={t("home.envTag")}
-            title={
-              <>
-                {t("home.envTitle1")} <span className="text-[#c084fc] italic">{t("home.envTitle2")}</span>
-              </>
-            }
+            title={<>{t("home.envTitle1")} {t("home.envTitle2")}</>}
             sub={t("home.envSub")}
           />
 
@@ -171,11 +166,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <SectionHead
             tag={t("home.howTag")}
-            title={
-              <>
-                {t("home.howTitle1")} <span className="text-[#c084fc] italic">{t("home.howTitle2")}</span>
-              </>
-            }
+            title={<>{t("home.howTitle1")} {t("home.howTitle2")}</>}
             sub={t("home.howSub")}
           />
 
