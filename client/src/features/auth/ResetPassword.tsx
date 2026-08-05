@@ -65,7 +65,7 @@ export default function ResetPassword() {
             </div>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
               <div className="space-y-2">
-                <label className="text-label font-normal text-foreground/80">{t("recover.newPassword")}</label>
+                <label className="text-body font-semibold text-foreground/80">{t("recover.newPassword")}</label>
                 <div className="relative">
                   <Lock className={iconClass} />
                   <input

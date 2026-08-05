@@ -59,7 +59,7 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Top pages */}
         <div className="surface rounded-3xl p-6">
-          <h2 className="text-body font-semibold mb-5">{t("adminAnalytics.topPages")}</h2>
+          <h2 className="text-subhead font-semibold mb-5">{t("adminAnalytics.topPages")}</h2>
           {summary.topPaths.length === 0 ? (
             <p className="text-body text-muted-foreground">{t("adminAnalytics.noViews")}</p>
           ) : (
@@ -81,7 +81,7 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
 
         {/* Booking funnel */}
         <div className="surface rounded-3xl p-6">
-          <h2 className="text-body font-semibold mb-5">{t("adminAnalytics.bookingFunnel")}</h2>
+          <h2 className="text-subhead font-semibold mb-5">{t("adminAnalytics.bookingFunnel")}</h2>
           <div className="space-y-3">
             {funnelSteps.map((step) => {
               const value = summary.funnel[step.key];

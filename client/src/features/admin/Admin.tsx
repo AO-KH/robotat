@@ -77,7 +77,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
 
       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
         <label className="flex-1">
-          <span className="block text-label uppercase tracking-wider text-muted-foreground mb-1">{t("admin.statusLabel")}</span>
+          <span className="block text-body font-semibold text-muted-foreground mb-1">{t("admin.statusLabel")}</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as AssessmentStatus)}
@@ -89,7 +89,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
           </select>
         </label>
         <label className="flex-1">
-          <span className="block text-label uppercase tracking-wider text-muted-foreground mb-1">{t("admin.scheduledVisit")}</span>
+          <span className="block text-body font-semibold text-muted-foreground mb-1">{t("admin.scheduledVisit")}</span>
           <input
             type="datetime-local"
             value={scheduledAt}

@@ -51,7 +51,7 @@ export default function Services() {
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
                   <Icon className="w-7 h-7" />
                 </div>
-                <h3 className="text-heading font-semibold text-foreground mb-3">{service.title}</h3>
+                <h3 className="text-subhead font-semibold text-foreground mb-3">{service.title}</h3>
                 <p className="text-body text-muted-foreground flex-1 mb-8">{service.description}</p>
                 <button
                   onClick={openModal}

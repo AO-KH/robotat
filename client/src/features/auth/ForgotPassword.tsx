@@ -62,7 +62,7 @@ export default function ForgotPassword() {
             </div>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
               <div className="space-y-2">
-                <label className="text-label font-normal text-foreground/80">{t("auth.email")}</label>
+                <label className="text-body font-semibold text-foreground/80">{t("auth.email")}</label>
                 <div className="relative">
                   <Mail className={iconClass} />
                   <input type="email" placeholder="you@company.com" className={inputClass} {...form.register("email")} />

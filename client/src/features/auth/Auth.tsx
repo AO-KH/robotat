@@ -49,7 +49,7 @@ export default function Auth() {
         {isLogin ? (
           <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("auth.email")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
                 <input type="email" placeholder="you@company.com" className={inputClass} {...loginForm.register("email")} />
@@ -59,7 +59,7 @@ export default function Auth() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("auth.password")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("auth.password")}</label>
               <div className="relative">
                 <Lock className={iconClass} />
                 <input type="password" placeholder="••••••••" className={inputClass} {...loginForm.register("password")} />
@@ -84,7 +84,7 @@ export default function Auth() {
         ) : (
           <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("auth.fullName")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("auth.fullName")}</label>
               <div className="relative">
                 <User className={iconClass} />
                 <input type="text" placeholder="John Doe" className={inputClass} {...registerForm.register("name")} />
@@ -94,7 +94,7 @@ export default function Auth() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("auth.email")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
                 <input type="email" placeholder="you@company.com" className={inputClass} {...registerForm.register("email")} />
@@ -104,7 +104,7 @@ export default function Auth() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("auth.password")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("auth.password")}</label>
               <div className="relative">
                 <Lock className={iconClass} />
                 <input type="password" placeholder={t("auth.passwordHint")} className={inputClass} {...registerForm.register("password")} />

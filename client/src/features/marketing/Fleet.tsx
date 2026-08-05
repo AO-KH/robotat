@@ -51,7 +51,7 @@ export default function Fleet() {
           <motion.p
             {...riseOnMount}
             transition={{ ...riseOnMount.transition, delay: 0.05 }}
-            className="text-heading text-muted-foreground font-semibold mb-4"
+            className="text-subhead text-muted-foreground font-semibold mb-4"
           >
             {t("fleet.onePlatform")} <span className="text-[#c084fc] italic">{t("fleet.unlimitedAttachments")}</span>
           </motion.p>
@@ -110,7 +110,7 @@ export default function Fleet() {
                 </div>
                 <div className="p-8 relative z-20 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-heading font-semibold">{product.name}</h3>
+                    <h3 className="text-subhead font-semibold">{product.name}</h3>
                     <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       <Target className="w-5 h-5" />
                     </span>

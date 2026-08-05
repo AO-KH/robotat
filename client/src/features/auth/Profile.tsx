@@ -59,16 +59,16 @@ export default function Profile() {
         <motion.section {...riseOnMount} className="surface rounded-3xl p-6 md:p-8 mb-6">
           <div className="flex items-center gap-2 mb-5">
             <UserIcon className="w-5 h-5 text-[#c084fc]" />
-            <h2 className="text-body font-semibold">{t("profile.profile")}</h2>
+            <h2 className="text-subhead font-semibold">{t("profile.profile")}</h2>
           </div>
 
           <form onSubmit={profileForm.handleSubmit((d) => updateProfile.mutate(d))} className="space-y-4" noValidate>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("profile.email")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("profile.email")}</label>
               <input value={user.email} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
             </div>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("profile.fullName")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("profile.fullName")}</label>
               <input className={inputClass} {...profileForm.register("name")} />
               {profileForm.formState.errors.name && (
                 <p className="text-label text-destructive">{profileForm.formState.errors.name.message}</p>
@@ -88,7 +88,7 @@ export default function Profile() {
         <motion.section {...riseOnMount} transition={{ ...riseOnMount.transition, delay: 0.05 }} className="surface rounded-3xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
             <Lock className="w-5 h-5 text-[#c084fc]" />
-            <h2 className="text-body font-semibold">{t("profile.changePassword")}</h2>
+            <h2 className="text-subhead font-semibold">{t("profile.changePassword")}</h2>
           </div>
 
           <form
@@ -99,14 +99,14 @@ export default function Profile() {
             noValidate
           >
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("profile.currentPassword")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("profile.currentPassword")}</label>
               <input type="password" className={inputClass} {...passwordForm.register("currentPassword")} />
               {passwordForm.formState.errors.currentPassword && (
                 <p className="text-label text-destructive">{passwordForm.formState.errors.currentPassword.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-normal text-foreground/80">{t("profile.newPassword")}</label>
+              <label className="text-body font-semibold text-foreground/80">{t("profile.newPassword")}</label>
               <input type="password" placeholder={t("profile.newPasswordHint")} className={inputClass} {...passwordForm.register("newPassword")} />
               {passwordForm.formState.errors.newPassword && (
                 <p className="text-label text-destructive">{passwordForm.formState.errors.newPassword.message}</p>

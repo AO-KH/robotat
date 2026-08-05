@@ -98,7 +98,7 @@ export default function Home() {
               >
                 <div className="font-mono text-label text-[#c084fc] tracking-[0.16em]">— {String(i + 1).padStart(2, "0")}</div>
                 <div>
-                  <h3 className="text-heading font-semibold mb-2">{cap.title}</h3>
+                  <h3 className="text-subhead font-semibold mb-2">{cap.title}</h3>
                   <p className="text-body text-muted-foreground max-w-2xl">{cap.desc}</p>
                 </div>
               </motion.div>
@@ -143,7 +143,7 @@ export default function Home() {
                   </div>
 
                   <div className="eyebrow mb-2.5">{env.type}</div>
-                  <h4 className="text-heading font-semibold mb-3">{env.title}</h4>
+                  <h4 className="text-subhead font-semibold mb-3">{env.title}</h4>
                   <p className="text-body text-muted-foreground mb-5 flex-1">{env.desc}</p>
 
                   <div className="grid gap-2.5 pt-4 border-t border-border">
@@ -174,7 +174,7 @@ export default function Home() {
             {home.phases.map((phase, i) => (
               <motion.div {...riseIn} key={i} className="surface rounded-2xl p-7 flex flex-col">
                 <div className="eyebrow mb-4">{phase.tag}</div>
-                <h3 className="text-heading font-semibold mb-3">
+                <h3 className="text-subhead font-semibold mb-3">
                   {phase.titlePlain} <span className="text-[#c084fc] italic">{phase.titleAccent}</span>
                 </h3>
                 <p className="text-body text-muted-foreground mb-6 flex-1">{phase.desc}</p>
