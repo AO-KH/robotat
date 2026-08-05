@@ -648,11 +648,22 @@ Each task: fresh implementer → spec-compliance review → code-quality review.
 
 | Task | State | Commits |
 | --- | --- | --- |
-| 1 — visibility | **Done.** Spec ✅, quality APPROVED, verified live in browser | `96db5e0`, `3f7d455`, `47be0a1` |
-| 2 — surfaces | **Implemented, spec review ✅. Code-quality review still owed.** | `8677dd5` |
-| 3–8 | Not started | — |
+| 1 — visibility | Done. Spec ✅, quality APPROVED, verified live | `96db5e0`, `3f7d455`, `47be0a1` |
+| 2 — surfaces | Done. Spec ✅, quality found a real cascade bug, fixed | `8677dd5`, `18013ac` |
+| 3 — background | Done. Reviewed ✅ | `8a0698b` |
+| 4 — hero | Done. Reviewed ✅ | `e70bc96` |
+| 5 — section heads | Done. Reviewed ✅ | `7c1f083` |
+| 6 — CTA | Done. Reviewed ✅ | `1921f64` |
+| 7 — labels/nav | Done. Review found a WCAG regression, fixed | `096db20`, `f788919` |
+| 8 — font stack | Done. Reviewed ✅ | `6506cb3` |
 
-**Resume here:** run the code-quality review for Task 2 (`git diff 47be0a1..8677dd5`), then continue to Task 3.
+**All eight tasks complete.** 87 tests green, typecheck clean, production build succeeds.
+`:root` verified byte-identical for every colour token — the theme is untouched.
+
+**One open decision for the user:** `.eyebrow` previously rendered in `--purple-bright`;
+it is now `--muted-foreground` like `.data-label`. That was the intent of Task 7 (quiet
+labels), but it removes purple from every section-label touchpoint site-wide. A middle
+ground is `hsl(var(--purple) / 0.7)`. One-line change either way — see the notes below.
 
 Notes carried forward:
 
