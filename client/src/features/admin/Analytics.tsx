@@ -113,7 +113,7 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
 export default function Analytics() {
   const [, setLocation] = useLocation();
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: summary, isLoading, isError, refetch } = useAnalytics();
+  const { data: summary, isLoading, isLoadingError, refetch } = useAnalytics();
   const { t } = useI18n();
   useSeo({ title: "Analytics", noindex: true });
 
@@ -150,7 +150,7 @@ export default function Analytics() {
 
         <QueryState
           isLoading={isLoading}
-          isError={isError}
+          isLoadingError={isLoadingError}
           isEmpty={noActivity}
           onRetry={() => refetch()}
           loadingLabel={t("state.loading")}

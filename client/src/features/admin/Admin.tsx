@@ -117,9 +117,8 @@ export default function Admin() {
   const { t } = useI18n();
   const [filter, setFilter] = useState<AssessmentStatus | "all">("all");
   useSeo({ title: "Admin", noindex: true });
-  const { data: assessments = [], isLoading, isError, refetch } = useAllAssessments(
-    filter === "all" ? undefined : filter,
-  );
+  const { data: assessments = [], isLoading, isLoadingError, refetch } =
+    useAllAssessments(filter === "all" ? undefined : filter);
 
   // Guard: only staff. Bounce everyone else.
   useEffect(() => {
@@ -174,7 +173,7 @@ export default function Admin() {
 
         <QueryState
           isLoading={isLoading}
-          isError={isError}
+          isLoadingError={isLoadingError}
           isEmpty={assessments.length === 0}
           onRetry={() => refetch()}
           loadingLabel={t("state.loading")}

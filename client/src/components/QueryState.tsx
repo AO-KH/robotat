@@ -12,7 +12,7 @@ import { Loader2, RefreshCw } from "lucide-react";
  */
 export function QueryState({
   isLoading,
-  isError,
+  isLoadingError,
   isEmpty,
   onRetry,
   loadingLabel,
@@ -25,7 +25,16 @@ export function QueryState({
   children,
 }: {
   isLoading: boolean;
-  isError: boolean;
+  /**
+   * Pass the query's `isLoadingError`, NOT its `isError`. Once a query holds data, a
+   * failed *refetch* still flips `isError` true while leaving that data intact — and
+   * both the admin list and the dashboard list are invalidated on every status change
+   * and every booking, so this is reachable on any flaky connection. Reacting to
+   * `isError` would swap a perfectly good list for an error card. `isLoadingError` is
+   * error AND nothing cached, which is the only moment there is truly nothing to show;
+   * a refetch that fails over existing data leaves the stale list on screen instead.
+   */
+  isLoadingError: boolean;
   isEmpty: boolean;
   onRetry?: () => void;
   loadingLabel: string;
@@ -48,15 +57,31 @@ export function QueryState({
     );
   }
 
-  if (isError) {
+  if (isLoadingError) {
     return (
       <div className="surface rounded-2xl py-12 px-6 text-center" role="alert">
-        <h3 className="text-heading mb-2">{errorTitle}</h3>
+        {/*
+          `.text-heading` is the page-title role — at 52px on desktop it rendered this
+          notice larger than the "Our products" h1 above it, an error out-shouting the
+          page. A card title inside a panel is body text that happens to be a heading,
+          so it takes the body role at semibold rather than a fifth size.
+        */}
+        <h3 className="text-body font-semibold mb-2">{errorTitle}</h3>
         <p className="text-body text-muted-foreground max-w-md mx-auto mb-6">{errorBody}</p>
+        {/*
+          No `disabled`/spinner on this button, deliberately. Retrying a query that
+          holds no data resets its status to `pending` (query-core only preserves
+          `error` when `data !== undefined`), so this whole branch unmounts the instant
+          the retry starts and the loading spinner above takes over for the ~3s of
+          backoff — verified in the browser: the button is gone by 100ms and back at 3s,
+          with the spinner announcing "Loading" throughout. `isRefetching` is therefore
+          always false wherever this button exists, and a disabled state keyed off it
+          could never render.
+        */}
         {onRetry && (
           <button
             onClick={onRetry}
-            className="inline-flex items-center gap-2 min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground text-body hover:bg-[#a855f7] transition-colors"
+            className="inline-flex items-center gap-2 min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
           >
             <RefreshCw className="w-4 h-4" /> {retryLabel}
           </button>
@@ -68,7 +93,7 @@ export function QueryState({
   if (isEmpty) {
     return (
       <div className="surface rounded-2xl py-12 px-6 text-center">
-        <h3 className="text-heading mb-2">{emptyTitle}</h3>
+        <h3 className="text-body font-semibold mb-2">{emptyTitle}</h3>
         <p className="text-body text-muted-foreground max-w-md mx-auto">{emptyBody}</p>
         {emptyAction && <div className="mt-6">{emptyAction}</div>}
       </div>

@@ -82,6 +82,37 @@
     border: 1px solid hsl(var(--purple) / 0.10);
     box-shadow: inset 0 1px 0 0 hsl(var(--foreground) / 0.04);
   }
+
+  /* Four roles, and only four. The app currently has 28 ad-hoc font sizes, so nothing
+     is reliably bigger than anything else and each new screen invents its own. Each
+     role carries its own tracking and leading so call sites stop hand-tuning those.
+     Sizes sit on the 4pt grid; the responsive step is part of the role, not a new one.
+     Migrating existing call sites onto these is a separate task — this block only
+     makes the roles real so new components can use them. */
+  .text-display {
+    font-size: 44px;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+  .text-heading {
+    font-size: 32px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+  .text-body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .text-label {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @media (min-width: 768px) {
+    .text-display { font-size: 84px; }
+    .text-heading { font-size: 52px; }
+    .text-body { font-size: 17px; }
+  }
 }
 
 @layer utilities {

@@ -23,7 +23,7 @@ export default function Dashboard() {
   const {
     data: assessments = [],
     isLoading: listLoading,
-    isError: listError,
+    isLoadingError: listError,
     refetch: refetchList,
   } = useMyAssessments(!!user);
   const logout = useLogout();
@@ -132,7 +132,7 @@ export default function Dashboard() {
 
             <QueryState
               isLoading={listLoading}
-              isError={listError}
+              isLoadingError={listError}
               isEmpty={assessments.length === 0}
               onRetry={() => refetchList()}
               loadingLabel={t("state.loading")}
