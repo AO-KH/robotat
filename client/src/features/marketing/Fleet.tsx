@@ -25,7 +25,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
 export default function Fleet() {
   const { openModal } = useDemoModal();
   const { t, lang } = useI18n();
-  const { data: products = [], isLoading, isLoadingError, refetch } = useProducts();
+  const { data: products = [], isLoading, isLoadingError, isPaused, refetch } = useProducts();
   const [selected, setSelected] = useState<Product | null>(null);
   useSeo({
     title: "Products — MAX T100 & Attachments",
@@ -68,12 +68,15 @@ export default function Fleet() {
         <QueryState
           isLoading={isLoading}
           isLoadingError={isLoadingError}
+          isOffline={isPaused}
           isEmpty={products.length === 0}
           onRetry={() => refetch()}
           loadingLabel={t("state.loading")}
           errorTitle={t("state.errorTitle")}
           errorBody={t("state.errorBody")}
           retryLabel={t("state.retry")}
+          offlineTitle={t("state.offlineTitle")}
+          offlineBody={t("state.offlineBody")}
           emptyTitle={t("fleet.emptyTitle")}
           emptyBody={t("fleet.emptyBody")}
         >

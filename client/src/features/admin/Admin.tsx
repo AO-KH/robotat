@@ -117,7 +117,7 @@ export default function Admin() {
   const { t } = useI18n();
   const [filter, setFilter] = useState<AssessmentStatus | "all">("all");
   useSeo({ title: "Admin", noindex: true });
-  const { data: assessments = [], isLoading, isLoadingError, refetch } =
+  const { data: assessments = [], isLoading, isLoadingError, isPaused, refetch } =
     useAllAssessments(filter === "all" ? undefined : filter);
 
   // Guard: only staff. Bounce everyone else.
@@ -174,12 +174,15 @@ export default function Admin() {
         <QueryState
           isLoading={isLoading}
           isLoadingError={isLoadingError}
+          isOffline={isPaused}
           isEmpty={assessments.length === 0}
           onRetry={() => refetch()}
           loadingLabel={t("state.loading")}
           errorTitle={t("state.errorTitle")}
           errorBody={t("state.errorBody")}
           retryLabel={t("state.retry")}
+          offlineTitle={t("state.offlineTitle")}
+          offlineBody={t("state.offlineBody")}
           emptyTitle={t("admin.noBookings")}
           emptyBody={t("admin.bookingsAppear")}
         >

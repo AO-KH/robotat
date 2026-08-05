@@ -24,6 +24,7 @@ export default function Dashboard() {
     data: assessments = [],
     isLoading: listLoading,
     isLoadingError: listError,
+    isPaused: listPaused,
     refetch: refetchList,
   } = useMyAssessments(!!user);
   const logout = useLogout();
@@ -144,12 +145,15 @@ export default function Dashboard() {
             <QueryState
               isLoading={listLoading}
               isLoadingError={listError}
+              isOffline={listPaused}
               isEmpty={assessments.length === 0}
               onRetry={() => refetchList()}
               loadingLabel={t("state.loading")}
               errorTitle={t("state.errorTitle")}
               errorBody={t("state.errorBody")}
               retryLabel={t("state.retry")}
+              offlineTitle={t("state.offlineTitle")}
+              offlineBody={t("state.offlineBody")}
               emptyTitle={t("dashboard.noAssessments")}
               emptyBody={t("dashboard.noAssessmentsSub")}
               emptyAction={

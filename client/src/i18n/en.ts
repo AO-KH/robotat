@@ -362,6 +362,8 @@ export const en = {
     errorTitle: "We couldn't load this",
     errorBody: "Something went wrong reaching our servers. Check your connection and try again.",
     retry: "Try again",
+    offlineTitle: "You're offline",
+    offlineBody: "This needs a connection. It'll load as soon as you're back online.",
   },
   lang: { en: "EN", ar: "ع" },
 };
