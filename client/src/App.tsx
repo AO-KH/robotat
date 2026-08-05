@@ -9,6 +9,7 @@ import { useEffect } from "react";
 
 // Context & Layout
 import { I18nProvider } from "@/i18n";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DemoModalProvider } from "@/features/booking/DemoModalContext";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
@@ -72,6 +73,8 @@ function Router() {
 }
 
 function App() {
+  const [pathname] = useLocation();
+
   return (
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
@@ -83,7 +86,12 @@ function App() {
                 <ScrollToTop />
                 <Navigation />
                 <main className="flex-1">
-                  <Router />
+                  {/* Keyed by route: a caught render error doesn't clear itself on prop
+                      changes, so without this the fallback would stay stuck even after
+                      navigating to a page that renders fine. */}
+                  <ErrorBoundary key={pathname}>
+                    <Router />
+                  </ErrorBoundary>
                 </main>
                 <Footer />
                 <BookDemoModal />
