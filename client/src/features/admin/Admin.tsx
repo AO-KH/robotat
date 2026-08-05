@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, Calendar, BarChart3 } from "lucide-react";
+import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, BarChart3 } from "lucide-react";
 import { ASSESSMENT_STATUSES, type Assessment, type AssessmentStatus } from "@shared/schema";
+import { QueryState } from "@/components/QueryState";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
 import { useI18n } from "@/i18n";
@@ -116,7 +117,9 @@ export default function Admin() {
   const { t } = useI18n();
   const [filter, setFilter] = useState<AssessmentStatus | "all">("all");
   useSeo({ title: "Admin", noindex: true });
-  const { data: assessments = [], isLoading } = useAllAssessments(filter === "all" ? undefined : filter);
+  const { data: assessments = [], isLoading, isError, refetch } = useAllAssessments(
+    filter === "all" ? undefined : filter,
+  );
 
   // Guard: only staff. Bounce everyone else.
   useEffect(() => {
@@ -169,21 +172,24 @@ export default function Admin() {
           ))}
         </div>
 
-        {isLoading ? (
-          <div className="py-16 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-        ) : assessments.length === 0 ? (
-          <div className="surface rounded-2xl p-12 text-center">
-            <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-            <p className="font-medium">{t("admin.noBookings")}</p>
-            <p className="text-sm text-muted-foreground mt-1">{t("admin.bookingsAppear")}</p>
-          </div>
-        ) : (
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={assessments.length === 0}
+          onRetry={() => refetch()}
+          loadingLabel={t("state.loading")}
+          errorTitle={t("state.errorTitle")}
+          errorBody={t("state.errorBody")}
+          retryLabel={t("state.retry")}
+          emptyTitle={t("admin.noBookings")}
+          emptyBody={t("admin.bookingsAppear")}
+        >
           <motion.div {...riseOnMount} className="space-y-4">
             {assessments.map((a) => (
               <AssessmentCard key={a.id} a={a} />
             ))}
           </motion.div>
-        )}
+        </QueryState>
       </div>
     </div>
   );

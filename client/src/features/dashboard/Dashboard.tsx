@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard, Settings, LogOut, ChevronRight, ClipboardList, Loader2, MapPin, Plus, MailWarning } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { QueryState } from "@/components/QueryState";
 import { useCurrentUser, useLogout, useResendVerification } from "@/features/auth/use-auth";
 import { useMyAssessments } from "@/features/booking/use-assessments";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
@@ -19,7 +20,12 @@ const statusStyles: Record<string, string> = {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: assessments = [], isLoading: listLoading } = useMyAssessments(!!user);
+  const {
+    data: assessments = [],
+    isLoading: listLoading,
+    isError: listError,
+    refetch: refetchList,
+  } = useMyAssessments(!!user);
   const logout = useLogout();
   const resendVerification = useResendVerification();
   const { openModal } = useDemoModal();
@@ -124,23 +130,26 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {listLoading ? (
-              <div className="surface rounded-3xl p-10 flex justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : assessments.length === 0 ? (
-              <div className="surface rounded-3xl p-10 text-center">
-                <ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                <p className="font-medium mb-1">{t("dashboard.noAssessments")}</p>
-                <p className="text-sm text-muted-foreground mb-6">{t("dashboard.noAssessmentsSub")}</p>
+            <QueryState
+              isLoading={listLoading}
+              isError={listError}
+              isEmpty={assessments.length === 0}
+              onRetry={() => refetchList()}
+              loadingLabel={t("state.loading")}
+              errorTitle={t("state.errorTitle")}
+              errorBody={t("state.errorBody")}
+              retryLabel={t("state.retry")}
+              emptyTitle={t("dashboard.noAssessments")}
+              emptyBody={t("dashboard.noAssessmentsSub")}
+              emptyAction={
                 <button
                   onClick={openModal}
-                  className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors"
+                  className="min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors"
                 >
                   {t("dashboard.bookAssessment")}
                 </button>
-              </div>
-            ) : (
+              }
+            >
               <div className="surface rounded-3xl divide-y divide-white/5 overflow-hidden">
                 {assessments.map((a) => (
                   <Link
@@ -175,7 +184,7 @@ export default function Dashboard() {
                   </Link>
                 ))}
               </div>
-            )}
+            </QueryState>
           </div>
 
           {/* Quick actions */}

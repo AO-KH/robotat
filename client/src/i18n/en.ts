@@ -305,6 +305,8 @@ export const en = {
     choseWhatsapp: "Chose WhatsApp",
     choseEmail: "Chose Email",
     submittedRequest: "Submitted request",
+    emptyTitle: "No activity recorded yet",
+    emptyBody: "Analytics will appear once visitors start using the site.",
     privacyNote: "First-party, anonymous analytics — no third-party trackers, no IP addresses stored.",
   },
   detail: {
@@ -345,7 +347,15 @@ export const en = {
     commandCenterDesc:
       "Control the entire fleet from your tablet or desktop. Set boundaries, assign tasks, monitor live camera feeds, and review coverage maps all from one beautiful, intuitive interface.",
     requestPlatformDemo: "Request Platform Demo",
-    loadError: "Couldn't load products. Please try again.",
+    emptyTitle: "No products to show yet",
+    emptyBody: "Our catalogue is being updated. Please check back shortly.",
+  },
+  // Shared by every screen that renders a fetched list — see components/QueryState.tsx.
+  state: {
+    loading: "Loading",
+    errorTitle: "We couldn't load this",
+    errorBody: "Something went wrong reaching our servers. Check your connection and try again.",
+    retry: "Try again",
   },
   lang: { en: "EN", ar: "ع" },
 };

@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, X, ChevronRight, Loader2 } from "lucide-react";
+import { Target, X, ChevronRight } from "lucide-react";
+import { QueryState } from "@/components/QueryState";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useProducts } from "@/features/marketing/use-products";
 import { useI18n } from "@/i18n";
@@ -24,7 +25,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
 export default function Fleet() {
   const { openModal } = useDemoModal();
   const { t, lang } = useI18n();
-  const { data: products = [], isLoading } = useProducts();
+  const { data: products = [], isLoading, isError, refetch } = useProducts();
   const [selected, setSelected] = useState<Product | null>(null);
   useSeo({
     title: "Products — MAX T100 & Attachments",
@@ -64,11 +65,18 @@ export default function Fleet() {
         </div>
 
         {/* Fleet Grid */}
-        {isLoading ? (
-          <div className="py-16 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={products.length === 0}
+          onRetry={() => refetch()}
+          loadingLabel={t("state.loading")}
+          errorTitle={t("state.errorTitle")}
+          errorBody={t("state.errorBody")}
+          retryLabel={t("state.retry")}
+          emptyTitle={t("fleet.emptyTitle")}
+          emptyBody={t("fleet.emptyBody")}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {products.map((product, i) => (
               <motion.div
@@ -119,7 +127,7 @@ export default function Fleet() {
               </motion.div>
             ))}
           </div>
-        )}
+        </QueryState>
 
         {/* Product Detail Modal */}
         <AnimatePresence>
