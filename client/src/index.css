@@ -84,11 +84,12 @@
 
 @layer base {
   :root {
-    /* The signature face is not yet licensed for web embedding. Naming a family that
-       is not loaded means the stack lies about what renders — everything currently
-       falls through to Plex. When the licensed woff2 files land, add the @font-face
-       blocks and put the family back at the front of this one line; nothing else in
-       the codebase needs to change. */
+    /* Effra, the signature face, is still NOT licensed for web embedding — unlike
+       the two OFL families loaded above, which is why those could be self-hosted and
+       it cannot. Naming a family that is not loaded means the stack lies about what
+       renders, so Effra is deliberately absent here and everything falls through to
+       Plex. When the licensed woff2 files land, add an @font-face block for Effra
+       and put it at the front of this one line; nothing else needs to change. */
     --font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
