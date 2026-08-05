@@ -43,7 +43,7 @@ export default function Fleet() {
         <div className="text-center max-w-3xl mx-auto">
           <motion.h1
             {...riseOnMount}
-            className="text-gradient text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block"
+            className="text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block"
           >
             {t("fleet.ourProducts")}
           </motion.h1>

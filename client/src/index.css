@@ -120,19 +120,6 @@
       radial-gradient(ellipse 80% 40% at 50% 100%, rgba(124, 58, 237, 0.14), transparent 60%);
   }
 
-  .text-glow {
-    text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
-  }
-
-  /* Gradient headline: white -> lavender -> purple-bright */
-  .text-gradient {
-    background: linear-gradient(90deg, #ffffff 0%, #f3e8ff 38%, #c084fc 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-  }
-
   /* Mono uppercase micro-label (eyebrows, tags, specs) */
   .eyebrow {
     font-family: var(--font-mono);

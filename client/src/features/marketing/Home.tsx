@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
@@ -195,24 +195,24 @@ export default function Home() {
       {/* ===== CTA BAND ===== */}
       <section className="px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
         <motion.div {...riseIn} className="max-w-3xl mx-auto flex flex-col items-center gap-6">
-          <h2 className="text-gradient text-4xl md:text-[56px] font-semibold tracking-[-0.02em] leading-[1.08] inline-block">
-            {t("home.ctaTitle1")}
+          <h2 className="text-4xl md:text-[56px] font-semibold tracking-[-0.02em] leading-[1.08] inline-block">
+            {t("home.ctaTitle1")}{" "}
             <br />
             {t("home.ctaTitle2")}
           </h2>
           <p className="text-[16px] md:text-[17px] text-muted-foreground leading-relaxed">{t("home.ctaSub")}</p>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-5">
             <button
               onClick={openModal}
-              className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors duration-200 flex items-center justify-center gap-2"
+              className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors duration-200"
             >
-              {t("home.bookAssessment")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+              {t("home.bookAssessment")}
             </button>
             <a
               href="mailto:info@nasl-tech.com"
-              className="px-8 py-4 min-h-[48px] rounded-full border border-[#a855f7]/[0.22] font-medium text-[15px] hover:border-[#c084fc] hover:text-[#c084fc] transition-colors duration-200 flex items-center justify-center gap-2"
+              className="text-[15px] text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
             >
-              <Mail className="w-4 h-4" /> {t("home.emailTeam")}
+              {t("home.emailTeam")}
             </a>
           </div>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 eyebrow text-muted-foreground">
