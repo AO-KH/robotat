@@ -104,7 +104,12 @@ export function Navigation() {
             <LangToggle className="hidden sm:inline-flex" />
             <button
               onClick={openModal}
-              className="hidden sm:flex px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-semibold text-label uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
+              // `min-h-[44px]` because the height here is padding-derived (py-2.5 over
+              // text-label) and measured 38.8px — under the 44px floor at every width from
+              // 640px up, which on iOS is every iPad and every landscape iPhone. `hidden sm:`
+              // kept it out of the 375px audit, and no source guard can see a height that
+              // only exists after layout.
+              className="hidden sm:flex items-center min-h-[44px] px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-semibold text-label uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
             >
               {t("nav.bookDemo")}
             </button>

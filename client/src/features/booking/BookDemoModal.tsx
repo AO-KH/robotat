@@ -223,7 +223,14 @@ export function BookDemoModal() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    {/*
+                      `items-end` because these two labels do not wrap in step: at 375px in
+                      English "Location / Maps link" needs two lines in the 139px column while
+                      "Land size (ha)" needs one. Each cell stacks independently, so without
+                      this the two inputs sit 26px apart. Aligning the row on its end edge puts
+                      the inputs on one baseline whatever the labels above them do.
+                    */}
+                    <div className="grid grid-cols-2 gap-4 items-end">
                       <div className="space-y-2">
                         <label className="text-body font-semibold text-foreground/80">{t("booking.landSize")}</label>
                         <input {...register("landSize")} className={inputClass} placeholder="e.g. 50" />
