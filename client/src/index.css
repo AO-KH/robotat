@@ -1,12 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --font-sans: 'Effra', 'Effra Std', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    /* The signature face is not yet licensed for web embedding. Naming a family that
+       is not loaded means the stack lies about what renders — everything currently
+       falls through to Plex. When the licensed woff2 files land, add the @font-face
+       blocks and put the family back at the front of this one line; nothing else in
+       the codebase needs to change. */
+    --font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
     /* ROBOTAT dark purple theme (nasl-tech.com) */
@@ -42,33 +45,6 @@
     --teal: 172 77% 64%; /* #5eead4 live/status accent */
 
     --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 253 53% 3%;
-    --foreground: 252 100% 97%;
-
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 260 32% 12%;
-    --secondary-foreground: 252 100% 97%;
-
-    --card: 260 32% 9%;
-    --card-foreground: 252 100% 97%;
-
-    --muted: 262 30% 13%;
-    --muted-foreground: 285 4% 58%;
-
-    --accent: 271 91% 65%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 266 40% 15%;
-    --input: 262 30% 13%;
-    --ring: 271 95% 75%;
   }
 
   * {
