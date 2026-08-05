@@ -36,11 +36,15 @@
     />
     <meta name="twitter:image" content="https://robotat.nasl-tech.com/og-image.jpg" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts are self-hosted (see client/src/index.css and client/public/fonts/).
+         Nothing here may load a font from a third-party CDN: this client is bundled
+         into the iOS app, and a launch-time stylesheet fetch fails offline. -->
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/ibm-plex-sans-arabic-400-latin.woff2"
+      crossorigin
     />
 
     <!-- Organization structured data -->
