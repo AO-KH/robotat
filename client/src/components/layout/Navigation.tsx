@@ -88,7 +88,11 @@ export function Navigation() {
                 key={link.href}
                 href={link.href}
                 className={`relative px-[18px] py-2.5 text-[14px] font-medium tracking-[-0.005em] transition-colors hover:text-foreground ${
-                  location === link.href ? "text-foreground" : "text-foreground/45"
+                  // Inactive links must stay legible in their own right, not just be
+                  // "the dim ones": at 14px/500 WCAG AA wants 4.5:1, and /45 measured
+                  // 4.09 against this background. /55 gives 5.69 while the active link
+                  // sits at 18.19, so the current page still reads unmistakably.
+                  location === link.href ? "text-foreground" : "text-foreground/55"
                 }`}
               >
                 {link.label}
