@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, X, ChevronRight, Loader2 } from "lucide-react";
+import { Target, X, ChevronRight } from "lucide-react";
+import { QueryState } from "@/components/QueryState";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useProducts } from "@/features/marketing/use-products";
 import { useI18n } from "@/i18n";
@@ -24,7 +25,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
 export default function Fleet() {
   const { openModal } = useDemoModal();
   const { t, lang } = useI18n();
-  const { data: products = [], isLoading } = useProducts();
+  const { data: products = [], isLoading, isLoadingError, refetch } = useProducts();
   const [selected, setSelected] = useState<Product | null>(null);
   useSeo({
     title: "Products — MAX T100 & Attachments",
@@ -43,32 +44,39 @@ export default function Fleet() {
         <div className="text-center max-w-3xl mx-auto">
           <motion.h1
             {...riseOnMount}
-            className="text-4xl md:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06] mb-4 inline-block"
+            className="text-heading font-semibold mb-4 inline-block"
           >
             {t("fleet.ourProducts")}
           </motion.h1>
           <motion.p
             {...riseOnMount}
             transition={{ ...riseOnMount.transition, delay: 0.05 }}
-            className="text-xl md:text-[26px] text-muted-foreground font-medium leading-snug mb-4"
+            className="text-subhead text-muted-foreground font-semibold mb-4"
           >
             {t("fleet.onePlatform")} <span className="text-[#c084fc] italic">{t("fleet.unlimitedAttachments")}</span>
           </motion.p>
           <motion.p
             {...riseOnMount}
             transition={{ ...riseOnMount.transition, delay: 0.1 }}
-            className="text-[16px] md:text-[17px] text-muted-foreground leading-relaxed"
+            className="text-body text-muted-foreground"
           >
             {t("fleet.sub")}
           </motion.p>
         </div>
 
         {/* Fleet Grid */}
-        {isLoading ? (
-          <div className="py-16 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
+        <QueryState
+          isLoading={isLoading}
+          isLoadingError={isLoadingError}
+          isEmpty={products.length === 0}
+          onRetry={() => refetch()}
+          loadingLabel={t("state.loading")}
+          errorTitle={t("state.errorTitle")}
+          errorBody={t("state.errorBody")}
+          retryLabel={t("state.retry")}
+          emptyTitle={t("fleet.emptyTitle")}
+          emptyBody={t("fleet.emptyBody")}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {products.map((product, i) => (
               <motion.div
@@ -81,7 +89,7 @@ export default function Fleet() {
                 <div className={`h-64 relative overflow-hidden ${isPlatform(product) ? "bg-[radial-gradient(ellipse_80%_70%_at_50%_40%,rgba(124,58,237,0.22),transparent_70%)]" : "bg-black/50"}`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-[#15101f] to-transparent z-10" />
                   <div
-                    className={`absolute top-4 left-4 rtl:left-auto rtl:right-4 z-20 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase ${
+                    className={`absolute top-4 left-4 rtl:left-auto rtl:right-4 z-20 px-3 py-1 rounded-full text-label font-semibold tracking-widest uppercase ${
                       isPlatform(product)
                         ? "bg-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.6)]"
                         : "bg-white/10 text-white/70 border border-white/20"
@@ -95,23 +103,23 @@ export default function Fleet() {
                     className={`w-full h-full ${isPlatform(product) ? "object-contain p-4" : "object-cover"} group-hover:scale-110 transition-transform duration-700`}
                   />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-30">
-                    <div className="px-6 py-2 bg-primary rounded-full text-white text-sm font-bold shadow-2xl flex items-center gap-2">
+                    <div className="px-6 py-2 bg-primary rounded-full text-white text-body font-semibold shadow-2xl flex items-center gap-2">
                       {t("fleet.viewDetails")} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                     </div>
                   </div>
                 </div>
                 <div className="p-8 relative z-20 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-bold">{product.name}</h3>
+                    <h3 className="text-subhead font-semibold">{product.name}</h3>
                     <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       <Target className="w-5 h-5" />
                     </span>
                   </div>
-                  <p className="text-sm font-semibold text-primary mb-4 uppercase tracking-wider">{role(product)}</p>
-                  <p className="text-muted-foreground flex-1 line-clamp-2">{desc(product)}</p>
+                  <p className="text-label font-semibold text-primary mb-4 uppercase tracking-wider">{role(product)}</p>
+                  <p className="text-body text-muted-foreground flex-1 line-clamp-2">{desc(product)}</p>
 
                   <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-end">
-                    <div className="text-primary text-xs font-bold hover:underline flex items-center gap-1">
+                    <div className="text-primary text-label font-semibold hover:underline flex items-center gap-1">
                       {t("fleet.details")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
                     </div>
                   </div>
@@ -119,7 +127,7 @@ export default function Fleet() {
               </motion.div>
             ))}
           </div>
-        )}
+        </QueryState>
 
         {/* Product Detail Modal */}
         <AnimatePresence>
@@ -148,7 +156,7 @@ export default function Fleet() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#15101f] via-transparent to-transparent" />
                     <button
                       onClick={() => setSelected(null)}
-                      className="absolute top-6 right-6 rtl:right-auto rtl:left-6 p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-primary transition-colors border border-white/10"
+                      className="absolute top-6 right-6 rtl:right-auto rtl:left-6 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-primary transition-colors border border-white/10"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -157,21 +165,21 @@ export default function Fleet() {
                   <div className="p-8 md:p-12 overflow-y-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                       <div>
-                        <h2 className="text-4xl font-bold mb-2">{selected.name}</h2>
-                        <p className="text-primary font-bold tracking-widest uppercase text-sm">{role(selected)}</p>
+                        <h2 className="text-heading font-semibold mb-2">{selected.name}</h2>
+                        <p className="text-primary font-semibold tracking-widest uppercase text-label">{role(selected)}</p>
                       </div>
                       <button
                         onClick={() => {
                           setSelected(null);
                           openModal();
                         }}
-                        className="px-8 py-4 rounded-full bg-primary text-white font-medium hover:bg-[#a855f7] transition-colors whitespace-nowrap"
+                        className="px-8 py-4 rounded-full bg-primary text-white text-body font-semibold hover:bg-[#a855f7] transition-colors whitespace-nowrap"
                       >
                         {t("fleet.bookDemo")}
                       </button>
                     </div>
 
-                    <p className="text-lg text-muted-foreground mb-12 leading-relaxed">{desc(selected)}</p>
+                    <p className="text-body text-muted-foreground mb-12">{desc(selected)}</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {selected.specs.map((spec, i) => (
@@ -179,7 +187,7 @@ export default function Fleet() {
                           <h4 className="data-label mb-2">
                             {lang === "ar" ? spec.labelAr : spec.labelEn}
                           </h4>
-                          <p className="font-bold text-foreground">{lang === "ar" ? spec.valueAr : spec.valueEn}</p>
+                          <p className="text-body font-semibold text-foreground">{lang === "ar" ? spec.valueAr : spec.valueEn}</p>
                         </div>
                       ))}
                     </div>
@@ -199,11 +207,11 @@ export default function Fleet() {
           <div className="bg-[#06040d] rounded-[1.35rem] p-8 md:p-16 relative z-10 border border-white/5">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("fleet.commandCenter")}</h2>
-                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">{t("fleet.commandCenterDesc")}</p>
+                <h2 className="text-subhead font-semibold mb-6">{t("fleet.commandCenter")}</h2>
+                <p className="text-body text-muted-foreground mb-8">{t("fleet.commandCenterDesc")}</p>
                 <button
                   onClick={openModal}
-                  className="px-6 py-3 rounded-full border border-[#a855f7]/[0.22] hover:border-[#c084fc] hover:text-[#c084fc] text-foreground font-medium transition-colors"
+                  className="px-6 py-3 rounded-full border border-[#a855f7]/[0.22] hover:border-[#c084fc] hover:text-[#c084fc] text-foreground text-body font-semibold transition-colors"
                 >
                   {t("fleet.requestPlatformDemo")}
                 </button>

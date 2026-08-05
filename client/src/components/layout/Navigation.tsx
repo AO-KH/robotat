@@ -17,7 +17,7 @@ function LangToggle({ className = "" }: { className?: string }) {
           key={l}
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
-          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+          className={`min-h-[44px] min-w-[44px] px-2.5 flex items-center justify-center rounded-full text-label font-normal transition-colors ${
             lang === l ? "bg-primary/20 text-[#c084fc]" : "text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -76,7 +76,7 @@ export function Navigation() {
             >
               {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-2 group min-h-[44px]">
               <img src={logo} alt="ROBOTAT by NASL" className="h-10 w-auto object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.35)] group-hover:drop-shadow-[0_0_18px_rgba(168,85,247,0.55)] transition-all" />
             </Link>
           </div>
@@ -87,9 +87,9 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-[18px] py-2.5 text-[14px] font-medium tracking-[-0.005em] transition-colors hover:text-foreground ${
+                className={`relative px-[18px] py-2.5 text-body font-normal tracking-[-0.005em] transition-colors hover:text-foreground ${
                   // Inactive links must stay legible in their own right, not just be
-                  // "the dim ones": at 14px/500 WCAG AA wants 4.5:1, and /45 measured
+                  // "the dim ones": WCAG AA wants 4.5:1 at this size, and /45 measured
                   // 4.09 against this background. /55 gives 5.69 while the active link
                   // sits at 18.19, so the current page still reads unmistakably.
                   location === link.href ? "text-foreground" : "text-foreground/55"
@@ -104,14 +104,19 @@ export function Navigation() {
             <LangToggle className="hidden sm:inline-flex" />
             <button
               onClick={openModal}
-              className="hidden sm:flex px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-medium text-[13px] uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
+              // `min-h-[44px]` because the height here is padding-derived (py-2.5 over
+              // text-label) and measured 38.8px — under the 44px floor at every width from
+              // 640px up, which on iOS is every iPad and every landscape iPhone. `hidden sm:`
+              // kept it out of the 375px audit, and no source guard can see a height that
+              // only exists after layout.
+              className="hidden sm:flex items-center min-h-[44px] px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-semibold text-label uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
             >
               {t("nav.bookDemo")}
             </button>
-            <Link href={user ? "/dashboard" : "/auth"}>
+            <Link href={user ? "/dashboard" : "/auth"} className="inline-flex">
               <button
                 aria-label={user ? t("nav.myDashboard") : t("nav.signIn")}
-                className={`p-2.5 rounded-full border transition-colors ${
+                className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full border transition-colors ${
                   user
                     ? "bg-primary/15 border-primary/40 text-[#c084fc] hover:bg-primary/25"
                     : "bg-white/5 border-white/10 text-foreground hover:bg-white/10"
@@ -146,7 +151,7 @@ export function Navigation() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-base transition-colors ${
+                  className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-body transition-colors ${
                     location === link.href
                       ? "bg-[#a855f7]/[0.12] text-[#c084fc]"
                       : "text-foreground hover:bg-[#a855f7]/[0.08]"
@@ -163,7 +168,7 @@ export function Navigation() {
                     setMenuOpen(false);
                     openModal();
                   }}
-                  className="flex-1 px-4 py-3 rounded-full bg-primary text-primary-foreground font-medium text-[15px] hover:bg-[#a855f7] transition-colors"
+                  className="flex-1 px-4 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors"
                 >
                   {t("nav.bookDemo")}
                 </button>
@@ -188,7 +193,7 @@ export function Navigation() {
                 }`}
               >
                 <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : ""}`} />
-                <span className="text-[10px] font-medium">{link.label}</span>
+                <span className="text-label font-normal">{link.label}</span>
               </Link>
             );
           })}
@@ -197,7 +202,7 @@ export function Navigation() {
             className="flex flex-col items-center justify-center w-full h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="text-[10px] font-medium">{t("nav.contact")}</span>
+            <span className="text-label font-normal">{t("nav.contact")}</span>
           </button>
         </div>
       </nav>

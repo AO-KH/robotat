@@ -48,7 +48,10 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
+      // One transient failure should not strand a screen forever. Mutations stay at
+      // retry: false — re-sending a booking or a password change is not safe to repeat.
+      retry: 2,
+      retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 8000),
     },
     mutations: {
       retry: false,

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard, Settings, LogOut, ChevronRight, ClipboardList, Loader2, MapPin, Plus, MailWarning } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { QueryState } from "@/components/QueryState";
 import { useCurrentUser, useLogout, useResendVerification } from "@/features/auth/use-auth";
 import { useMyAssessments } from "@/features/booking/use-assessments";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
@@ -19,7 +20,12 @@ const statusStyles: Record<string, string> = {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: assessments = [], isLoading: listLoading } = useMyAssessments(!!user);
+  const {
+    data: assessments = [],
+    isLoading: listLoading,
+    isLoadingError: listError,
+    refetch: refetchList,
+  } = useMyAssessments(!!user);
   const logout = useLogout();
   const resendVerification = useResendVerification();
   const { openModal } = useDemoModal();
@@ -57,13 +63,13 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-4xl font-bold mb-2">{t("dashboard.greeting", { name: user.name.split(" ")[0] })}</h1>
-            <p className="text-muted-foreground">{t("dashboard.subtitle")}</p>
+            <h1 className="text-heading font-semibold mb-2">{t("dashboard.greeting", { name: user.name.split(" ")[0] })}</h1>
+            <p className="text-body text-muted-foreground">{t("dashboard.subtitle")}</p>
           </div>
           <button
             onClick={onSignOut}
             disabled={logout.isPending}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 hover:bg-white/10 transition-all disabled:opacity-70"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-body hover:bg-white/10 transition-all disabled:opacity-70"
           >
             <LogOut className="w-5 h-5" /> {t("dashboard.signOut")}
           </button>
@@ -74,12 +80,12 @@ export default function Dashboard() {
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 justify-between p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
             <div className="flex items-center gap-3 text-yellow-200/90">
               <MailWarning className="w-5 h-5 shrink-0" />
-              <span className="text-sm">{t("recover.bannerText")}</span>
+              <span className="text-body">{t("recover.bannerText")}</span>
             </div>
             <button
               onClick={() => resendVerification.mutate()}
               disabled={resendVerification.isPending}
-              className="shrink-0 px-4 py-2 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="shrink-0 min-h-[44px] px-4 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {resendVerification.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {t("recover.bannerResend")}
@@ -103,8 +109,16 @@ export default function Dashboard() {
               <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${stat.color}`}>
                 <stat.icon className="w-6 h-6" />
               </div>
-              <p className={`font-bold ${stat.wide ? "text-lg break-all" : "text-3xl"}`}>{stat.value}</p>
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+              {/*
+                A stat figure is a display number inside a card, not a heading. At
+                `.text-heading` it tied with this page's own h1 (52px on desktop) and
+                with the section headings below, so four different things rendered at
+                one size. `.text-subhead` sits it under the title and one step above
+                the `wide` variant's email, which reads as siblings rather than as two
+                unrelated treatments.
+              */}
+              <p className={`font-semibold ${stat.wide ? "text-body break-all" : "text-subhead"}`}>{stat.value}</p>
+              <p className="text-label font-normal text-muted-foreground">{stat.label}</p>
             </motion.div>
           ))}
         </div>
@@ -113,34 +127,40 @@ export default function Dashboard() {
           {/* Assessments list */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+              <h2 className="text-subhead font-semibold flex items-center gap-2">
                 <LayoutDashboard className="w-6 h-6 text-primary" /> {t("dashboard.myAssessments")}
               </h2>
               <button
                 onClick={openModal}
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-[#a855f7] transition-colors"
+                // Same padding-derived shortfall as the header CTA: `py-2` over
+                // `text-body` measured 43.2px, and `hidden md:` kept it out of the
+                // 375px audit. Found by sweeping the breakpoint widths.
+                className="hidden md:flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
               >
                 <Plus className="w-4 h-4" /> {t("dashboard.book")}
               </button>
             </div>
 
-            {listLoading ? (
-              <div className="surface rounded-3xl p-10 flex justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : assessments.length === 0 ? (
-              <div className="surface rounded-3xl p-10 text-center">
-                <ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                <p className="font-medium mb-1">{t("dashboard.noAssessments")}</p>
-                <p className="text-sm text-muted-foreground mb-6">{t("dashboard.noAssessmentsSub")}</p>
+            <QueryState
+              isLoading={listLoading}
+              isLoadingError={listError}
+              isEmpty={assessments.length === 0}
+              onRetry={() => refetchList()}
+              loadingLabel={t("state.loading")}
+              errorTitle={t("state.errorTitle")}
+              errorBody={t("state.errorBody")}
+              retryLabel={t("state.retry")}
+              emptyTitle={t("dashboard.noAssessments")}
+              emptyBody={t("dashboard.noAssessmentsSub")}
+              emptyAction={
                 <button
                   onClick={openModal}
-                  className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-[#a855f7] transition-colors"
+                  className="min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
                 >
                   {t("dashboard.bookAssessment")}
                 </button>
-              </div>
-            ) : (
+              }
+            >
               <div className="surface rounded-3xl divide-y divide-white/5 overflow-hidden">
                 {assessments.map((a) => (
                   <Link
@@ -150,55 +170,55 @@ export default function Dashboard() {
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-3 mb-1">
-                        <span className="font-semibold">{t("dashboard.assessment")} #{a.id}</span>
+                        <span className="text-body font-semibold">{t("dashboard.assessment")} #{a.id}</span>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          className={`px-2.5 py-0.5 rounded-full text-label font-semibold uppercase tracking-wider ${
                             statusStyles[a.status] ?? "bg-white/10 text-muted-foreground"
                           }`}
                         >
                           {t(`status.${a.status}`)}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-body text-muted-foreground truncate">
                         {a.landSize ? `${a.landSize} ha` : t("dashboard.siteVisit")}
                         {a.company ? ` · ${a.company}` : ""}
                       </p>
                       {a.location && (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 truncate">
+                        <p className="text-label text-muted-foreground mt-1 flex items-center gap-1 truncate">
                           <MapPin className="w-3 h-3 shrink-0" /> {a.location}
                         </p>
                       )}
                     </div>
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+                    <span className="flex items-center gap-1 text-label text-muted-foreground whitespace-nowrap">
                       {formatDate(a.createdAt)} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                     </span>
                   </Link>
                 ))}
               </div>
-            )}
+            </QueryState>
           </div>
 
           {/* Quick actions */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
+            <h2 className="text-subhead font-semibold flex items-center gap-2">
               <Settings className="w-6 h-6 text-primary" /> {t("dashboard.quickActions")}
             </h2>
             <div className="space-y-4">
               <button
                 onClick={openModal}
-                className="w-full p-6 rounded-3xl bg-primary text-primary-foreground font-bold text-start hover:bg-[#a855f7] transition-colors flex justify-between items-center"
+                className="w-full p-6 rounded-3xl bg-primary text-primary-foreground text-body font-semibold text-start hover:bg-[#a855f7] transition-colors flex justify-between items-center"
               >
                 {t("dashboard.bookAssessment")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />
               </button>
               <button
                 onClick={() => setLocation("/profile")}
-                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground font-bold text-start hover:bg-white/10 transition-all flex justify-between items-center"
+                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground text-body font-semibold text-start hover:bg-white/10 transition-all flex justify-between items-center"
               >
                 {t("dashboard.accountSettings")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />
               </button>
               <button
                 onClick={() => setLocation("/fleet")}
-                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground font-bold text-start hover:bg-white/10 transition-all flex justify-between items-center"
+                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground text-body font-semibold text-start hover:bg-white/10 transition-all flex justify-between items-center"
               >
                 {t("dashboard.browseProducts")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />
               </button>
