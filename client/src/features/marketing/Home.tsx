@@ -48,9 +48,7 @@ export default function Home() {
           <h1 className="text-[44px] md:text-7xl lg:text-[84px] font-light tracking-[-0.035em] leading-[1.02]">
             {t("home.heroLine1")}
             <br />
-            <b className="font-semibold">{t("home.heroLine2")}</b>
-            <br />
-            <span className="text-[#c084fc] italic font-medium">{t("home.heroLine3")}</span>
+            <span className="font-medium">{t("home.heroLine2")}</span>
           </h1>
 
           <p className="text-[17px] md:text-lg text-muted-foreground leading-relaxed max-w-2xl">{t("home.heroSub")}</p>

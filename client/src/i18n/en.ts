@@ -25,9 +25,8 @@ export const en = {
     copyright: "© 2026 NASL Technologies. ROBOTAT is a NASL company.",
   },
   home: {
-    heroLine1: "Autonomous robots,",
-    heroLine2: "built to work,",
-    heroLine3: "wherever you need them",
+    heroLine1: "Autonomous robots that",
+    heroLine2: "work your land, every hour",
     heroSub:
       "One autonomous robot, built and operated by ROBOTAT for orchards, row crops, protected agriculture, and solar sites across the region.",
     bookAssessment: "Book a site assessment",
