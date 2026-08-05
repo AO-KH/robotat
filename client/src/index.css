@@ -120,13 +120,21 @@
       radial-gradient(ellipse 80% 40% at 50% 100%, rgba(124, 58, 237, 0.14), transparent 60%);
   }
 
-  /* Mono uppercase micro-label (eyebrows, tags, specs) */
+  /* A section label. Quiet, in the page's own sans, no shouting caps. */
   .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* A data label: mono is correct here because the value beside it IS data —
+     a spec figure, a count, a timestamp. This is the only place mono belongs. */
+  .data-label {
     font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: hsl(var(--purple-bright));
+    color: hsl(var(--muted-foreground));
   }
 
   .pb-safe {

@@ -102,7 +102,7 @@ export default function Fleet() {
                 </div>
                 <div className="p-8 relative z-20 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-bold font-mono">{product.name}</h3>
+                    <h3 className="text-2xl font-bold">{product.name}</h3>
                     <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       <Target className="w-5 h-5" />
                     </span>
@@ -157,7 +157,7 @@ export default function Fleet() {
                   <div className="p-8 md:p-12 overflow-y-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                       <div>
-                        <h2 className="text-4xl font-bold font-mono mb-2">{selected.name}</h2>
+                        <h2 className="text-4xl font-bold mb-2">{selected.name}</h2>
                         <p className="text-primary font-bold tracking-widest uppercase text-sm">{role(selected)}</p>
                       </div>
                       <button
@@ -176,7 +176,7 @@ export default function Fleet() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {selected.specs.map((spec, i) => (
                         <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                          <h4 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
+                          <h4 className="data-label mb-2">
                             {lang === "ar" ? spec.labelAr : spec.labelEn}
                           </h4>
                           <p className="font-bold text-foreground">{lang === "ar" ? spec.valueAr : spec.valueEn}</p>

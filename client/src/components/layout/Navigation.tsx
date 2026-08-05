@@ -87,14 +87,11 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-[18px] py-2.5 text-[13px] font-medium uppercase tracking-[0.14em] transition-colors hover:text-foreground ${
-                  location === link.href ? "text-foreground" : "text-foreground/60"
+                className={`relative px-[18px] py-2.5 text-[14px] font-medium tracking-[-0.005em] transition-colors hover:text-foreground ${
+                  location === link.href ? "text-foreground" : "text-foreground/45"
                 }`}
               >
                 {link.label}
-                {location === link.href && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#c084fc] shadow-[0_0_8px_#c084fc]" />
-                )}
               </Link>
             ))}
           </nav>

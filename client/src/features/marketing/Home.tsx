@@ -132,7 +132,7 @@ export default function Home() {
                       <img src={img} alt={env.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-[radial-gradient(ellipse_70%_60%_at_50%_40%,rgba(124,58,237,0.18),transparent_70%)] flex items-center justify-center">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                        <span className="data-label">
                           {t("home.greenhouseComingSoon")}
                         </span>
                       </div>
@@ -142,7 +142,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <div className="eyebrow mb-2.5 normal-case tracking-[0.08em]">{env.type}</div>
+                  <div className="eyebrow mb-2.5">{env.type}</div>
                   <h4 className="text-[22px] md:text-2xl font-semibold tracking-[-0.015em] mb-3">{env.title}</h4>
                   <p className="text-[14.5px] text-muted-foreground leading-relaxed mb-5 flex-1">{env.desc}</p>
 
@@ -150,7 +150,7 @@ export default function Home() {
                     {env.specs.map((s) => (
                       <div key={s.label} className="flex justify-between gap-3 text-[12.5px]">
                         <b className="font-medium">{s.label}</b>
-                        <span className="font-mono text-[11.5px] text-muted-foreground text-right">{s.value}</span>
+                        <span className="data-label text-right">{s.value}</span>
                       </div>
                     ))}
                   </div>
@@ -182,7 +182,7 @@ export default function Home() {
                   {phase.kv.map((k) => (
                     <div key={k.label} className="flex justify-between gap-3 text-[12.5px]">
                       <b className="font-medium">{k.label}</b>
-                      <span className="font-mono text-[11.5px] text-muted-foreground text-right">{k.value}</span>
+                      <span className="data-label text-right">{k.value}</span>
                     </div>
                   ))}
                 </div>
