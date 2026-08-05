@@ -85,7 +85,7 @@ export default function Dashboard() {
             <button
               onClick={() => resendVerification.mutate()}
               disabled={resendVerification.isPending}
-              className="shrink-0 px-4 py-2 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="shrink-0 min-h-[44px] px-4 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {resendVerification.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {t("recover.bannerResend")}

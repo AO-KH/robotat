@@ -49,7 +49,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen pt-28 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground mb-6 transition-colors">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground mb-6 transition-colors min-h-[44px]">
           <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("profile.backToDashboard")}
         </Link>
 

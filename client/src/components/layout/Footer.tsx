@@ -49,7 +49,8 @@ export function Footer() {
           {columns.map((col) => (
             <div key={col.heading}>
               <h4 className="eyebrow mb-4">{col.heading}</h4>
-              <ul className="space-y-2.5">
+              {/* No row gap: the 44px touch padding below already separates the rows. */}
+              <ul>
                 {col.links.map((link) =>
                   link.href.startsWith("http") ? (
                     <li key={link.label}>
@@ -57,7 +58,7 @@ export function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-body text-muted-foreground hover:text-foreground transition-colors py-1 inline-block"
+                        className="text-body text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] inline-flex items-center"
                       >
                         {link.label}
                       </a>
@@ -66,7 +67,7 @@ export function Footer() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="text-body text-muted-foreground hover:text-foreground transition-colors py-1 inline-block"
+                        className="text-body text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] inline-flex items-center"
                       >
                         {link.label}
                       </Link>
@@ -77,7 +78,7 @@ export function Footer() {
                   <li>
                     <button
                       onClick={openModal}
-                      className="text-body text-muted-foreground hover:text-foreground transition-colors py-1"
+                      className="text-body text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] inline-flex items-center"
                     >
                       {t("footer.contact")}
                     </button>

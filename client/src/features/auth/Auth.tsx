@@ -68,7 +68,7 @@ export default function Auth() {
                 <p className="text-label text-destructive">{loginForm.formState.errors.password.message}</p>
               )}
               <div className="text-end">
-                <Link href="/forgot-password" className="text-label text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/forgot-password" className="text-label text-muted-foreground hover:text-primary transition-colors min-h-[44px] inline-flex items-center">
                   {t("auth.forgotLink")}
                 </Link>
               </div>
@@ -126,7 +126,7 @@ export default function Auth() {
         <div className="mt-8 text-center text-body">
           <button
             onClick={() => setIsLogin((v) => !v)}
-            className="text-muted-foreground hover:text-primary transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors min-h-[44px] px-4 inline-flex items-center justify-center"
           >
             {isLogin ? t("auth.toSignUp") : t("auth.toSignIn")}
           </button>

@@ -17,7 +17,7 @@ function LangToggle({ className = "" }: { className?: string }) {
           key={l}
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
-          className={`px-2.5 py-1 rounded-full text-label font-normal transition-colors ${
+          className={`min-h-[44px] min-w-[44px] px-2.5 flex items-center justify-center rounded-full text-label font-normal transition-colors ${
             lang === l ? "bg-primary/20 text-[#c084fc]" : "text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -76,7 +76,7 @@ export function Navigation() {
             >
               {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-2 group min-h-[44px]">
               <img src={logo} alt="ROBOTAT by NASL" className="h-10 w-auto object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.35)] group-hover:drop-shadow-[0_0_18px_rgba(168,85,247,0.55)] transition-all" />
             </Link>
           </div>
@@ -108,10 +108,10 @@ export function Navigation() {
             >
               {t("nav.bookDemo")}
             </button>
-            <Link href={user ? "/dashboard" : "/auth"}>
+            <Link href={user ? "/dashboard" : "/auth"} className="inline-flex">
               <button
                 aria-label={user ? t("nav.myDashboard") : t("nav.signIn")}
-                className={`p-2.5 rounded-full border transition-colors ${
+                className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full border transition-colors ${
                   user
                     ? "bg-primary/15 border-primary/40 text-[#c084fc] hover:bg-primary/25"
                     : "bg-white/5 border-white/10 text-foreground hover:bg-white/10"

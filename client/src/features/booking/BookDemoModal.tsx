@@ -100,7 +100,7 @@ export function BookDemoModal() {
                     <button
                       onClick={() => setView("choose")}
                       aria-label="Back"
-                      className="p-1.5 rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
                     </button>
@@ -112,7 +112,7 @@ export function BookDemoModal() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-2 rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -161,7 +161,12 @@ export function BookDemoModal() {
                     {!user && (
                       <p className="text-center text-label text-muted-foreground mt-5">
                         {t("booking.haveAccount")}{" "}
-                        <a href="/auth" className="text-[#c084fc] hover:underline">{t("auth.signIn")}</a>{" "}
+                        <a
+                          href="/auth"
+                          className="text-[#c084fc] hover:underline min-h-[44px] px-2 inline-flex items-center"
+                        >
+                          {t("auth.signIn")}
+                        </a>{" "}
                         {t("booking.signInToTrack")}
                       </p>
                     )}

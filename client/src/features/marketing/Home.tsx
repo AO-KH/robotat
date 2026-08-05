@@ -210,7 +210,7 @@ export default function Home() {
             </button>
             <a
               href="mailto:info@nasl-tech.com"
-              className="text-body text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+              className="text-body text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors min-h-[44px] inline-flex items-center"
             >
               {t("home.emailTeam")}
             </a>

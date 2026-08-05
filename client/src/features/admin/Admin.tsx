@@ -147,7 +147,7 @@ export default function Admin() {
           </div>
           <Link
             href="/admin/analytics"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-body font-semibold hover:border-[#c084fc] hover:text-[#c084fc] transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full border border-white/10 text-body font-semibold hover:border-[#c084fc] hover:text-[#c084fc] transition-colors whitespace-nowrap"
           >
             <BarChart3 className="w-4 h-4" /> {t("admin.analytics")}
           </Link>
@@ -160,7 +160,7 @@ export default function Admin() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-body font-semibold transition-colors border ${
+              className={`min-h-[44px] px-4 inline-flex items-center rounded-full text-body font-semibold transition-colors border ${
                 filter === f
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"

@@ -50,7 +50,7 @@ export default function ForgotPassword() {
                 dev: /reset-password?token={devToken}
               </Link>
             )}
-            <Link href="/auth" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground">
+            <Link href="/auth" className="inline-flex items-center gap-2 text-body text-muted-foreground hover:text-foreground min-h-[44px]">
               <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("recover.backToSignIn")}
             </Link>
           </div>
@@ -84,7 +84,7 @@ export default function ForgotPassword() {
               </button>
             </form>
             <div className="mt-8 text-center text-body">
-              <Link href="/auth" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+              <Link href="/auth" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors min-h-[44px]">
                 <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("recover.backToSignIn")}
               </Link>
             </div>

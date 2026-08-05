@@ -156,7 +156,7 @@ export default function Fleet() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#15101f] via-transparent to-transparent" />
                     <button
                       onClick={() => setSelected(null)}
-                      className="absolute top-6 right-6 rtl:right-auto rtl:left-6 p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-primary transition-colors border border-white/10"
+                      className="absolute top-6 right-6 rtl:right-auto rtl:left-6 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-primary transition-colors border border-white/10"
                     >
                       <X className="w-6 h-6" />
                     </button>
