@@ -33,19 +33,40 @@ App Store Guideline 4.2 ("not just a website in a wrapper").
 
 ## First-time setup (on the Mac)
 
+**The `ios/` project already exists and is committed** — `npx cap add ios` has been
+run and you should not run it again. What is missing is the part that only macOS can
+do: CocoaPods never installed, because it does not exist on Windows.
+
 ```bash
 npm ci
 
 # Build the web client against the deployed API (baked into the bundle):
 VITE_API_URL=https://robotat.nasl-tech.com npm run build
 
-# Generate the native iOS project (creates ./ios) and copy the web build in:
-npx cap add ios
+# Install the native dependencies CocoaPods could not install off-Mac:
+cd ios/App && pod install && cd ../..
+
+# Copy the web build into the native project:
 npx cap sync ios
 ```
 
-`npx cap add ios` scaffolds `ios/App/*` (an Xcode project). Commit it — only the
-generated build artifacts under it are gitignored (see [.gitignore](../.gitignore)).
+`ios/App/*` is a normal Xcode project and is committed, because it is where native
+configuration lives — `Info.plist`, icons, entitlements. Only generated artifacts
+under it are ignored: `App/Pods`, `App/App/public` (the copied web build),
+`capacitor.config.json`, and `capacitor-cordova-ios-plugins`. See
+[ios/.gitignore](../ios/.gitignore).
+
+**Already configured, so you do not need to redo it in Xcode:**
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Launch screen | solid `#06040d` | The default was Capacitor's white placeholder, which flashed white on every launch of a near-black app |
+| Webview background | `#06040d` | Shows between the launch screen dismissing and React's first paint |
+| Status bar | `UIStatusBarStyleLightContent`, app-wide | Left to the system it renders dark glyphs on a light-mode device — invisible here. There is no light theme to switch to |
+| Line endings | LF for `.pbxproj`/`.plist`/`.storyboard`/`.swift` | Repo is developed on Windows with `autocrlf=true`; see [.gitattributes](../.gitattributes) |
+
+**Not yet done — the app icon is still Capacitor's placeholder.** `AppIcon-512@2x.png`
+needs replacing with real ROBOTAT artwork before submission.
 
 ## Dev loop
 
