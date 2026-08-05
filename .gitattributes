@@ -1,0 +1,24 @@
+# This repo is developed on Windows (core.autocrlf=true) but the iOS app is built on
+# a Mac. Xcode's project and interface files must stay LF in the working tree on both
+# sides — a CRLF .pbxproj in particular is a known source of spurious merge conflicts
+# and, occasionally, a project Xcode refuses to open.
+*.pbxproj        text eol=lf
+*.plist          text eol=lf
+*.storyboard     text eol=lf
+*.xcscheme       text eol=lf
+*.xcworkspacedata text eol=lf
+*.swift          text eol=lf
+*.podspec        text eol=lf
+Podfile          text eol=lf
+Podfile.lock     text eol=lf
+
+# Binary assets Git should never try to normalise.
+*.png            binary
+*.jpg            binary
+*.jpeg           binary
+*.ico            binary
+*.pdf            binary
+*.ttf            binary
+*.otf            binary
+*.woff           binary
+*.woff2          binary

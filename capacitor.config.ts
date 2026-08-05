@@ -16,6 +16,13 @@ const config: CapacitorConfig = {
   ios: {
     // Let content flow under the status bar; the app handles safe-area insets.
     contentInset: "always",
+
+    // The webview's own background, shown between the launch screen dismissing and
+    // React's first paint. Left at the default white it produces a flash on a site
+    // whose background is #06040d — the single most obvious "this is a wrapped
+    // website" tell on launch. Matches --background in client/src/index.css, and
+    // the launch screen, so the whole startup sequence is one continuous colour.
+    backgroundColor: "#06040dff",
   },
 };
 
