@@ -31,7 +31,7 @@ function Timeline({ a }: { a: Assessment }) {
     return (
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
         <X className="w-5 h-5 shrink-0" />
-        <span className="text-body font-medium">{t("detail.cancelledMsg")}</span>
+        <span className="text-body font-normal">{t("detail.cancelledMsg")}</span>
       </div>
     );
   }
@@ -56,7 +56,7 @@ function Timeline({ a }: { a: Assessment }) {
               >
                 <Icon className="w-5 h-5" />
               </div>
-              <span className={`text-label font-medium ${done || current ? "text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-label font-normal ${done || current ? "text-foreground" : "text-muted-foreground"}`}>
                 {t(step.labelKey)}
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function AssessmentDetail() {
   if (isError || !a) {
     return (
       <div className="min-h-screen pt-28 px-4 text-center">
-        <p className="text-body font-medium mb-2">{t("detail.notFound")}</p>
+        <p className="text-body font-semibold mb-2">{t("detail.notFound")}</p>
         <Link href="/dashboard" className="text-body text-[#c084fc] hover:underline">{t("detail.backToDashboard")}</Link>
       </div>
     );
@@ -117,7 +117,7 @@ export default function AssessmentDetail() {
 
         <motion.div {...riseOnMount} className="surface rounded-3xl p-6 md:p-8">
           <div className="mb-8">
-            <h1 className="text-heading font-bold mb-1">{t("detail.assessment")} #{a.id}</h1>
+            <h1 className="text-heading font-semibold mb-1">{t("detail.assessment")} #{a.id}</h1>
             <p className="text-label text-muted-foreground">{t("detail.requested", { date: fmt(a.createdAt, locale) })}</p>
           </div>
 
@@ -130,7 +130,7 @@ export default function AssessmentDetail() {
               <Calendar className="w-5 h-5 text-[#c084fc] shrink-0" />
               <div>
                 <div className="text-label uppercase tracking-wider text-muted-foreground">{t("detail.scheduledVisit")}</div>
-                <div className="text-body font-medium">{fmt(a.scheduledAt, locale, true)}</div>
+                <div className="text-body font-normal">{fmt(a.scheduledAt, locale, true)}</div>
               </div>
             </div>
           )}

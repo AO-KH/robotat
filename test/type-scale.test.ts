@@ -34,4 +34,16 @@ describe("typography uses the four-role scale", () => {
     }
     expect(offenders, "Use text-display / text-heading / text-body / text-label instead").toEqual([]);
   });
+
+  it("uses only two font weights", () => {
+    const offenders: string[] = [];
+    for (const file of tsxFiles("client/src")) {
+      if (VENDOR.test(file)) continue;
+      readFileSync(file, "utf8").split("\n").forEach((line, i) => {
+        const m = line.match(/\bfont-(thin|extralight|light|medium|bold|extrabold|black)\b/);
+        if (m) offenders.push(`${file.replace(/\\/g, "/")}:${i + 1} (${m[0]})`);
+      });
+    }
+    expect(offenders, "Only font-normal and font-semibold are allowed").toEqual([]);
+  });
 });

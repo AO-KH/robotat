@@ -51,7 +51,7 @@ export default function Fleet() {
           <motion.p
             {...riseOnMount}
             transition={{ ...riseOnMount.transition, delay: 0.05 }}
-            className="text-heading text-muted-foreground font-medium mb-4"
+            className="text-heading text-muted-foreground font-semibold mb-4"
           >
             {t("fleet.onePlatform")} <span className="text-[#c084fc] italic">{t("fleet.unlimitedAttachments")}</span>
           </motion.p>
@@ -89,7 +89,7 @@ export default function Fleet() {
                 <div className={`h-64 relative overflow-hidden ${isPlatform(product) ? "bg-[radial-gradient(ellipse_80%_70%_at_50%_40%,rgba(124,58,237,0.22),transparent_70%)]" : "bg-black/50"}`}>
                   <div className="absolute inset-0 bg-gradient-to-t from-[#15101f] to-transparent z-10" />
                   <div
-                    className={`absolute top-4 left-4 rtl:left-auto rtl:right-4 z-20 px-3 py-1 rounded-full text-label font-bold tracking-widest uppercase ${
+                    className={`absolute top-4 left-4 rtl:left-auto rtl:right-4 z-20 px-3 py-1 rounded-full text-label font-semibold tracking-widest uppercase ${
                       isPlatform(product)
                         ? "bg-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.6)]"
                         : "bg-white/10 text-white/70 border border-white/20"
@@ -103,14 +103,14 @@ export default function Fleet() {
                     className={`w-full h-full ${isPlatform(product) ? "object-contain p-4" : "object-cover"} group-hover:scale-110 transition-transform duration-700`}
                   />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-30">
-                    <div className="px-6 py-2 bg-primary rounded-full text-white text-body font-bold shadow-2xl flex items-center gap-2">
+                    <div className="px-6 py-2 bg-primary rounded-full text-white text-body font-semibold shadow-2xl flex items-center gap-2">
                       {t("fleet.viewDetails")} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                     </div>
                   </div>
                 </div>
                 <div className="p-8 relative z-20 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-heading font-bold">{product.name}</h3>
+                    <h3 className="text-heading font-semibold">{product.name}</h3>
                     <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       <Target className="w-5 h-5" />
                     </span>
@@ -119,7 +119,7 @@ export default function Fleet() {
                   <p className="text-body text-muted-foreground flex-1 line-clamp-2">{desc(product)}</p>
 
                   <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-end">
-                    <div className="text-primary text-label font-bold hover:underline flex items-center gap-1">
+                    <div className="text-primary text-label font-semibold hover:underline flex items-center gap-1">
                       {t("fleet.details")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
                     </div>
                   </div>
@@ -165,15 +165,15 @@ export default function Fleet() {
                   <div className="p-8 md:p-12 overflow-y-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                       <div>
-                        <h2 className="text-heading font-bold mb-2">{selected.name}</h2>
-                        <p className="text-primary font-bold tracking-widest uppercase text-label">{role(selected)}</p>
+                        <h2 className="text-heading font-semibold mb-2">{selected.name}</h2>
+                        <p className="text-primary font-semibold tracking-widest uppercase text-label">{role(selected)}</p>
                       </div>
                       <button
                         onClick={() => {
                           setSelected(null);
                           openModal();
                         }}
-                        className="px-8 py-4 rounded-full bg-primary text-white text-body font-medium hover:bg-[#a855f7] transition-colors whitespace-nowrap"
+                        className="px-8 py-4 rounded-full bg-primary text-white text-body font-semibold hover:bg-[#a855f7] transition-colors whitespace-nowrap"
                       >
                         {t("fleet.bookDemo")}
                       </button>
@@ -187,7 +187,7 @@ export default function Fleet() {
                           <h4 className="data-label mb-2">
                             {lang === "ar" ? spec.labelAr : spec.labelEn}
                           </h4>
-                          <p className="text-body font-bold text-foreground">{lang === "ar" ? spec.valueAr : spec.valueEn}</p>
+                          <p className="text-body font-semibold text-foreground">{lang === "ar" ? spec.valueAr : spec.valueEn}</p>
                         </div>
                       ))}
                     </div>
@@ -207,11 +207,11 @@ export default function Fleet() {
           <div className="bg-[#06040d] rounded-[1.35rem] p-8 md:p-16 relative z-10 border border-white/5">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-heading font-bold mb-6">{t("fleet.commandCenter")}</h2>
+                <h2 className="text-heading font-semibold mb-6">{t("fleet.commandCenter")}</h2>
                 <p className="text-body text-muted-foreground mb-8">{t("fleet.commandCenterDesc")}</p>
                 <button
                   onClick={openModal}
-                  className="px-6 py-3 rounded-full border border-[#a855f7]/[0.22] hover:border-[#c084fc] hover:text-[#c084fc] text-foreground text-body font-medium transition-colors"
+                  className="px-6 py-3 rounded-full border border-[#a855f7]/[0.22] hover:border-[#c084fc] hover:text-[#c084fc] text-foreground text-body font-semibold transition-colors"
                 >
                   {t("fleet.requestPlatformDemo")}
                 </button>

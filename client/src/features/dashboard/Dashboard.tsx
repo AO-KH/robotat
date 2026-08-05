@@ -63,7 +63,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-heading font-bold mb-2">{t("dashboard.greeting", { name: user.name.split(" ")[0] })}</h1>
+            <h1 className="text-heading font-semibold mb-2">{t("dashboard.greeting", { name: user.name.split(" ")[0] })}</h1>
             <p className="text-body text-muted-foreground">{t("dashboard.subtitle")}</p>
           </div>
           <button
@@ -85,7 +85,7 @@ export default function Dashboard() {
             <button
               onClick={() => resendVerification.mutate()}
               disabled={resendVerification.isPending}
-              className="shrink-0 px-4 py-2 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="shrink-0 px-4 py-2 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {resendVerification.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {t("recover.bannerResend")}
@@ -109,8 +109,8 @@ export default function Dashboard() {
               <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${stat.color}`}>
                 <stat.icon className="w-6 h-6" />
               </div>
-              <p className={`font-bold ${stat.wide ? "text-body break-all" : "text-heading"}`}>{stat.value}</p>
-              <p className="text-label font-medium text-muted-foreground">{stat.label}</p>
+              <p className={`font-semibold ${stat.wide ? "text-body break-all" : "text-heading"}`}>{stat.value}</p>
+              <p className="text-label font-normal text-muted-foreground">{stat.label}</p>
             </motion.div>
           ))}
         </div>
@@ -119,12 +119,12 @@ export default function Dashboard() {
           {/* Assessments list */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-heading font-bold flex items-center gap-2">
+              <h2 className="text-heading font-semibold flex items-center gap-2">
                 <LayoutDashboard className="w-6 h-6 text-primary" /> {t("dashboard.myAssessments")}
               </h2>
               <button
                 onClick={openModal}
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors"
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
               >
                 <Plus className="w-4 h-4" /> {t("dashboard.book")}
               </button>
@@ -144,7 +144,7 @@ export default function Dashboard() {
               emptyAction={
                 <button
                   onClick={openModal}
-                  className="min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors"
+                  className="min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
                 >
                   {t("dashboard.bookAssessment")}
                 </button>
@@ -161,7 +161,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-3 mb-1">
                         <span className="text-body font-semibold">{t("dashboard.assessment")} #{a.id}</span>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-label font-bold uppercase tracking-wider ${
+                          className={`px-2.5 py-0.5 rounded-full text-label font-semibold uppercase tracking-wider ${
                             statusStyles[a.status] ?? "bg-white/10 text-muted-foreground"
                           }`}
                         >
@@ -189,25 +189,25 @@ export default function Dashboard() {
 
           {/* Quick actions */}
           <div className="space-y-6">
-            <h2 className="text-heading font-bold flex items-center gap-2">
+            <h2 className="text-heading font-semibold flex items-center gap-2">
               <Settings className="w-6 h-6 text-primary" /> {t("dashboard.quickActions")}
             </h2>
             <div className="space-y-4">
               <button
                 onClick={openModal}
-                className="w-full p-6 rounded-3xl bg-primary text-primary-foreground text-body font-bold text-start hover:bg-[#a855f7] transition-colors flex justify-between items-center"
+                className="w-full p-6 rounded-3xl bg-primary text-primary-foreground text-body font-semibold text-start hover:bg-[#a855f7] transition-colors flex justify-between items-center"
               >
                 {t("dashboard.bookAssessment")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />
               </button>
               <button
                 onClick={() => setLocation("/profile")}
-                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground text-body font-bold text-start hover:bg-white/10 transition-all flex justify-between items-center"
+                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground text-body font-semibold text-start hover:bg-white/10 transition-all flex justify-between items-center"
               >
                 {t("dashboard.accountSettings")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />
               </button>
               <button
                 onClick={() => setLocation("/fleet")}
-                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground text-body font-bold text-start hover:bg-white/10 transition-all flex justify-between items-center"
+                className="w-full p-6 rounded-3xl bg-white/5 border border-white/10 text-foreground text-body font-semibold text-start hover:bg-white/10 transition-all flex justify-between items-center"
               >
                 {t("dashboard.browseProducts")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />
               </button>

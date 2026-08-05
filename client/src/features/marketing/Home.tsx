@@ -48,10 +48,10 @@ export default function Home() {
           transition={{ ...riseOnMount.transition, duration: 0.6 }}
           className="max-w-4xl mx-auto flex flex-col items-center gap-7"
         >
-          <h1 className="text-display font-light">
+          <h1 className="text-display font-normal">
             {t("home.heroLine1")}
             <br />
-            <span className="font-medium">{t("home.heroLine2")}</span>
+            <span className="font-semibold">{t("home.heroLine2")}</span>
           </h1>
 
           <p className="text-body text-muted-foreground max-w-2xl">{t("home.heroSub")}</p>
@@ -59,7 +59,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
               onClick={openModal}
-              className="px-7 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-body hover:bg-[#a855f7] transition-colors duration-200 flex items-center justify-center gap-2"
+              className="px-7 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors duration-200 flex items-center justify-center gap-2"
             >
               {t("home.bookAssessment")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </button>
@@ -98,7 +98,7 @@ export default function Home() {
               >
                 <div className="font-mono text-label text-[#c084fc] tracking-[0.16em]">— {String(i + 1).padStart(2, "0")}</div>
                 <div>
-                  <h3 className="text-heading font-medium mb-2">{cap.title}</h3>
+                  <h3 className="text-heading font-semibold mb-2">{cap.title}</h3>
                   <p className="text-body text-muted-foreground max-w-2xl">{cap.desc}</p>
                 </div>
               </motion.div>
@@ -149,7 +149,7 @@ export default function Home() {
                   <div className="grid gap-2.5 pt-4 border-t border-border">
                     {env.specs.map((s) => (
                       <div key={s.label} className="flex justify-between gap-3 text-label">
-                        <b className="font-medium">{s.label}</b>
+                        <b className="font-normal">{s.label}</b>
                         <span className="data-label text-right">{s.value}</span>
                       </div>
                     ))}
@@ -174,14 +174,14 @@ export default function Home() {
             {home.phases.map((phase, i) => (
               <motion.div {...riseIn} key={i} className="surface rounded-2xl p-7 flex flex-col">
                 <div className="eyebrow mb-4">{phase.tag}</div>
-                <h3 className="text-heading font-medium mb-3">
+                <h3 className="text-heading font-semibold mb-3">
                   {phase.titlePlain} <span className="text-[#c084fc] italic">{phase.titleAccent}</span>
                 </h3>
                 <p className="text-body text-muted-foreground mb-6 flex-1">{phase.desc}</p>
                 <div className="grid gap-2.5 pt-4 border-t border-border">
                   {phase.kv.map((k) => (
                     <div key={k.label} className="flex justify-between gap-3 text-label">
-                      <b className="font-medium">{k.label}</b>
+                      <b className="font-normal">{k.label}</b>
                       <span className="data-label text-right">{k.value}</span>
                     </div>
                   ))}
@@ -204,7 +204,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center gap-5">
             <button
               onClick={openModal}
-              className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-medium text-body hover:bg-[#a855f7] transition-colors duration-200"
+              className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors duration-200"
             >
               {t("home.bookAssessment")}
             </button>

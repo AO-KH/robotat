@@ -50,8 +50,8 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 text-[#c084fc]">
               <s.icon className="w-6 h-6" />
             </div>
-            <p className="text-heading font-bold">{s.value.toLocaleString()}</p>
-            <p className="text-label font-medium text-muted-foreground">{s.label}</p>
+            <p className="text-heading font-semibold">{s.value.toLocaleString()}</p>
+            <p className="text-label font-normal text-muted-foreground">{s.label}</p>
           </motion.div>
         ))}
       </div>
@@ -145,7 +145,7 @@ export default function Analytics() {
 
         <div className="flex items-center gap-3 mb-8">
           <BarChart3 className="w-7 h-7 text-[#c084fc]" />
-          <h1 className="text-heading font-bold">{t("adminAnalytics.title")}</h1>
+          <h1 className="text-heading font-semibold">{t("adminAnalytics.title")}</h1>
         </div>
 
         <QueryState

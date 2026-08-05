@@ -53,7 +53,7 @@ export default function Profile() {
           <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("profile.backToDashboard")}
         </Link>
 
-        <h1 className="text-heading font-bold mb-8">{t("profile.accountSettings")}</h1>
+        <h1 className="text-heading font-semibold mb-8">{t("profile.accountSettings")}</h1>
 
         {/* Profile */}
         <motion.section {...riseOnMount} className="surface rounded-3xl p-6 md:p-8 mb-6">
@@ -64,11 +64,11 @@ export default function Profile() {
 
           <form onSubmit={profileForm.handleSubmit((d) => updateProfile.mutate(d))} className="space-y-4" noValidate>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("profile.email")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("profile.email")}</label>
               <input value={user.email} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
             </div>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("profile.fullName")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("profile.fullName")}</label>
               <input className={inputClass} {...profileForm.register("name")} />
               {profileForm.formState.errors.name && (
                 <p className="text-label text-destructive">{profileForm.formState.errors.name.message}</p>
@@ -77,7 +77,7 @@ export default function Profile() {
             <button
               type="submit"
               disabled={updateProfile.isPending}
-              className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors disabled:opacity-60 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-60 flex items-center gap-2"
             >
               {updateProfile.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("profile.saveChanges")}
             </button>
@@ -99,14 +99,14 @@ export default function Profile() {
             noValidate
           >
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("profile.currentPassword")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("profile.currentPassword")}</label>
               <input type="password" className={inputClass} {...passwordForm.register("currentPassword")} />
               {passwordForm.formState.errors.currentPassword && (
                 <p className="text-label text-destructive">{passwordForm.formState.errors.currentPassword.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("profile.newPassword")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("profile.newPassword")}</label>
               <input type="password" placeholder={t("profile.newPasswordHint")} className={inputClass} {...passwordForm.register("newPassword")} />
               {passwordForm.formState.errors.newPassword && (
                 <p className="text-label text-destructive">{passwordForm.formState.errors.newPassword.message}</p>
@@ -115,7 +115,7 @@ export default function Profile() {
             <button
               type="submit"
               disabled={changePassword.isPending}
-              className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors disabled:opacity-60 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-60 flex items-center gap-2"
             >
               {changePassword.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("profile.updatePassword")}
             </button>

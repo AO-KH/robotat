@@ -106,7 +106,7 @@ export function BookDemoModal() {
                     </button>
                   )}
                   <div>
-                    <h2 className="text-body font-bold text-foreground">{t("booking.title")}</h2>
+                    <h2 className="text-body font-semibold text-foreground">{t("booking.title")}</h2>
                     <p className="text-label text-muted-foreground mt-1">{t("booking.subtitle")}</p>
                   </div>
                 </div>
@@ -179,7 +179,7 @@ export function BookDemoModal() {
                           type="button"
                           key={opt.key}
                           onClick={() => setType(opt.key as AccountType)}
-                          className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-body font-medium transition-colors ${
+                          className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-body font-semibold transition-colors ${
                             type === opt.key
                               ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:text-foreground"
@@ -192,27 +192,27 @@ export function BookDemoModal() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-label font-medium text-foreground/80">
+                        <label className="text-label font-normal text-foreground/80">
                           {type === "company" ? t("booking.contactName") : t("booking.fullName")}
                         </label>
                         <input {...register("name")} className={inputClass} placeholder="John Doe" />
                         {errors.name && <p className="text-label text-destructive">{errors.name.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-label font-medium text-foreground/80">{t("booking.phone")}</label>
+                        <label className="text-label font-normal text-foreground/80">{t("booking.phone")}</label>
                         <input {...register("phone")} className={inputClass} placeholder="+966…" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-label font-medium text-foreground/80">{t("booking.emailLabel")}</label>
+                      <label className="text-label font-normal text-foreground/80">{t("booking.emailLabel")}</label>
                       <input {...register("email")} type="email" className={inputClass} placeholder="you@example.com" />
                       {errors.email && <p className="text-label text-destructive">{errors.email.message}</p>}
                     </div>
 
                     {type === "company" && (
                       <div className="space-y-2">
-                        <label className="text-label font-medium text-foreground/80">{t("booking.companyName")}</label>
+                        <label className="text-label font-normal text-foreground/80">{t("booking.companyName")}</label>
                         <input {...register("company")} className={inputClass} placeholder={t("booking.companyNamePlaceholder")} />
                         {errors.company && <p className="text-label text-destructive">{errors.company.message}</p>}
                       </div>
@@ -220,17 +220,17 @@ export function BookDemoModal() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-label font-medium text-foreground/80">{t("booking.landSize")}</label>
+                        <label className="text-label font-normal text-foreground/80">{t("booking.landSize")}</label>
                         <input {...register("landSize")} className={inputClass} placeholder="e.g. 50" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-label font-medium text-foreground/80">{t("booking.location")}</label>
+                        <label className="text-label font-normal text-foreground/80">{t("booking.location")}</label>
                         <input {...register("location")} className={inputClass} placeholder="https://goo.gl/…" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-label font-medium text-foreground/80">{t("booking.message")}</label>
+                      <label className="text-label font-normal text-foreground/80">{t("booking.message")}</label>
                       <textarea
                         {...register("message")}
                         rows={3}

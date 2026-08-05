@@ -54,7 +54,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
           <div className="flex items-center gap-2.5">
             <span className="text-body font-semibold">#{a.id} · {a.name}</span>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-label font-bold uppercase tracking-wider border ${
+              className={`px-2.5 py-0.5 rounded-full text-label font-semibold uppercase tracking-wider border ${
                 STATUS_STYLES[a.status] ?? "bg-white/10 text-muted-foreground border-white/10"
               }`}
             >
@@ -101,7 +101,7 @@ function AssessmentCard({ a }: { a: Assessment }) {
           <button
             onClick={save}
             disabled={!dirty || isPending}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("admin.update")}
           </button>
@@ -143,11 +143,11 @@ export default function Admin() {
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-7 h-7 text-[#c084fc]" />
-            <h1 className="text-heading font-bold">{t("admin.assessments")}</h1>
+            <h1 className="text-heading font-semibold">{t("admin.assessments")}</h1>
           </div>
           <Link
             href="/admin/analytics"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-body font-medium hover:border-[#c084fc] hover:text-[#c084fc] transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-body font-semibold hover:border-[#c084fc] hover:text-[#c084fc] transition-colors whitespace-nowrap"
           >
             <BarChart3 className="w-4 h-4" /> {t("admin.analytics")}
           </Link>
@@ -160,7 +160,7 @@ export default function Admin() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-body font-medium transition-colors border ${
+              className={`px-4 py-2 rounded-full text-body font-semibold transition-colors border ${
                 filter === f
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"

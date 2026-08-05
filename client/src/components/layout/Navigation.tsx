@@ -17,7 +17,7 @@ function LangToggle({ className = "" }: { className?: string }) {
           key={l}
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
-          className={`px-2.5 py-1 rounded-full text-label font-medium transition-colors ${
+          className={`px-2.5 py-1 rounded-full text-label font-normal transition-colors ${
             lang === l ? "bg-primary/20 text-[#c084fc]" : "text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -87,7 +87,7 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-[18px] py-2.5 text-body font-medium tracking-[-0.005em] transition-colors hover:text-foreground ${
+                className={`relative px-[18px] py-2.5 text-body font-normal tracking-[-0.005em] transition-colors hover:text-foreground ${
                   // Inactive links must stay legible in their own right, not just be
                   // "the dim ones": WCAG AA wants 4.5:1 at this size, and /45 measured
                   // 4.09 against this background. /55 gives 5.69 while the active link
@@ -104,7 +104,7 @@ export function Navigation() {
             <LangToggle className="hidden sm:inline-flex" />
             <button
               onClick={openModal}
-              className="hidden sm:flex px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-medium text-label uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
+              className="hidden sm:flex px-[22px] py-2.5 rounded-full border border-foreground/25 text-foreground font-semibold text-label uppercase tracking-[0.14em] hover:border-[#c084fc] hover:text-[#c084fc] hover:bg-[#a855f7]/[0.06] transition-all duration-200"
             >
               {t("nav.bookDemo")}
             </button>
@@ -163,7 +163,7 @@ export function Navigation() {
                     setMenuOpen(false);
                     openModal();
                   }}
-                  className="flex-1 px-4 py-3 rounded-full bg-primary text-primary-foreground font-medium text-body hover:bg-[#a855f7] transition-colors"
+                  className="flex-1 px-4 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors"
                 >
                   {t("nav.bookDemo")}
                 </button>
@@ -188,7 +188,7 @@ export function Navigation() {
                 }`}
               >
                 <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : ""}`} />
-                <span className="text-label font-medium">{link.label}</span>
+                <span className="text-label font-normal">{link.label}</span>
               </Link>
             );
           })}
@@ -197,7 +197,7 @@ export function Navigation() {
             className="flex flex-col items-center justify-center w-full h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="text-label font-medium">{t("nav.contact")}</span>
+            <span className="text-label font-normal">{t("nav.contact")}</span>
           </button>
         </div>
       </nav>

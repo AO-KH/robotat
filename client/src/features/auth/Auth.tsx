@@ -42,14 +42,14 @@ export default function Auth() {
         className="w-full max-w-md surface rounded-3xl p-8 shadow-2xl"
       >
         <div className="text-center mb-8">
-          <h1 className="text-heading font-bold mb-2">{isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}</h1>
+          <h1 className="text-heading font-semibold mb-2">{isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}</h1>
           <p className="text-body text-muted-foreground">{isLogin ? t("auth.signInSub") : t("auth.registerSub")}</p>
         </div>
 
         {isLogin ? (
           <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("auth.email")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
                 <input type="email" placeholder="you@company.com" className={inputClass} {...loginForm.register("email")} />
@@ -59,7 +59,7 @@ export default function Auth() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("auth.password")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("auth.password")}</label>
               <div className="relative">
                 <Lock className={iconClass} />
                 <input type="password" placeholder="••••••••" className={inputClass} {...loginForm.register("password")} />
@@ -76,7 +76,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={pending}
-              className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {pending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t("auth.signIn")} <ArrowRight className="w-5 h-5 rtl:rotate-180" /></>}
             </button>
@@ -84,7 +84,7 @@ export default function Auth() {
         ) : (
           <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("auth.fullName")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("auth.fullName")}</label>
               <div className="relative">
                 <User className={iconClass} />
                 <input type="text" placeholder="John Doe" className={inputClass} {...registerForm.register("name")} />
@@ -94,7 +94,7 @@ export default function Auth() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("auth.email")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
                 <input type="email" placeholder="you@company.com" className={inputClass} {...registerForm.register("email")} />
@@ -104,7 +104,7 @@ export default function Auth() {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-label font-medium text-foreground/80">{t("auth.password")}</label>
+              <label className="text-label font-normal text-foreground/80">{t("auth.password")}</label>
               <div className="relative">
                 <Lock className={iconClass} />
                 <input type="password" placeholder={t("auth.passwordHint")} className={inputClass} {...registerForm.register("password")} />
@@ -116,7 +116,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={pending}
-              className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-medium hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full py-4 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {pending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t("auth.createAccountBtn")} <ArrowRight className="w-5 h-5 rtl:rotate-180" /></>}
             </button>
