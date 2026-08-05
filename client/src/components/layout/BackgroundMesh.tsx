@@ -1,35 +1,22 @@
-import { motion } from "framer-motion";
-
+/**
+ * The page's atmosphere: a static composed field behind all routes.
+ *
+ * Previously two blurred blobs ran infinite scale/opacity loops. On the iOS build
+ * that is continuous compositing work for motion nobody asked for, and there was no
+ * prefers-reduced-motion guard. The depth here comes from layered radial tone
+ * instead, which costs nothing after first paint.
+ */
 export function BackgroundMesh() {
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-[#06040d]">
+    <div className="fixed inset-0 z-[-1] pointer-events-none" aria-hidden="true">
       <div className="absolute inset-0 bg-mesh" />
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.1, 0.15, 0.1],
+      <div
+        className="absolute inset-0 opacity-[0.18]"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")",
         }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#7c3aed]/20 blur-[120px]"
       />
-      <motion.div
-        animate={{
-          scale: [1, 1.5, 1],
-          opacity: [0.1, 0.2, 0.1],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2,
-        }}
-        className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#6366f1]/15 blur-[150px]"
-      />
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDIiLz4KPC9zdmc+')] opacity-20" />
     </div>
   );
 }
