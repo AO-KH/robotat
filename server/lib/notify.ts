@@ -1,6 +1,14 @@
 import nodemailer from "nodemailer";
 import type { Assessment } from "@shared/schema";
 import { log } from "./log";
+import {
+  apnsConfigured,
+  buildApnsPayload,
+  deadTokens,
+  sendApnsNotifications,
+  type ApnsTransport,
+} from "./apns";
+import { deleteTokensByValue, getTokensForUser } from "../modules/push/push.storage";
 
 /**
  * Delivery of new assessment bookings to the business, two ways:
@@ -301,9 +309,69 @@ async function whatsappCustomer(a: Assessment): Promise<void> {
   }
 }
 
+/**
+ * Push the status change to every iOS device the customer has registered.
+ *
+ * This is the notification that actually reaches someone: email lands in a folder and
+ * WhatsApp needs an approved template, but a push arrives on the lock screen of the
+ * phone the booking was made on. It is also the concrete answer to App Review
+ * Guideline 4.2 — the app does something the website cannot.
+ *
+ * `transport` is injectable for tests; production always uses the real http2 one.
+ */
+export async function pushCustomer(a: Assessment, transport?: ApnsTransport): Promise<void> {
+  /*
+    An assessment can legitimately have no owner.
+
+    Account deletion anonymises bookings rather than deleting them — the business still
+    needs its record of the visit — so `assessments.user_id` is nullable and is set to
+    NULL when the customer leaves. There is nobody to notify, and looking up tokens for
+    a null user id would be a type error at best and a query for user 0 at worst.
+  */
+  if (a.userId == null) {
+    log(`[apns] assessment #${a.id} has no owner (deleted account) — nothing to push`, "notify");
+    return;
+  }
+
+  // Checked before the database is touched: unconfigured is the normal state in dev
+  // and in the test suite, and it should cost nothing.
+  if (!apnsConfigured()) {
+    log(`[apns:dev] not configured; would push status "${a.status}" for #${a.id}`, "notify");
+    return;
+  }
+
+  const tokens = await getTokensForUser(a.userId);
+  if (tokens.length === 0) {
+    log(`[apns] no registered devices for assessment #${a.id}`, "notify");
+    return;
+  }
+
+  const results = await sendApnsNotifications(
+    tokens.map((t) => t.token),
+    buildApnsPayload(a),
+    transport,
+  );
+
+  /*
+    Prune what Apple says is gone.
+
+    A token for a deleted app never becomes valid again, so leaving it in the table
+    means every future status change pays for a doomed request, forever, for a device
+    that no longer exists. APNs reports this once and expects us to act on it.
+  */
+  const dead = deadTokens(results);
+  if (dead.length > 0) {
+    await deleteTokensByValue(dead);
+    log(`[apns] pruned ${dead.length} dead device token(s) after #${a.id}`, "notify");
+  }
+
+  const delivered = results.filter((r) => r.ok).length;
+  log(`[apns] status notice for #${a.id} delivered to ${delivered}/${results.length} device(s)`, "notify");
+}
+
 /** Notify the customer their booking changed status. Best-effort; never throws. */
 export async function notifyCustomerStatusChange(a: Assessment): Promise<void> {
-  await Promise.allSettled([emailCustomer(a), whatsappCustomer(a)]);
+  await Promise.allSettled([emailCustomer(a), whatsappCustomer(a), pushCustomer(a)]);
 }
 
 /**
@@ -339,6 +407,23 @@ export function notifyConfigWarnings(env: NodeJS.ProcessEnv = process.env): stri
   if (env.NODE_ENV === "production" && !env.SMTP_HOST) {
     warnings.push("SMTP_HOST is not set in production — customer emails will only be logged.");
   }
+
+  /*
+    APNs needs all three of team id, key id and signing key. Two out of three is the
+    dangerous state: it looks configured to whoever set it, but `apnsConfigured()` is
+    false, so every push is skipped with a debug-level log line and the iOS app quietly
+    never notifies anyone. Nothing configured at all is fine — that is dev and test.
+  */
+  const apnsKeys = ["APNS_TEAM_ID", "APNS_KEY_ID", "APNS_PRIVATE_KEY"] as const;
+  const missingApns = apnsKeys.filter((k) => !env[k]);
+  if (missingApns.length > 0 && missingApns.length < apnsKeys.length) {
+    warnings.push(
+      `APNs is only partially configured — ${missingApns.join(", ")} ` +
+        `${missingApns.length === 1 ? "is" : "are"} missing, so iOS push notifications are ` +
+        `switched off entirely. Set all of ${apnsKeys.join(", ")} or none of them.`,
+    );
+  }
+
   return warnings;
 }
 
