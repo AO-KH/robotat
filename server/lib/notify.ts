@@ -174,6 +174,57 @@ export function customerStatusMessage(a: Assessment): { subject: string; body: s
   }
 }
 
+/**
+ * Parameters for the approved WhatsApp status template, as exactly three strings.
+ *
+ * Business-initiated WhatsApp messages have to be templates. A plain `type: "text"`
+ * is only delivered inside the 24-hour window opened by the customer's own last
+ * message, and outside it Meta rejects the send with error 131047 — which this code
+ * logs and swallows, so a scheduled visit silently never reaches the customer. That
+ * is the failure this function exists to remove.
+ *
+ * Three rules come from Meta's API, not from taste:
+ *
+ *  1. **The count is fixed.** Placeholders are positional and not optional, so a
+ *     template with `{{1}} {{2}} {{3}}` must always receive three values. That is why
+ *     the scheduled date is folded into the status phrase rather than being a fourth
+ *     parameter that would be empty for every other status.
+ *  2. **No newlines, tabs, or runs of four or more spaces.** Meta rejects those
+ *     outright, which rules out reusing `customerStatusMessage().body` — it is
+ *     deliberately multi-line and carries a signature block.
+ *  3. **Line breaks live in the template**, registered with Meta, not in the values.
+ *
+ * The matching template body, which you register in the WhatsApp Manager, is roughly:
+ *   "Hi {{1}}, your ROBOTAT site assessment {{2}} is now {{3}}. We'll be in touch."
+ */
+export function customerStatusTemplateParams(a: Assessment): [string, string, string] {
+  const when = a.scheduledAt
+    ? new Date(a.scheduledAt).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })
+    : null;
+
+  let phrase: string;
+  switch (a.status) {
+    case "scheduled":
+      phrase = when ? `scheduled for ${when}` : "scheduled";
+      break;
+    case "completed":
+      phrase = "complete";
+      break;
+    case "cancelled":
+      phrase = "cancelled";
+      break;
+    default:
+      phrase = a.status;
+  }
+
+  // Collapse anything Meta would reject. `toLocaleString` can emit a narrow no-break
+  // space (U+202F) before AM/PM, which is not matched by \s in every runtime — hence
+  // the explicit character class rather than a bare \s+.
+  const clean = (s: string) => s.replace(/[\s  ]+/g, " ").trim();
+
+  return [clean(a.name), `#${a.id}`, clean(phrase)];
+}
+
 async function emailCustomer(a: Assessment): Promise<void> {
   const { subject, body } = customerStatusMessage(a);
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
@@ -206,12 +257,42 @@ async function whatsappCustomer(a: Assessment): Promise<void> {
     return;
   }
   const to = a.phone.replace(/[^\d]/g, "");
-  const { body } = customerStatusMessage(a);
+  const template = process.env.WHATSAPP_STATUS_TEMPLATE;
+
+  /*
+    A template when one is configured, plain text otherwise.
+
+    Text only reaches the customer inside the 24-hour window their own last message
+    opened. A status change is business-initiated and usually falls outside it, so in
+    production the text path fails with error 131047 and the customer hears nothing.
+    The template path is the one that actually delivers.
+
+    Text is kept as the fallback because it needs no Meta approval, which makes local
+    development and staging workable without a registered template. Anywhere real,
+    set WHATSAPP_STATUS_TEMPLATE — see the warning in checkNotifyConfig().
+  */
+  const payload = template
+    ? {
+        messaging_product: "whatsapp",
+        to,
+        type: "template",
+        template: {
+          name: template,
+          language: { code: process.env.WHATSAPP_TEMPLATE_LANG || "en" },
+          components: [
+            {
+              type: "body",
+              parameters: customerStatusTemplateParams(a).map((text) => ({ type: "text", text })),
+            },
+          ],
+        },
+      }
+    : { messaging_product: "whatsapp", to, type: "text", text: { body: customerStatusMessage(a).body } };
 
   const res = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body } }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     log(`[whatsapp] customer notice error ${res.status}: ${await res.text()}`, "notify");
@@ -223,6 +304,47 @@ async function whatsappCustomer(a: Assessment): Promise<void> {
 /** Notify the customer their booking changed status. Best-effort; never throws. */
 export async function notifyCustomerStatusChange(a: Assessment): Promise<void> {
   await Promise.allSettled([emailCustomer(a), whatsappCustomer(a)]);
+}
+
+/**
+ * Warn at boot about delivery configuration that looks live but will not deliver.
+ *
+ * Every send path here is best-effort and swallows its errors, which is right for a
+ * notification — a failed WhatsApp message must not fail a booking. The cost is that
+ * a misconfiguration is invisible: WhatsApp credentials with no template send plain
+ * text that Meta rejects outside the 24-hour window, and nobody finds out because the
+ * failure is a log line on a server no one is reading.
+ *
+ * Returns the warnings rather than logging them directly so this stays testable.
+ */
+export function notifyConfigWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
+  const warnings: string[] = [];
+  const whatsappLive = Boolean(env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_ID);
+
+  if (whatsappLive && !env.WHATSAPP_STATUS_TEMPLATE) {
+    warnings.push(
+      "WHATSAPP_STATUS_TEMPLATE is not set. Customer status notices will be sent as plain " +
+        "text, which Meta only delivers inside the 24-hour window opened by the customer's " +
+        "own last message. Outside it they fail with error 131047 and the customer is never " +
+        "told their visit was scheduled. Register a template in the WhatsApp Manager and set " +
+        "its name here.",
+    );
+  }
+  if (env.WHATSAPP_TOKEN && !env.WHATSAPP_PHONE_ID) {
+    warnings.push("WHATSAPP_TOKEN is set but WHATSAPP_PHONE_ID is not — WhatsApp delivery is off.");
+  }
+  if (env.WHATSAPP_PHONE_ID && !env.WHATSAPP_TOKEN) {
+    warnings.push("WHATSAPP_PHONE_ID is set but WHATSAPP_TOKEN is not — WhatsApp delivery is off.");
+  }
+  if (env.NODE_ENV === "production" && !env.SMTP_HOST) {
+    warnings.push("SMTP_HOST is not set in production — customer emails will only be logged.");
+  }
+  return warnings;
+}
+
+/** Log the above. Called once at boot. */
+export function checkNotifyConfig(): void {
+  for (const warning of notifyConfigWarnings()) log(`[notify:config] ${warning}`, "notify");
 }
 
 /* ============================================================

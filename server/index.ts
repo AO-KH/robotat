@@ -3,6 +3,7 @@ import { env } from "./lib/env"; // validates env and fails fast before anything
 import { buildApp } from "./app";
 import { serveStatic } from "./static";
 import { log } from "./lib/log";
+import { checkNotifyConfig } from "./lib/notify";
 
 (async () => {
   const { app, httpServer } = await buildApp();
@@ -31,6 +32,9 @@ import { log } from "./lib/log";
     },
     () => {
       log(`serving on port ${port}`);
+      // After the port line so it is the last thing in the boot output, where a
+      // misconfiguration is hardest to scroll past.
+      checkNotifyConfig();
     },
   );
 })();
