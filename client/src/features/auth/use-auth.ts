@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { ApiError, apiError, errorText } from "@/lib/api-error";
 import { isNativeApiMode } from "@/lib/api-base";
-import { setAuthToken } from "@/lib/auth-token";
+import { getAuthToken, setAuthToken } from "@/lib/auth-token";
 import { ME_KEY, clearSignedInState } from "./auth-state";
 
 /**
@@ -55,7 +55,20 @@ export function useCurrentUser() {
     queryKey: ME_KEY,
     queryFn: async () => {
       const res = await fetch(api.auth.me.path, { credentials: "include" });
-      if (res.status === 401) return null;
+      if (res.status === 401) {
+        /*
+          A restored token can already be dead: the server bumps `token_version` on a
+          password change, which revokes every token issued before it. Without this,
+          the dead token stays in the Keychain and is retried on every single launch,
+          failing silently each time.
+
+          Only cleared when one was actually held — on the web a 401 here is the normal
+          answer for a signed-out visitor, and calling this unconditionally would be a
+          no-op but a misleading one to read.
+        */
+        if (getAuthToken()) setAuthToken(null);
+        return null;
+      }
       if (!res.ok) throw new Error("Failed to load session");
       return (await res.json()) as PublicUser;
     },

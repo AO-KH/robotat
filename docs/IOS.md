@@ -98,10 +98,44 @@ can be prototyped anywhere, but building/signing/submitting is Mac-only:
    token with the backend, and fan out assessment status-change notifications to it
    (reuses the Phase 2 notification logic). This is the primary native value for
    Guideline 4.2.
-2. **Secure token storage** — the bearer token is held in memory only, so the app
-   signs you out on every relaunch. `client/src/lib/auth-token.ts` already exposes a
-   `TokenPersistence` adapter for this; it needs a Keychain-backed implementation.
-   `@capacitor/preferences` is *not* secure and is not an acceptable stopgap.
+2. **Secure token storage** — one `npm install` and two lines away.
+
+   The boot sequence is done and tested: `main.tsx` awaits `restoreAuthToken()` before
+   React mounts, so the token is in memory before the first request is built, and a
+   revoked token is cleared from the store on the first 401 instead of being retried
+   every launch. `client/src/lib/token-persistence.ts` has `secureTokenPersistence()`,
+   which adapts any Capacitor secure-storage plugin — it takes the plugin as an
+   argument, so it is unit-tested against a fake even though the plugin itself only
+   runs on a device.
+
+   What is missing is a plugin, because installing an untested native dependency off a
+   Mac would have been unverifiable. On the Mac:
+
+   ```bash
+   npm install <a-capacitor-keychain-plugin>   # must expose get/set/remove
+   npx cap sync ios
+   ```
+
+   then register it in `client/src/main.tsx`, before `restoreAuthToken()`:
+
+   ```ts
+   import { Capacitor } from "@capacitor/core";
+   import { registerTokenPersistence } from "./lib/auth-token";
+   import { secureTokenPersistence } from "./lib/token-persistence";
+
+   if (Capacitor.isNativePlatform()) {
+     const { SecureStoragePlugin } = await import("<the-plugin>");
+     registerTokenPersistence(secureTokenPersistence(SecureStoragePlugin));
+   }
+   ```
+
+   Guard on `isNativePlatform()` so the web build never loads it. **`@capacitor/preferences`
+   is not secure** — it is plain `UserDefaults` — and is not an acceptable stopgap for a
+   30-day credential. Nor is `localStorage`: anything that can run script in the webview
+   can read it.
+
+   Until that lands the app still signs out on relaunch, which is the one part of this
+   that could not be finished without the hardware.
 3. **App polish** — app icon, offline states. (Launch screen and dark appearance are
    done — see the table above.)
 4. **App Store** — bundle id `com.nasl.robotat`, code signing team, screenshots,
