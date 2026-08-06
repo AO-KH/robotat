@@ -199,6 +199,7 @@ export const en = {
   booking: {
     title: "Book a site assessment",
     subtitle: "A ROBOTAT agronomist visits your farm.",
+    close: "Close",
     howReach: "How would you like to reach us?",
     howReachSub: "Chat with us now, or send the full details by email.",
     whatsapp: "WhatsApp",

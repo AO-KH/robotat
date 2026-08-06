@@ -196,6 +196,7 @@ export const ar: Dictionary = {
   booking: {
     title: "احجز تقييماً للموقع",
     subtitle: "يزور مهندس زراعي من ROBOTAT مزرعتك.",
+    close: "إغلاق",
     howReach: "كيف تودّ التواصل معنا؟",
     howReachSub: "تحدّث معنا الآن، أو أرسل التفاصيل الكاملة عبر البريد.",
     whatsapp: "واتساب",

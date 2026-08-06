@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X, Loader2, Mail, ArrowLeft, User as UserIcon, Building2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
@@ -15,7 +16,7 @@ type View = "choose" | "form";
 type AccountType = "individual" | "company";
 
 export function BookDemoModal() {
-  const { isOpen, closeModal } = useDemoModal();
+  const { isOpen, closeModal, restoreTriggerFocus } = useDemoModal();
   const { data: user } = useCurrentUser();
   const { t } = useI18n();
   const { data: links, isLoading } = useContactLinks(isOpen);
@@ -76,24 +77,67 @@ export function BookDemoModal() {
   const inputClass =
     "w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all";
 
+  /*
+    Radix, not a hand-rolled trap. This was a bare <div>: no role, no aria-modal, no
+    focus trap, no Escape, no focus restore — so VoiceOver could wander into the page
+    behind it and Tab could leave it entirely. Radix's Dialog brings all of that plus
+    the parts a hand-rolled trap reliably gets wrong: focus guards either side of the
+    portal, aria-hidden on the rest of the document, and scroll lock. A focus trap done
+    badly is worse than none, so writing one here was not the cheaper option.
+
+    The primitives directly rather than components/ui/dialog.tsx's `DialogContent`:
+    that wrapper hard-codes its own centring, padding, `bg-background` and a second
+    close button, none of which this modal wants — adopting it would have meant
+    overriding nearly every class and hiding its close button. `Root`/`Portal`/
+    `Content`/`Title`/`Description` are the same Radix components that file is built
+    from, just without styling opinions this modal has to undo.
+
+    `forceMount` on both Portal and Content is what keeps the existing animation:
+    without it Radix's own Presence unmounts the panel the instant `open` flips false
+    and the framer exit never runs. With it, AnimatePresence stays in charge and the
+    scale/y transition is untouched. Radix Dialog has no directional layout of its own
+    (unlike Select or DropdownMenu, which take a `dir`), so the `rtl:` utilities in
+    here keep working exactly as before.
+  */
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} // overlay-ok
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-          />
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} // overlay-ok
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-[#15101f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto max-h-[90vh] flex flex-col"
-            >
+    <DialogPrimitive.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) closeModal();
+      }}
+    >
+      <DialogPrimitive.Portal forceMount>
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }} // overlay-ok
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeModal}
+                className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+              />
+              <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+                <DialogPrimitive.Content
+                  forceMount
+                  asChild
+                  /*
+                    Radix returns focus to its own `Dialog.Trigger`, and this modal has
+                    none — it opens through context from the hero, the nav and the bottom
+                    tab bar. Left alone, closing it dropped focus on <body>, so a keyboard
+                    user landed at the top of the document. Verified in the browser before
+                    and after: activeElement went from BODY to the button that opened it.
+                  */
+                  onCloseAutoFocus={(event) => {
+                    if (restoreTriggerFocus()) event.preventDefault();
+                  }}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }} // overlay-ok
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="w-full max-w-md bg-[#15101f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto max-h-[90vh] flex flex-col"
+                  >
               <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5 shrink-0">
                 <div className="flex items-center gap-3">
                   {view === "form" && (
@@ -106,12 +150,22 @@ export function BookDemoModal() {
                     </button>
                   )}
                   <div>
-                    <h2 className="text-subhead font-semibold text-foreground">{t("booking.title")}</h2>
-                    <p className="text-label text-muted-foreground mt-1">{t("booking.subtitle")}</p>
+                    {/*
+                      asChild so Radix wires aria-labelledby/aria-describedby to these
+                      exact nodes — the dialog is labelled by its own visible title
+                      rather than by a duplicated aria-label that can drift from it.
+                    */}
+                    <DialogPrimitive.Title asChild>
+                      <h2 className="text-subhead font-semibold text-foreground">{t("booking.title")}</h2>
+                    </DialogPrimitive.Title>
+                    <DialogPrimitive.Description asChild>
+                      <p className="text-label text-muted-foreground mt-1">{t("booking.subtitle")}</p>
+                    </DialogPrimitive.Description>
                   </div>
                 </div>
                 <button
                   onClick={closeModal}
+                  aria-label={t("booking.close")}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >
                   <X className="w-5 h-5" />
@@ -261,10 +315,13 @@ export function BookDemoModal() {
                   </form>
                 )}
               </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+                  </motion.div>
+                </DialogPrimitive.Content>
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
