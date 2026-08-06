@@ -334,6 +334,14 @@ export const en = {
     newPassword: "New password",
     newPasswordHint: "At least 8 characters",
     updatePassword: "Update password",
+    deleteTitle: "Delete your account",
+    deleteBody: "This removes your account and personal details immediately. It cannot be undone.",
+    deleteBookingsNote:
+      "Assessments you have already booked stay with our team as a record of the work, with your personal details removed. Messages already sent by WhatsApp or email cannot be recalled.",
+    deletePasswordLabel: "Confirm your password",
+    deleteConfirm: "Delete my account",
+    deleteFailed: "Couldn't delete your account",
+    deleteWrongPassword: "That password is not correct.",
   },
   fleet: {
     ourProducts: "Our products",

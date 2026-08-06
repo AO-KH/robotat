@@ -331,6 +331,14 @@ export const ar: Dictionary = {
     newPassword: "كلمة المرور الجديدة",
     newPasswordHint: "8 أحرف على الأقل",
     updatePassword: "تحديث كلمة المرور",
+    deleteTitle: "حذف حسابك",
+    deleteBody: "يؤدي هذا إلى حذف حسابك وبياناتك الشخصية فورًا، ولا يمكن التراجع عنه.",
+    deleteBookingsNote:
+      "تبقى التقييمات التي حجزتها لدى فريقنا كسجلّ للعمل المنجز، مع إزالة بياناتك الشخصية. أما الرسائل المُرسلة عبر واتساب أو البريد الإلكتروني فلا يمكن استرجاعها.",
+    deletePasswordLabel: "أكّد كلمة المرور",
+    deleteConfirm: "حذف حسابي",
+    deleteFailed: "تعذّر حذف الحساب",
+    deleteWrongPassword: "كلمة المرور غير صحيحة.",
   },
   fleet: {
     ourProducts: "منتجاتنا",
