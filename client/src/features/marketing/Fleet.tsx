@@ -25,7 +25,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
 export default function Fleet() {
   const { openModal } = useDemoModal();
   const { t, lang } = useI18n();
-  const { data: products = [], isLoading, isLoadingError, refetch } = useProducts();
+  const { data: products = [], isLoading, isLoadingError, isPaused, refetch } = useProducts();
   const [selected, setSelected] = useState<Product | null>(null);
   useSeo({
     title: "Products — MAX T100 & Attachments",
@@ -68,22 +68,45 @@ export default function Fleet() {
         <QueryState
           isLoading={isLoading}
           isLoadingError={isLoadingError}
+          isOffline={isPaused}
           isEmpty={products.length === 0}
           onRetry={() => refetch()}
           loadingLabel={t("state.loading")}
           errorTitle={t("state.errorTitle")}
           errorBody={t("state.errorBody")}
           retryLabel={t("state.retry")}
+          offlineTitle={t("state.offlineTitle")}
+          offlineBody={t("state.offlineBody")}
           emptyTitle={t("fleet.emptyTitle")}
           emptyBody={t("fleet.emptyBody")}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {products.map((product, i) => (
-              <motion.div
+              /*
+                A real <button>, not a div with onClick. The detail view below is the
+                only place a product's specs exist, and as a div this card had no
+                tabindex, no role and no key handler — so that view was unreachable by
+                keyboard and by VoiceOver, on an app that ships to the App Store.
+
+                Safe to wrap the whole card because nothing inside it is interactive:
+                "View Details" (the hover overlay) and "Details" (the footer) are both
+                plain divs, verified in the browser — `card.querySelectorAll("button,a,
+                input,select,textarea")` returned []. So this introduces no nested
+                control. Those two are decorative duplicates of the button's own
+                purpose, hence aria-hidden: without it the accessible name opens
+                "View Details" before the product is even named, and ends by saying
+                "Details" a second time.
+
+                `text-start` because a button centres its text and these cards are
+                start-aligned; `w-full` because a button shrink-wraps and these fill a
+                grid cell. Both restore the previous rendering exactly.
+              */
+              <motion.button
                 key={product.slug}
+                type="button"
                 {...riseIn}
                 transition={{ ...riseIn.transition, delay: i * 0.1 }}
-                className="surface rounded-3xl overflow-hidden hover:border-primary/50 transition-colors duration-500 group flex flex-col cursor-pointer"
+                className="surface rounded-3xl overflow-hidden hover:border-primary/50 transition-colors duration-500 group flex flex-col cursor-pointer w-full text-start"
                 onClick={() => setSelected(product)}
               >
                 <div className={`h-64 relative overflow-hidden ${isPlatform(product) ? "bg-[radial-gradient(ellipse_80%_70%_at_50%_40%,rgba(124,58,237,0.22),transparent_70%)]" : "bg-black/50"}`}>
@@ -102,7 +125,10 @@ export default function Fleet() {
                     alt={product.name}
                     className={`w-full h-full ${isPlatform(product) ? "object-contain p-4" : "object-cover"} group-hover:scale-110 transition-transform duration-700`}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-30">
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-30"
+                  >
                     <div className="px-6 py-2 bg-primary rounded-full text-white text-body font-semibold shadow-2xl flex items-center gap-2">
                       {t("fleet.viewDetails")} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                     </div>
@@ -118,13 +144,13 @@ export default function Fleet() {
                   <p className="text-label font-semibold text-primary mb-4 uppercase tracking-wider">{role(product)}</p>
                   <p className="text-body text-muted-foreground flex-1 line-clamp-2">{desc(product)}</p>
 
-                  <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-end">
+                  <div aria-hidden="true" className="mt-8 pt-6 border-t border-white/5 flex items-center justify-end">
                     <div className="text-primary text-label font-semibold hover:underline flex items-center gap-1">
                       {t("fleet.details")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </div>
         </QueryState>

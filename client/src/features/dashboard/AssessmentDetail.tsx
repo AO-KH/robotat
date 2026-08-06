@@ -144,7 +144,7 @@ export default function AssessmentDetail() {
     good booking turn into "Assessment not found". `isLoadingError` is error AND no
     cached data, the only moment there is genuinely nothing to show.
   */
-  const { data: a, isLoading, isLoadingError, refetch } = useAssessment(enabled ? id : undefined);
+  const { data: a, isLoading, isLoadingError, isPaused, refetch } = useAssessment(enabled ? id : undefined);
   const { t } = useI18n();
   useSeo({ title: "Assessment", noindex: true });
 
@@ -176,12 +176,17 @@ export default function AssessmentDetail() {
         <QueryState
           isLoading={isLoading}
           isLoadingError={isLoadingError}
+          // The fifth QueryState call site, and the one where "empty" lies loudest:
+          // offline, this screen told a customer their booking did not exist.
+          isOffline={isPaused}
           isEmpty={!a}
           onRetry={() => refetch()}
           loadingLabel={t("state.loading")}
           errorTitle={t("state.errorTitle")}
           errorBody={t("state.errorBody")}
           retryLabel={t("state.retry")}
+          offlineTitle={t("state.offlineTitle")}
+          offlineBody={t("state.offlineBody")}
           emptyTitle={t("detail.notFound")}
           emptyBody={t("detail.notFoundBody")}
           // No `emptyAction`: the way out of this screen is the back link directly

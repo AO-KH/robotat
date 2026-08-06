@@ -196,6 +196,7 @@ export const ar: Dictionary = {
   booking: {
     title: "احجز تقييماً للموقع",
     subtitle: "يزور مهندس زراعي من ROBOTAT مزرعتك.",
+    close: "إغلاق",
     howReach: "كيف تودّ التواصل معنا؟",
     howReachSub: "تحدّث معنا الآن، أو أرسل التفاصيل الكاملة عبر البريد.",
     whatsapp: "واتساب",
@@ -358,6 +359,8 @@ export const ar: Dictionary = {
     errorTitle: "تعذّر تحميل هذا المحتوى",
     errorBody: "حدث خطأ أثناء الاتصال بخوادمنا. تحقّق من اتصالك وحاول مرة أخرى.",
     retry: "إعادة المحاولة",
+    offlineTitle: "أنت غير متصل بالإنترنت",
+    offlineBody: "يحتاج هذا المحتوى إلى اتصال. سيتم تحميله بمجرد عودة الاتصال.",
   },
   lang: { en: "EN", ar: "ع" },
 };

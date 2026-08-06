@@ -199,6 +199,7 @@ export const en = {
   booking: {
     title: "Book a site assessment",
     subtitle: "A ROBOTAT agronomist visits your farm.",
+    close: "Close",
     howReach: "How would you like to reach us?",
     howReachSub: "Chat with us now, or send the full details by email.",
     whatsapp: "WhatsApp",
@@ -362,6 +363,8 @@ export const en = {
     errorTitle: "We couldn't load this",
     errorBody: "Something went wrong reaching our servers. Check your connection and try again.",
     retry: "Try again",
+    offlineTitle: "You're offline",
+    offlineBody: "This needs a connection. It'll load as soon as you're back online.",
   },
   lang: { en: "EN", ar: "ع" },
 };
