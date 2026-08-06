@@ -107,7 +107,19 @@ export function BookDemoModal() {
       }}
     >
       <DialogPrimitive.Portal forceMount>
-        <AnimatePresence>
+        {/*
+          This plain <div> is load-bearing, not stray markup. Radix's Portal renders
+          `<PortalPrimitive asChild={true}>` around each child — asChild is hardcoded in
+          its source, not a prop — so it always goes through Slot and always tries to
+          attach a ref to whatever it is given. `AnimatePresence` is a plain function
+          component with no forwardRef, so React warned "Function components cannot be
+          given refs" and the ref silently never landed. A DOM element takes it.
+
+          It has no layout effect: everything inside is `fixed`, so an unstyled block
+          element in the portal root changes nothing.
+        */}
+        <div>
+          <AnimatePresence>
           {isOpen && (
             <>
               <motion.div
@@ -320,7 +332,8 @@ export function BookDemoModal() {
               </div>
             </>
           )}
-        </AnimatePresence>
+          </AnimatePresence>
+        </div>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
   );
