@@ -24,6 +24,7 @@ import {
   updateUserName,
   updateUserPassword,
   revokeUserCredentials,
+  deleteAccountAndAnonymise,
   markEmailVerified,
   createAuthToken,
   getValidAuthToken,
@@ -187,6 +188,40 @@ authRoutes.patch(api.auth.changePassword.path, requireAuth, async (req, res, nex
     // session so they aren't signed out of the tab they just used.
     await revokeUserCredentials(user.id, req.sessionID);
     res.status(200).json({ ok: true });
+  } catch (err) {
+    if (handleZodError(err, res)) return;
+    next(err);
+  }
+});
+
+// DELETE /api/auth/account — delete the signed-in user's account. Irreversible.
+// Required in-app by App Store Guideline 5.1.1(v).
+authRoutes.delete(api.auth.deleteAccount.path, requireAuth, async (req, res, next) => {
+  try {
+    const input = api.auth.deleteAccount.input.parse(req.body);
+    const user = req.user as User;
+    // Re-load to get the current hash (the session user may be stale).
+    const fresh = await getUserById(user.id);
+    if (!fresh) return res.status(401).json({ message: "Not signed in" });
+
+    // Being signed in isn't proof enough for something irreversible: anyone who
+    // walks up to an unlocked device inherits the session.
+    const ok = await verifyPassword(input.password, fresh.passwordHash);
+    if (!ok) return res.status(401).json({ message: "That password is incorrect." });
+
+    await deleteAccountAndAnonymise(fresh.id);
+
+    // Same teardown as logout, plus the session row and cookie: the user row is gone,
+    // so nothing would authenticate anyway, but leaving a cookie behind means the app
+    // keeps asking about an account that no longer exists.
+    req.logout((err) => {
+      if (err) return next(err);
+      req.session.destroy(() => {
+        // "connect.sid" is the express-session default; setupAuth doesn't set `name`.
+        res.clearCookie("connect.sid");
+        res.status(200).json({ ok: true });
+      });
+    });
   } catch (err) {
     if (handleZodError(err, res)) return;
     next(err);

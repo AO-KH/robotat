@@ -91,6 +91,13 @@ export const changePasswordSchema = z.object({
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+/** Deleting an account re-verifies the password: it is irreversible, and session-only
+ *  proof is not enough if someone walks up to an unlocked device. */
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, "Password is required"),
+});
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
 /* ============================================================
  * Assessment bookings (a logged-in user requests a site visit)
  * ========================================================== */

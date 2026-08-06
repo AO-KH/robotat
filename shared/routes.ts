@@ -4,6 +4,7 @@ import {
   loginSchema,
   updateProfileSchema,
   changePasswordSchema,
+  deleteAccountSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
@@ -89,6 +90,18 @@ export const api = {
       method: "PATCH" as const,
       path: "/api/auth/password" as const,
       input: changePasswordSchema,
+      responses: {
+        200: z.object({ ok: z.literal(true) }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    // Delete the signed-in user's account. Irreversible, and re-verifies the
+    // password. Bookings are kept but anonymised — see deleteAccountAndAnonymise.
+    deleteAccount: {
+      method: "DELETE" as const,
+      path: "/api/auth/account" as const,
+      input: deleteAccountSchema,
       responses: {
         200: z.object({ ok: z.literal(true) }),
         400: errorSchemas.validation,
