@@ -1,6 +1,21 @@
-import { users, authTokens, type User, type AuthToken, type AuthTokenKind } from "@shared/schema";
+import {
+  users,
+  authTokens,
+  assessments,
+  analyticsEvents,
+  type User,
+  type AuthToken,
+  type AuthTokenKind,
+} from "@shared/schema";
 import { db } from "../../lib/db";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
+
+/**
+ * What replaces a deleted customer's name and email on the bookings they leave behind.
+ * Both columns are NOT NULL, so something has to go there; a visible marker tells staff
+ * "this customer deleted their account", which a blank string would not.
+ */
+export const DELETED_MARKER = "[deleted]";
 
 export async function createUser(input: {
   name: string;
@@ -70,6 +85,48 @@ export async function markEmailVerified(id: number): Promise<User> {
     .where(eq(users.id, id))
     .returning();
   return user;
+}
+
+/**
+ * Delete the user, keep the work.
+ *
+ * An assessment records that ROBOTAT sent an agronomist to a farm — a business fact
+ * that survives the customer closing their account, and one that may have been
+ * invoiced. So the row stays and everything identifying the person is stripped:
+ * user_id detached, name and email replaced with a visible marker (they are NOT NULL,
+ * and a blank would read to staff as a data bug rather than a deleted customer), and
+ * every contact and free-text column nulled.
+ *
+ * `message` is scrubbed even though it is not nominally a personal field: it is
+ * user-authored free text and routinely carries a phone number or an address.
+ *
+ * Analytics events keep counting toward funnel totals; they just stop being
+ * attributable. Auth tokens cascade via their own foreign key.
+ *
+ * All in one transaction: a partial deletion would leave a user whose bookings still
+ * carry their name, which is the exact state this exists to prevent.
+ */
+export async function deleteAccountAndAnonymise(userId: number): Promise<void> {
+  await db.transaction(async (tx) => {
+    // Deliberately not touching land_size, status, scheduled_at or created_at: they
+    // describe the visit, not the customer, and the business record needs them.
+    await tx
+      .update(assessments)
+      .set({
+        userId: null,
+        name: DELETED_MARKER,
+        email: DELETED_MARKER,
+        phone: null,
+        company: null,
+        location: null,
+        message: null,
+      })
+      .where(eq(assessments.userId, userId));
+
+    await tx.update(analyticsEvents).set({ userId: null }).where(eq(analyticsEvents.userId, userId));
+
+    await tx.delete(users).where(eq(users.id, userId));
+  });
 }
 
 /* ---- Auth tokens (password reset / email verification) ---- */

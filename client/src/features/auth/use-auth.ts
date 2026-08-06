@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type RegisterInput, type LoginInput } from "@shared/routes";
-import type { PublicUser, UpdateProfileInput, ChangePasswordInput } from "@shared/schema";
+import type {
+  PublicUser,
+  UpdateProfileInput,
+  ChangePasswordInput,
+  DeleteAccountInput,
+} from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { isNativeApiMode } from "@/lib/api-base";
 import { setAuthToken } from "@/lib/auth-token";
@@ -284,6 +289,54 @@ export function useChangePassword() {
     },
     onError: (err: Error) => {
       toast({ title: "Couldn't change password", description: err.message, variant: "destructive" });
+    },
+  });
+}
+
+/**
+ * A failed delete, carrying the HTTP status.
+ *
+ * `DELETE /api/auth/account` answers a wrong password with 401 and a bare `{ message }` —
+ * no `field` key, unlike `changePassword`'s 400. So the status is the only thing that
+ * tells the caller to put the error on the password input rather than treat it as a
+ * generic failure, and the plain `Error` the other hooks throw would lose it.
+ */
+export class DeleteAccountError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "DeleteAccountError";
+  }
+}
+
+/** True when a delete failed because the password did not match. */
+export function isWrongPassword(err: unknown): boolean {
+  return err instanceof DeleteAccountError && err.status === 401;
+}
+
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: DeleteAccountInput) => {
+      const res = await fetch(api.auth.deleteAccount.path, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(api.auth.deleteAccount.input.parse(data)),
+      });
+      if (!res.ok) {
+        throw new DeleteAccountError(res.status, await readError(res, "Could not delete your account"));
+      }
+      return true;
+    },
+    onSuccess: () => {
+      // The same teardown as sign-out, and for a stronger reason: the account is gone,
+      // so the dashboard, bookings and server-prefilled contact details still sitting in
+      // the cache belong to nobody. `clearSignedInState` wipes the cache outright rather
+      // than invalidating it — see auth-state.ts.
+      clearSignedInState(qc);
     },
   });
 }
