@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type BookAssessmentInput } from "@shared/routes";
 import type { Assessment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
+import { apiError, errorText } from "@/lib/api-error";
 
 const LIST_KEY = ["/api/assessments"] as const;
 
@@ -71,6 +73,7 @@ export function useAssessment(id: number | undefined) {
 export function useBookAssessment() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { t } = useI18n();
   return useMutation({
     mutationFn: async (data: BookAssessmentInput): Promise<BookAssessmentResult> => {
       const res = await fetch(api.assessments.create.path, {
@@ -79,25 +82,25 @@ export function useBookAssessment() {
         credentials: "include",
         body: JSON.stringify(api.assessments.create.input.parse(data)),
       });
-      if (!res.ok) {
-        try {
-          const body = await res.json();
-          throw new Error(body?.message || "Could not submit your request");
-        } catch (e) {
-          throw e instanceof Error ? e : new Error("Could not submit your request");
-        }
-      }
+      if (!res.ok) throw await apiError(res, t("toast.shared.generic"));
       return (await res.json()) as BookAssessmentResult;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: LIST_KEY });
       toast({
-        title: "Assessment requested",
-        description: "Our agronomy team will reach out to schedule your visit.",
+        title: t("toast.booking.successTitle"),
+        description: t("toast.booking.successBody"),
       });
     },
     onError: (err: Error) => {
-      toast({ title: "Booking failed", description: err.message, variant: "destructive" });
+      toast({
+        title: t("toast.booking.failedTitle"),
+        description: errorText(err, {
+          400: t("toast.shared.invalid"),
+          401: t("toast.shared.signedOut"),
+        }),
+        variant: "destructive",
+      });
     },
   });
 }

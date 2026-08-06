@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Assessment, AssessmentStatus, UpdateAssessmentInput, AnalyticsSummary } from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
+import { apiError, errorText } from "@/lib/api-error";
 
 const LIST_KEY = "/api/admin/assessments";
 
@@ -51,6 +53,7 @@ export function useAnalytics() {
 export function useUpdateAssessment() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { t } = useI18n();
   return useMutation({
     mutationFn: async ({ id, ...body }: { id: number } & UpdateAssessmentInput) => {
       const res = await fetch(`${LIST_KEY}/${id}`, {
@@ -59,18 +62,24 @@ export function useUpdateAssessment() {
         credentials: "include",
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const msg = await res.json().then((b) => b?.message).catch(() => null);
-        throw new Error(msg || "Update failed");
-      }
+      if (!res.ok) throw await apiError(res, t("toast.shared.generic"));
       return (await res.json()) as Assessment;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [LIST_KEY] });
-      toast({ title: "Updated", description: "The booking was updated." });
+      toast({ title: t("toast.adminUpdate.successTitle"), description: t("toast.adminUpdate.successBody") });
     },
     onError: (e: Error) => {
-      toast({ title: "Update failed", description: e.message, variant: "destructive" });
+      toast({
+        title: t("toast.adminUpdate.failedTitle"),
+        description: errorText(e, {
+          400: t("toast.shared.invalid"),
+          401: t("toast.shared.signedOut"),
+          403: t("toast.shared.staffOnly"),
+          404: t("toast.adminUpdate.notFound"),
+        }),
+        variant: "destructive",
+      });
     },
   });
 }
