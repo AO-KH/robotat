@@ -16,7 +16,8 @@
     "db:push": "drizzle-kit push",
     "cap:copy": "cap copy",
     "cap:sync": "cap sync",
-    "cap:sync:ios": "cap sync ios"
+    "cap:sync:ios": "cap sync ios",
+    "dev:staff": "tsx script/dev-staff.ts"
   },
   "dependencies": {
     "@capacitor/core": "^7.6.7",

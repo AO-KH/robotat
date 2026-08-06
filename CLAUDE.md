@@ -58,6 +58,12 @@ Each server module owns `*.storage.ts` (Drizzle queries) + `*.routes.ts` (an Exp
 - `npm test` — run the Vitest/Supertest integration tests (needs a `robotat_test` DB; see `.env.test`)
 - `npm run db:generate` — generate a Drizzle migration from schema changes
 - `npm run db:migrate` — apply pending migrations (migrations are committed under `migrations/`)
+- `npm run dev:staff` — mint a disposable **staff** account so `/admin` and
+  `/admin/analytics` can actually be opened and looked at. Prints a generated password
+  once; refuses to run when `NODE_ENV=production`. Delete it when done with
+  `npm run dev:staff -- --delete <email>`. Use this instead of editing the database by
+  hand or resetting a real user's password — those screens went unverified through
+  three branches because there was no sanctioned way in.
 
 ## Environment
 
