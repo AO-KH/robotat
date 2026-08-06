@@ -362,6 +362,66 @@ export const ar: Dictionary = {
     body: "قد يكون الرابط قديمًا، أو أن الصفحة قد نُقلت. كل شيء آخر ما زال في مكانه.",
     backHome: "العودة إلى الرئيسية",
   },
+  toast: {
+    shared: {
+      invalid: "يُرجى التحقّق من البيانات والمحاولة مرة أخرى.",
+      signedOut: "يجب تسجيل الدخول للقيام بذلك.",
+      staffOnly: "هذا الإجراء يتطلّب حساب موظّف.",
+      rateLimited: "محاولات كثيرة جداً. يُرجى المحاولة مرة أخرى بعد بضع دقائق.",
+      generic: "حدث خطأ ما. يُرجى المحاولة مرة أخرى.",
+    },
+    register: {
+      successTitle: "مرحباً بك في ROBOTAT",
+      successBody: "حسابك جاهز.",
+      createdTitle: "تم إنشاء الحساب",
+      createdBody: "تم إنشاء حسابك، لكن تسجيل الدخول لم ينجح. يُرجى تسجيل الدخول.",
+      failedTitle: "تعذّر إنشاء الحساب",
+      emailTaken: "يوجد حساب بهذا البريد الإلكتروني بالفعل.",
+    },
+    login: {
+      successTitle: "تم تسجيل الدخول",
+      successBody: "مرحباً بعودتك، {name}.",
+      failedTitle: "تعذّر تسجيل الدخول",
+      badCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    },
+    profile: {
+      successTitle: "تم تحديث الملف الشخصي",
+      failedTitle: "تعذّر التحديث",
+    },
+    forgotPassword: {
+      failedTitle: "حدث خطأ ما",
+    },
+    resetPassword: {
+      successTitle: "تم تحديث كلمة المرور",
+      successBody: "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+      failedTitle: "تعذّرت إعادة تعيين كلمة المرور",
+      badLink: "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
+    },
+    verification: {
+      sentTitle: "تم إرسال بريد التأكيد",
+      sentBody: "تفقّد بريدك للعثور على رابط التأكيد.",
+      alreadyTitle: "مؤكَّد بالفعل",
+      alreadyBody: "عنوان بريدك الإلكتروني مؤكَّد بالفعل.",
+      failedTitle: "تعذّرت إعادة الإرسال",
+    },
+    changePassword: {
+      successTitle: "تم تغيير كلمة المرور",
+      successBody: "تم تحديث كلمة المرور الخاصة بك.",
+      failedTitle: "تعذّر تغيير كلمة المرور",
+      wrongCurrent: "كلمة المرور الحالية غير صحيحة.",
+    },
+    booking: {
+      successTitle: "تم طلب التقييم",
+      successBody: "سيتواصل معك فريقنا الزراعي لجدولة الزيارة.",
+      failedTitle: "تعذّر الحجز",
+    },
+    adminUpdate: {
+      successTitle: "تم التحديث",
+      successBody: "تم تحديث الحجز.",
+      failedTitle: "تعذّر التحديث",
+      notFound: "هذا الحجز لم يعد موجوداً.",
+    },
+  },
   state: {
     loading: "جارٍ التحميل",
     errorTitle: "تعذّر تحميل هذا المحتوى",

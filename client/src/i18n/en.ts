@@ -365,6 +365,75 @@ export const en = {
     body: "The link may be out of date, or the page may have moved. Everything else is still where you left it.",
     backHome: "Back to home",
   },
+  /*
+    Toasts raised from the data hooks — the `use-…` module under each feature.
+
+    `shared` is the copy for statuses that mean the same thing wherever they occur, so
+    six operations point at one string instead of carrying six identical ones; a block
+    below overrides it only where its endpoint gives that status a specific meaning
+    (400 on reset-password is a dead link, not a malformed field). The hooks map status
+    codes to these keys — see lib/api-error.ts for why status and not the server's prose.
+  */
+  toast: {
+    shared: {
+      invalid: "Please check the details and try again.",
+      signedOut: "You must be signed in to do that.",
+      staffOnly: "Staff access required.",
+      rateLimited: "Too many attempts. Please try again in a few minutes.",
+      generic: "Something went wrong. Please try again.",
+    },
+    register: {
+      successTitle: "Welcome to ROBOTAT",
+      successBody: "Your account is ready.",
+      createdTitle: "Account created",
+      createdBody: "Your account was created, but signing in failed. Please sign in.",
+      failedTitle: "Sign up failed",
+      emailTaken: "An account with that email already exists.",
+    },
+    login: {
+      successTitle: "Signed in",
+      successBody: "Welcome back, {name}.",
+      failedTitle: "Sign in failed",
+      badCredentials: "Invalid email or password.",
+    },
+    profile: {
+      successTitle: "Profile updated",
+      failedTitle: "Update failed",
+    },
+    forgotPassword: {
+      failedTitle: "Something went wrong",
+    },
+    resetPassword: {
+      successTitle: "Password updated",
+      successBody: "You can now sign in with your new password.",
+      failedTitle: "Couldn't reset password",
+      badLink: "This reset link is invalid or has expired.",
+    },
+    verification: {
+      sentTitle: "Verification email sent",
+      sentBody: "Check your inbox for the confirmation link.",
+      alreadyTitle: "Already verified",
+      alreadyBody: "Your email is already confirmed.",
+      failedTitle: "Couldn't resend",
+    },
+    changePassword: {
+      successTitle: "Password changed",
+      successBody: "Your password has been updated.",
+      failedTitle: "Couldn't change password",
+      wrongCurrent: "Current password is incorrect.",
+    },
+    booking: {
+      successTitle: "Assessment requested",
+      successBody: "Our agronomy team will reach out to schedule your visit.",
+      failedTitle: "Booking failed",
+    },
+    adminUpdate: {
+      successTitle: "Updated",
+      successBody: "The booking was updated.",
+      failedTitle: "Update failed",
+      notFound: "That booking no longer exists.",
+    },
+  },
   // Shared by every screen that renders a fetched list — see components/QueryState.tsx.
   state: {
     loading: "Loading",
