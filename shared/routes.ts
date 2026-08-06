@@ -13,6 +13,8 @@ import {
   ASSESSMENT_STATUSES,
   assessments,
   trackEventSchema,
+  registerPushTokenSchema,
+  unregisterPushTokenSchema,
   type PublicUser,
   type Assessment,
   type AnalyticsSummary,
@@ -236,6 +238,33 @@ export const api = {
       responses: {
         202: z.object({ ok: z.literal(true) }),
         400: errorSchemas.validation,
+      },
+    },
+  },
+  push: {
+    // Store (or re-point) this device's push token for the signed-in user.
+    // Idempotent: the same token can be sent on every app launch.
+    register: {
+      method: "POST" as const,
+      path: "/api/push/register" as const,
+      input: registerPushTokenSchema,
+      responses: {
+        200: z.object({ ok: z.literal(true) }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+      },
+    },
+    // Forget this device (the user turned notifications off, or signed out).
+    // POST rather than DELETE: request bodies on DELETE are poorly supported,
+    // and nothing else in this API sends one.
+    unregister: {
+      method: "POST" as const,
+      path: "/api/push/unregister" as const,
+      input: unregisterPushTokenSchema,
+      responses: {
+        200: z.object({ ok: z.literal(true) }),
+        400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
       },
     },
   },

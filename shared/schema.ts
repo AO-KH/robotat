@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 /** User roles. `customer` is the default; `staff` can access the admin module. */
@@ -144,6 +144,64 @@ export const bookAssessmentSchema = z.object({
   message: z.string().trim().optional(),
 });
 export type BookAssessmentInput = z.infer<typeof bookAssessmentSchema>;
+
+/* ============================================================
+ * Push tokens — device tokens for native notifications (APNs)
+ * ========================================================== */
+/** Platforms a device token can come from. Only iOS ships today. */
+export const PUSH_PLATFORMS = ["ios", "android", "web"] as const;
+export type PushPlatform = (typeof PUSH_PLATFORMS)[number];
+
+/**
+ * One row per device, keyed by the token itself.
+ *
+ * `token` is UNIQUE rather than (user_id, token): a phone can be handed to another
+ * person who signs in with their own account, and the same device token must then
+ * belong to the new user instead of existing twice. Registration upserts on the
+ * token and reassigns `user_id`.
+ *
+ * The cascade is load-bearing. Deleting an account (deleteAccountAndAnonymise)
+ * detaches bookings and analytics but knows nothing about push; without ON DELETE
+ * CASCADE a deleted user's device would keep a row pointing at a missing user, and
+ * the fan-out would eventually try to notify it.
+ */
+export const pushTokens = pgTable(
+  "push_tokens",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    platform: text("platform").notNull().default("ios"), // PushPlatform
+    createdAt: timestamp("created_at").defaultNow(),
+    // Bumped on every re-registration; the app re-registers on each launch, so a
+    // stale last_seen_at is how dead devices will be spotted later.
+    lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  },
+  (table) => [index("push_tokens_user_id_idx").on(table.userId)],
+);
+
+export type PushToken = typeof pushTokens.$inferSelect;
+
+/** A device token is opaque (APNs sends hex today) — check it is a plausible
+ *  non-empty string rather than inventing a format the platform never promised. */
+const deviceTokenSchema = z
+  .string()
+  .trim()
+  .min(1, "Device token is required")
+  .max(512, "Device token is too long");
+
+export const registerPushTokenSchema = z.object({
+  token: deviceTokenSchema,
+  platform: z.enum(PUSH_PLATFORMS).optional(),
+});
+export type RegisterPushTokenInput = z.infer<typeof registerPushTokenSchema>;
+
+export const unregisterPushTokenSchema = z.object({
+  token: deviceTokenSchema,
+});
+export type UnregisterPushTokenInput = z.infer<typeof unregisterPushTokenSchema>;
 
 /* ============================================================
  * Analytics — first-party, anonymous event stream

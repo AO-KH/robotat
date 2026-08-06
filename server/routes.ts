@@ -7,6 +7,7 @@ import { adminRoutes } from "./modules/admin/admin.routes";
 import { analyticsRoutes } from "./modules/analytics/analytics.routes";
 import { productRoutes } from "./modules/products/products.routes";
 import { contactRoutes } from "./modules/contact/contact.routes";
+import { pushRoutes } from "./modules/push/push.routes";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // Liveness probe for containers / load balancers (no auth, no DB).
@@ -21,6 +22,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.use(analyticsRoutes);
   app.use(productRoutes);
   app.use(contactRoutes);
+  app.use(pushRoutes);
 
   return httpServer;
 }
