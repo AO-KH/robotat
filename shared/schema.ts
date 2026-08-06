@@ -100,9 +100,11 @@ export type AssessmentStatus = (typeof ASSESSMENT_STATUSES)[number];
 
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
+  // Nullable on purpose: deleting an account detaches its bookings instead of
+  // destroying them (App Store Guideline 5.1.1(v)). An assessment records a site
+  // visit ROBOTAT actually performed — a business fact that outlives the account.
+  // The contact fields below are anonymised at deletion time.
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
@@ -144,7 +146,7 @@ export const analyticsEvents = pgTable("analytics_events", {
   type: text("type").notNull(), // e.g. page_view, booking_open, booking_whatsapp…
   path: text("path"),
   visitorId: text("visitor_id"), // anonymous, client-generated (no PII, no IP stored)
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
