@@ -19,9 +19,10 @@ App Store Guideline 4.2 ("not just a website in a wrapper").
   `client/src/lib/auth-token.ts`, and `client/src/lib/api-base.ts` attaches it as
   `Authorization: Bearer …` on every `/api` call. The server allows the
   `capacitor://localhost` origin via `server/lib/cors.ts`.
-- **Not yet done:** the token is held in memory only, so relaunching the app requires
-  signing in again. Register a `TokenPersistence` backed by the iOS Keychain (see the
-  interface in `auth-token.ts`) — not `@capacitor/preferences`, which is not secure.
+- Token restore-at-boot: `main.tsx` awaits `restoreAuthToken()` before React mounts,
+  and a 401 while holding a token clears it from the store rather than retrying a dead
+  one every launch. **Still needs a Keychain plugin** to actually survive a relaunch —
+  see "Secure token storage" below for the two-line wiring.
 - npm scripts: `cap:copy`, `cap:sync`, `cap:sync:ios`.
 
 ## Hard prerequisites (not in this repo — need a Mac)
