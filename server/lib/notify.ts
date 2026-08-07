@@ -91,12 +91,56 @@ export function buildMailtoLink(lead: Lead): string {
 }
 
 async function sendEmail(a: Assessment): Promise<void> {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, ASSESSMENT_INBOX } = process.env;
+  const { ASSESSMENT_INBOX } = process.env;
   const to = ASSESSMENT_INBOX || "assessments@nasl-tech.com";
   const body = summaryLines(a).join("\n");
 
+  await deliverEmail({
+    to,
+    replyTo: a.email,
+    subject: `New site assessment request — ${a.name}`,
+    text: body,
+    context: `assessment #${a.id}`,
+  });
+}
+
+/**
+ * The one place mail leaves this process.
+ *
+ * Every send went through its own `createTransport` + `sendMail` pair, which meant a
+ * change like MAIL_REDIRECT_TO had to be remembered in three places — and forgetting
+ * one is invisible until a customer receives something they should not have.
+ *
+ * ## MAIL_REDIRECT_TO
+ *
+ * Set it and every message goes there instead of to its real recipient, with the
+ * intended address prefixed onto the subject so an inbox full of redirected mail is
+ * still readable. It exists so a live SMTP setup can be exercised end to end without
+ * sending anything to a real customer.
+ *
+ * It is refused outright in production (see validateProduction in ./env). There is no
+ * legitimate production use: it would mean every customer silently stops receiving
+ * their booking confirmations while the logs still read "sent".
+ */
+async function deliverEmail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: string;
+  /** For the log line, so it says what happened rather than what was asked for. */
+  context: string;
+}): Promise<void> {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_REDIRECT_TO } = process.env;
+
+  const redirected = Boolean(MAIL_REDIRECT_TO);
+  const to = MAIL_REDIRECT_TO || opts.to;
+  // ASCII "->" rather than an arrow glyph: one non-ASCII character forces the whole
+  // Subject header into MIME quoted-printable, which makes an inbox of redirected
+  // mail unsearchable in its raw form.
+  const subject = redirected ? `[-> ${opts.to}] ${opts.subject}` : opts.subject;
+
   if (!SMTP_HOST) {
-    log(`[email:dev] would send to ${to}:\n${body}`, "notify");
+    log(`[email:dev] would send to ${to} — ${subject}\n${opts.text}`, "notify");
     return;
   }
 
@@ -110,11 +154,19 @@ async function sendEmail(a: Assessment): Promise<void> {
   await transport.sendMail({
     from: SMTP_USER || "robotat@nasl-tech.com",
     to,
-    replyTo: a.email,
-    subject: `New site assessment request — ${a.name}`,
-    text: body,
+    replyTo: opts.replyTo,
+    subject,
+    text: opts.text,
   });
-  log(`[email] assessment #${a.id} sent to ${to}`, "notify");
+
+  // Says "redirected to", not "sent to", so a log cannot be misread as the customer
+  // having received it.
+  log(
+    redirected
+      ? `[email] ${opts.context} redirected to ${to} (intended ${opts.to})`
+      : `[email] ${opts.context} sent to ${to}`,
+    "notify",
+  );
 }
 
 async function sendWhatsappCloudApi(a: Assessment): Promise<void> {
@@ -158,27 +210,14 @@ export async function deliverAssessment(a: Assessment): Promise<void> {
 
 async function emailCustomer(a: Assessment): Promise<void> {
   const { subject, body } = customerStatusMessage(a);
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  // SMTP config is read inside deliverEmail, which is the only sender.
 
-  if (!SMTP_HOST) {
-    log(`[email:dev] would notify ${a.email} — ${subject}\n${body}`, "notify");
-    return;
-  }
-
-  const transport = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT || 587),
-    secure: Number(SMTP_PORT) === 465,
-    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-  });
-
-  await transport.sendMail({
-    from: SMTP_USER || "robotat@nasl-tech.com",
+  await deliverEmail({
     to: a.email,
     subject,
     text: body,
+    context: `status notice for #${a.id} (${a.status})`,
   });
-  log(`[email] status notice for #${a.id} (${a.status}) sent to ${a.email}`, "notify");
 }
 
 async function whatsappCustomer(a: Assessment): Promise<void> {
@@ -336,6 +375,12 @@ export function notifyConfigWarnings(env: NodeJS.ProcessEnv = process.env): stri
   if (env.WHATSAPP_PHONE_ID && !env.WHATSAPP_TOKEN) {
     warnings.push("WHATSAPP_PHONE_ID is set but WHATSAPP_TOKEN is not — WhatsApp delivery is off.");
   }
+  if (env.MAIL_REDIRECT_TO) {
+    warnings.push(
+      `MAIL_REDIRECT_TO is set: every email goes to ${env.MAIL_REDIRECT_TO} instead of its ` +
+        "real recipient. Customers are receiving nothing. Unset it when you are done testing.",
+    );
+  }
   if (env.NODE_ENV === "production" && !env.SMTP_HOST) {
     warnings.push("SMTP_HOST is not set in production — customer emails will only be logged.");
   }
@@ -370,20 +415,7 @@ export function checkNotifyConfig(): void {
 
 /** Send a transactional email to a user. Degrades to a console log when SMTP is unset. */
 export async function sendUserEmail(to: string, subject: string, body: string): Promise<void> {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  // SMTP config is read inside deliverEmail, which is the only sender.
 
-  if (!SMTP_HOST) {
-    log(`[email:dev] would send to ${to} — ${subject}\n${body}`, "notify");
-    return;
-  }
-
-  const transport = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT || 587),
-    secure: Number(SMTP_PORT) === 465,
-    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-  });
-
-  await transport.sendMail({ from: SMTP_USER || "robotat@nasl-tech.com", to, subject, text: body });
-  log(`[email] "${subject}" sent to ${to}`, "notify");
+  await deliverEmail({ to, subject, text: body, context: `"${subject}"` });
 }

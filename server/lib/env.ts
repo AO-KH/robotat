@@ -40,6 +40,18 @@ const schema = z.object({
   // separately-hosted web client. The Capacitor origins are always allowed and do
   // not need listing here.
   CORS_ORIGINS: z.string().optional(),
+
+  /**
+   * Divert every outgoing email to this address instead of its real recipient.
+   *
+   * For exercising a live SMTP setup without mailing real customers. Validated as an
+   * address so a typo fails at boot rather than silently sending nowhere, and refused
+   * outright in production by validateProduction() below.
+   */
+  MAIL_REDIRECT_TO: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().email("MAIL_REDIRECT_TO must be a valid email address").optional(),
+  ),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -69,6 +81,16 @@ export function validateProduction(env: Env): string[] {
     );
   } else if (!env.PUBLIC_APP_URL.startsWith("https://")) {
     problems.push("PUBLIC_APP_URL must use https:// in production (session cookies are Secure-only).");
+  }
+
+  if (env.MAIL_REDIRECT_TO) {
+    problems.push(
+      `MAIL_REDIRECT_TO is set to "${env.MAIL_REDIRECT_TO}". It diverts every outgoing ` +
+        "email to one address, so in production no customer would receive their booking " +
+        "confirmation, status update, password reset or verification link — while the logs " +
+        "still read as if mail went out. It exists for testing a live SMTP setup and has no " +
+        "production use. Unset it.",
+    );
   }
 
   return problems;

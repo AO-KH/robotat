@@ -131,3 +131,16 @@ describe("notifyConfigWarnings", () => {
     expect(warnings.some((w) => w.includes("SMTP_HOST"))).toBe(true);
   });
 });
+
+describe("MAIL_REDIRECT_TO", () => {
+  it("warns loudly at boot, because customers silently receive nothing", () => {
+    const warnings = notifyConfigWarnings({ MAIL_REDIRECT_TO: "dev@example.com" });
+    const w = warnings.find((x) => x.includes("MAIL_REDIRECT_TO"));
+    expect(w).toBeDefined();
+    expect(w).toContain("dev@example.com");
+  });
+
+  it("stays quiet when it is not set", () => {
+    expect(notifyConfigWarnings({}).some((w) => w.includes("MAIL_REDIRECT_TO"))).toBe(false);
+  });
+});

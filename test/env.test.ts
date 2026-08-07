@@ -71,3 +71,24 @@ describe("production env guard", () => {
     }
   });
 });
+
+describe("MAIL_REDIRECT_TO in production", () => {
+  it("is refused — it would silently stop every customer email", () => {
+    const problems = validateProduction({
+      NODE_ENV: "production",
+      SESSION_SECRET: "a".repeat(48),
+      PUBLIC_APP_URL: "https://robotat.nasl-tech.com",
+      MAIL_REDIRECT_TO: "dev@example.com",
+    } as never);
+    expect(problems.some((p) => p.includes("MAIL_REDIRECT_TO"))).toBe(true);
+  });
+
+  it("is allowed outside production", () => {
+    const problems = validateProduction({
+      NODE_ENV: "development",
+      SESSION_SECRET: "dev",
+      MAIL_REDIRECT_TO: "dev@example.com",
+    } as never);
+    expect(problems).toEqual([]);
+  });
+});
