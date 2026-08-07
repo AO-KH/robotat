@@ -151,6 +151,23 @@ async function sendCustomerConfirmation(a: Assessment): Promise<void> {
 }
 
 /**
+ * The address customers see in `From:`.
+ *
+ * Separate from SMTP_USER, which is a login credential and only doubles as a sender by
+ * coincidence of Gmail using an address for both. A transactional provider does not:
+ * Resend authenticates as `resend`, Brevo and Postmark issue a username or an API key,
+ * and none of those is something a customer should see at the top of their inbox.
+ *
+ * Accepts a display name too — `MAIL_FROM="ROBOTAT <hello@nasl-tech.com>"` — which
+ * nodemailer passes through as-is.
+ *
+ * The fallback chain keeps today working: unset, it is SMTP_USER exactly as before.
+ */
+export function mailFrom(env: NodeJS.ProcessEnv = process.env): string {
+  return env.MAIL_FROM || env.SMTP_USER || "robotat@nasl-tech.com";
+}
+
+/**
  * The one place mail leaves this process.
  *
  * Every send went through its own `createTransport` + `sendMail` pair, which meant a
@@ -198,7 +215,7 @@ async function deliverEmail(opts: {
   });
 
   await transport.sendMail({
-    from: SMTP_USER || "robotat@nasl-tech.com",
+    from: mailFrom(),
     to,
     replyTo: opts.replyTo,
     subject,

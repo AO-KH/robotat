@@ -7,6 +7,7 @@ import {
   customerStatusPush,
   customerStatusTemplateParams,
   emailVerificationMessage,
+  mailFrom,
   notifyConfigWarnings,
   passwordResetMessage,
 } from "../server/lib/notify";
@@ -242,6 +243,21 @@ describe("customerStatusTemplateParams", () => {
     const [name, ref] = customerStatusTemplateParams(fixture({ id: 42, name: "Sara" }));
     expect(name).toBe("Sara");
     expect(ref).toBe("#42");
+  });
+});
+
+describe("mailFrom", () => {
+  it("prefers MAIL_FROM over the login credential", () => {
+    expect(mailFrom({ MAIL_FROM: "ROBOTAT <hello@nasl-tech.com>", SMTP_USER: "resend" }))
+      .toBe("ROBOTAT <hello@nasl-tech.com>");
+  });
+
+  it("falls back to SMTP_USER, which is what Gmail wants", () => {
+    expect(mailFrom({ SMTP_USER: "someone@gmail.com" })).toBe("someone@gmail.com");
+  });
+
+  it("never leaves the From header empty", () => {
+    expect(mailFrom({})).toContain("@");
   });
 });
 
