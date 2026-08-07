@@ -23,6 +23,9 @@ import { BookDemoModal } from "@/features/booking/BookDemoModal";
 import Home from "@/features/marketing/Home";
 import Services from "@/features/marketing/Services";
 import Fleet from "@/features/marketing/Fleet";
+// Eagerly imported, unlike the admin screens below: an App Store reviewer opens this
+// one, and a lazy chunk fetch is one more thing that can fail in front of them.
+import Privacy from "@/features/marketing/Privacy";
 import Auth from "@/features/auth/Auth";
 import ForgotPassword from "@/features/auth/ForgotPassword";
 import ResetPassword from "@/features/auth/ResetPassword";
@@ -112,6 +115,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/services" component={Services} />
       <Route path="/fleet" component={Fleet} />
+      <Route path="/privacy" component={Privacy} />
       <Route path="/auth" component={Auth} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
