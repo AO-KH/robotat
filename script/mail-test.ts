@@ -98,7 +98,19 @@ function explain(err: unknown): void {
 
   console.error(`\nfailed: ${message}\n`);
 
-  if (/535|Username and Password not accepted|Invalid login/i.test(message)) {
+  if (/Missing credentials/i.test(message)) {
+    console.error(
+      [
+        "SMTP_PASS is empty. Everything else reached Gmail and negotiated TLS, so the",
+        "password is the only thing missing.",
+        "",
+        "It must be a Google App Password, not your account password:",
+        "  1. Turn on 2-Step Verification on the account",
+        "  2. Create one at https://myaccount.google.com/apppasswords",
+        "  3. Paste the 16 characters into SMTP_PASS with the spaces removed",
+      ].join("\n"),
+    );
+  } else if (/535|Username and Password not accepted|Invalid login/i.test(message)) {
     console.error(
       "That is an authentication rejection. For Gmail it almost always means SMTP_PASS\n" +
         "is the account password rather than an App Password, or the App Password still\n" +
