@@ -16,12 +16,14 @@ import { MAX_BYTES, RE_ENCODABLE, SHIPPED_IMAGE } from "./asset-budget";
  *
  * In place and keeping each file's format, so no import path has to move; the originals
  * stay in git history, which is the backup that counts. Keeping the format has one limit
- * worth knowing before you drop a file in here: PNG is lossless, so a photograph saved as
- * one cannot be squeezed to a sane weight. The two that arrived that way were converted
- * to JPEG by hand in the commit that added this script, because quantising them far
- * enough to fit posterised the grass into flat green blocks. This script will not do that
- * conversion for you — renaming a file out from under an import fails at build time
- * rather than where the mistake was made — but it does say so when it meets the case.
+ * worth knowing before you drop a file in here: the only real lever PNG has is quantising
+ * to a 256-colour palette, which `encode` does use — it is what took max_t100_robot.png
+ * from 886 KB to 174 KB. That works on flat art and fails on photographs. The two photos
+ * that arrived as PNGs were converted to JPEG by hand in the commit that added this
+ * script, because quantising them far enough to fit posterised the grass into flat green
+ * blocks. This script will not do that conversion for you — renaming a file out from
+ * under an import fails at build time rather than where the mistake was made — but it
+ * does say so when it meets the case.
  *
  * Safe to run repeatedly, which takes two rules and not one. A file already under budget
  * is never opened. A file over it is written back only if the re-encode is at least a

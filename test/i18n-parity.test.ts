@@ -9,9 +9,24 @@ import { ar } from "../client/src/i18n/ar";
  *
  * Compares key sets rather than counts: two dictionaries can hold 283 keys each and
  * still disagree about which 283.
+ *
+ * Arrays are descended into and indexed, which is not a detail. This guard used to treat
+ * an array as a single opaque leaf, so home.capabilities (5 entries), home.environments
+ * (3), home.phases (3) and services.items (4) each counted as ONE key and their contents
+ * were never compared — most of the marketing copy. Dropping the last phase from ar.ts,
+ * halving services.items, blanking a capability, or deleting a key from inside a phase
+ * all left this green.
+ *
+ * Indexing also makes a length mismatch surface as a missing key rather than passing
+ * silently, and that is the case with teeth: Home.tsx aligns ENV_IMAGES with
+ * dict.home.environments BY INDEX, so one dropped element in one language slides every
+ * image after it onto the wrong section.
  */
 function flatten(value: unknown, prefix = ""): string[] {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return [prefix];
+  if (Array.isArray(value)) {
+    return value.flatMap((child, i) => flatten(child, prefix ? `${prefix}.${i}` : String(i)));
+  }
+  if (value === null || typeof value !== "object") return [prefix];
   return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
     flatten(child, prefix ? `${prefix}.${key}` : key),
   );
@@ -71,14 +86,30 @@ describe("i18n dictionaries", () => {
     ]);
     const offenders: string[] = [];
 
+    /*
+      Object.keys covers array indices too, so this already descended into arrays — but
+      only as far as the Arabic side went. Where ar.ts held a shorter array or was missing
+      a branch entirely, the recursion hit `undefined` and returned without a word, so a
+      whole sub-tree quietly stopped being checked. A shape that does not line up is now
+      an offender in its own right: the key-set test above should catch it first, and if
+      it somehow does not, this failing loudly beats it passing quietly.
+    */
     const walk = (enNode: unknown, arNode: unknown, path: string) => {
-      if (typeof enNode === "string" && typeof arNode === "string") {
+      if (typeof enNode === "string") {
+        if (typeof arNode !== "string") {
+          offenders.push(`${path}: no Arabic value (found ${arNode === undefined ? "nothing" : typeof arNode})`);
+          return;
+        }
         const looksUntranslated =
           enNode === arNode && !HAS_ARABIC.test(arNode) && !ALLOWED.has(arNode);
         if (looksUntranslated) offenders.push(`${path}: "${enNode}"`);
         return;
       }
-      if (enNode && arNode && typeof enNode === "object" && typeof arNode === "object") {
+      if (enNode && typeof enNode === "object") {
+        if (!arNode || typeof arNode !== "object") {
+          offenders.push(`${path}: no Arabic branch (found ${arNode === undefined ? "nothing" : typeof arNode})`);
+          return;
+        }
         for (const key of Object.keys(enNode as object)) {
           walk(
             (enNode as Record<string, unknown>)[key],
@@ -91,5 +122,29 @@ describe("i18n dictionaries", () => {
 
     walk(en, ar, "");
     expect(offenders).toEqual([]);
+  });
+
+  it("has no blank string in either dictionary", () => {
+    /*
+      The one way to break an array entry that indexing the keys does not catch: leave
+      the shape intact and empty the strings inside it. The key sets still match, and the
+      untranslated check compares en to ar, so "" against real English copy looks like a
+      translation. On the page it renders as a card with a heading and no words in it.
+    */
+    const blanks: string[] = [];
+    const collect = (node: unknown, path: string, lang: string) => {
+      if (typeof node === "string") {
+        if (node.trim() === "") blanks.push(`${lang}.${path}`);
+        return;
+      }
+      if (node && typeof node === "object") {
+        for (const key of Object.keys(node as object)) {
+          collect((node as Record<string, unknown>)[key], path ? `${path}.${key}` : key, lang);
+        }
+      }
+    };
+    collect(en, "", "en");
+    collect(ar, "", "ar");
+    expect(blanks).toEqual([]);
   });
 });
