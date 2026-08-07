@@ -40,6 +40,62 @@ export function generateToken(): { token: string; tokenHash: string } {
 }
 
 /**
+ * Providers where `user+anything@` is documented to reach `user@`.
+ *
+ * Kept to a list rather than applied everywhere, because `+` is a legal character in a
+ * local part and some hosts treat it literally. Merging two genuinely separate people
+ * is a worse failure than letting one extra alias through.
+ */
+const PLUS_ALIAS_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "icloud.com",
+  "me.com",
+  "protonmail.com",
+  "proton.me",
+  "fastmail.com",
+]);
+
+/** Domains that also ignore dots in the local part. Effectively Google's. */
+const DOT_INSENSITIVE_DOMAINS = new Set(["gmail.com", "googlemail.com"]);
+
+/**
+ * One inbox, one identity.
+ *
+ * Lowercasing alone is not enough to stop one person holding many accounts: Gmail
+ * ignores dots and everything after a `+`, so abdullahkh250@, abdullah.kh250@ and
+ * abdullahkh250+farm@ are three registrations that all land in the same mailbox. Each
+ * would receive its own verification code, verify cleanly, and carry its own allowance
+ * under the per-account booking limit — which is how a three-a-day cap becomes fifteen.
+ *
+ * This is the value the uniqueness check runs against. The address the customer typed is
+ * still what gets stored and written to, because that is the one they recognise on an
+ * envelope; only the comparison is normalised.
+ *
+ * googlemail.com folds into gmail.com — Google's own alias for the same mailbox.
+ */
+export function canonicalEmail(raw: string): string {
+  const trimmed = raw.trim().toLowerCase();
+  const at = trimmed.lastIndexOf("@");
+  if (at <= 0) return trimmed; // not an address shape; nothing to canonicalise
+
+  let local = trimmed.slice(0, at);
+  const domain = trimmed.slice(at + 1);
+
+  if (PLUS_ALIAS_DOMAINS.has(domain)) local = local.split("+")[0];
+  if (DOT_INSENSITIVE_DOMAINS.has(domain)) local = local.replaceAll(".", "");
+
+  // An address that is nothing but a +suffix would canonicalise to an empty local part,
+  // which is not an address at all. Fall back rather than invent one.
+  if (!local) return trimmed;
+
+  return `${local}@${domain === "googlemail.com" ? "gmail.com" : domain}`;
+}
+
+/**
  * Mint a 6-digit email verification code and its storage hash.
  *
  * `randomInt` rather than `randomBytes(...) % 1_000_000`: the modulo of a byte range

@@ -13,6 +13,7 @@ import {
   verifyPassword,
   toPublicUser,
   issueToken,
+  canonicalEmail,
   generateToken,
   generateVerificationCode,
   MAX_VERIFY_ATTEMPTS,
@@ -23,6 +24,7 @@ import {
 import {
   createUser,
   getUserByEmail,
+  getUserByCanonicalEmail,
   getUserById,
   updateUserName,
   updateUserPassword,
@@ -47,6 +49,16 @@ import { log } from "../../lib/log";
 // Outside production we return the raw token in the JSON response so integration
 // tests (and local manual testing) can complete the flow without a real inbox.
 const EXPOSE_DEV_TOKEN = process.env.NODE_ENV !== "production";
+
+/**
+ * Said the same way whether the duplicate is caught by the lookup or by the index.
+ *
+ * Names the remedy rather than only the problem: someone typing an alias of an address
+ * they already registered has no reason to connect "already exists" with the dots they
+ * added, so the message asks for a different address outright.
+ */
+const DUPLICATE_EMAIL_MESSAGE =
+  "An account already uses this email address. Please sign in instead, or register with a different email.";
 
 /**
  * Absolute app origin for building emailed links.
@@ -92,9 +104,21 @@ const authLimiter = rateLimit({
 authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
   try {
     const input = api.auth.register.input.parse(req.body);
-    const existing = await getUserByEmail(input.email);
+
+    /*
+      Matched on the canonical form, not the literal address, so one mailbox cannot hold
+      several accounts. Gmail ignores dots and anything after a `+`, and a plain
+      uniqueness check let abdullahkh250@, abdullah.kh250@ and abdullahkh250+farm@ all
+      register — three accounts, one inbox, three verification codes that all arrive, and
+      three separate allowances under a booking limit meant to be per person.
+
+      The 409 is a courtesy, not the guarantee: check-then-insert is a race, and the
+      unique index on email_canonical (migration 0011) is what actually holds. The catch
+      below turns that constraint into the same answer rather than a 500.
+    */
+    const existing = await getUserByCanonicalEmail(canonicalEmail(input.email));
     if (existing) {
-      return res.status(409).json({ message: "An account with that email already exists.", field: "email" });
+      return res.status(409).json({ message: DUPLICATE_EMAIL_MESSAGE, field: "email" });
     }
     const passwordHash = await hashPassword(input.password);
     const user = await createUser({ name: input.name, email: input.email, passwordHash, locale: input.locale });
@@ -111,6 +135,14 @@ authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
     });
   } catch (err) {
     if (handleZodError(err, res)) return;
+    /*
+      Two people registering the same mailbox in the same instant both pass the check
+      above and one loses at the index. Postgres 23505 is unique_violation; without this
+      the loser gets a 500 for what is really the ordinary "already taken" answer.
+    */
+    if ((err as { code?: string })?.code === "23505") {
+      return res.status(409).json({ message: DUPLICATE_EMAIL_MESSAGE, field: "email" });
+    }
     next(err);
   }
 });

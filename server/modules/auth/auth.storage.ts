@@ -8,6 +8,7 @@ import {
   type AuthTokenKind,
 } from "@shared/schema";
 import { db } from "../../lib/db";
+import { canonicalEmail } from "./auth.service";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
 
 /**
@@ -29,6 +30,7 @@ export async function createUser(input: {
     .values({
       name: input.name,
       email: input.email.toLowerCase(),
+      emailCanonical: canonicalEmail(input.email),
       passwordHash: input.passwordHash,
       // Left out entirely when undefined, so the column default ("en") applies rather
       // than an explicit null hitting a NOT NULL column.
@@ -45,6 +47,19 @@ export async function getUserById(id: number): Promise<User | undefined> {
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
+  return user;
+}
+
+/**
+ * The account that owns this mailbox, whatever alias form was typed.
+ *
+ * Used by registration to reject a second account on an inbox that already has one.
+ * Sign-in deliberately still matches on `email` exactly: someone who registered as
+ * first.last@gmail.com expects to sign in with that, and letting any alias through
+ * would quietly widen what counts as their username.
+ */
+export async function getUserByCanonicalEmail(canonical: string): Promise<User | undefined> {
+  const [user] = await db.select().from(users).where(eq(users.emailCanonical, canonical));
   return user;
 }
 

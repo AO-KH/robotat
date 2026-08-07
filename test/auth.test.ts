@@ -77,3 +77,55 @@ describe("auth", () => {
     expect((await agent.get("/api/auth/me")).status).toBe(401);
   });
 });
+
+describe("registration — one mailbox, one account", () => {
+  it("refuses an alias of an address that is already registered", async () => {
+    await request(app).post("/api/auth/register").send(newUser({ email: "farmer@gmail.com" }));
+
+    // Gmail ignores dots and anything after a "+", so each of these reaches the mailbox
+    // that already has an account. Letting them through would also hand each one its own
+    // allowance under the per-account booking limit.
+    for (const alias of [
+      "farmer@gmail.com",
+      "FARMER@Gmail.com",
+      "far.mer@gmail.com",
+      "farmer+spring@gmail.com",
+      "f.a.r.m.e.r+anything@googlemail.com",
+    ]) {
+      const res = await request(app).post("/api/auth/register").send(newUser({ email: alias }));
+      expect(res.status).toBe(409);
+      expect(res.body.field).toBe("email");
+      // Says what to do about it, not just that it went wrong.
+      expect(res.body.message).toMatch(/different email/i);
+    }
+  });
+
+  it("still allows genuinely different addresses on the same provider", async () => {
+    await request(app).post("/api/auth/register").send(newUser({ email: "one@gmail.com" }));
+    const other = await request(app).post("/api/auth/register").send(newUser({ email: "two@gmail.com" }));
+    expect(other.status).toBe(201);
+  });
+
+  it("does not merge dotted addresses outside Google", async () => {
+    // first.last@ and firstlast@ are two different people on most hosts.
+    await request(app).post("/api/auth/register").send(newUser({ email: "first.last@nasl-tech.com" }));
+    const second = await request(app).post("/api/auth/register").send(newUser({ email: "firstlast@nasl-tech.com" }));
+    expect(second.status).toBe(201);
+  });
+
+  it("stores the address as typed, and signs in with that form", async () => {
+    // The canonical value is for comparison only; the customer still sees, and uses,
+    // the address they gave.
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "Dotted.User@gmail.com", password: "password123" }));
+
+    const me = await agent.get("/api/auth/me");
+    expect(me.body.email).toBe("dotted.user@gmail.com");
+
+    const fresh = request.agent(app);
+    const login = await fresh
+      .post("/api/auth/login")
+      .send({ email: "dotted.user@gmail.com", password: "password123" });
+    expect(login.status).toBe(200);
+  });
+});

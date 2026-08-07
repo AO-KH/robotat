@@ -12,6 +12,12 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  /**
+   * The address with provider-specific aliasing stripped — see canonicalEmail().
+   * Uniquely indexed, so one mailbox cannot hold several accounts. `email` keeps
+   * whatever the customer typed, because that is what they recognise.
+   */
+  emailCanonical: text("email_canonical").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("customer"),
   // Null until the user confirms their email via a verification link.

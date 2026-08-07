@@ -410,7 +410,8 @@ export const en = {
       createdTitle: "Account created",
       createdBody: "Your account was created, but signing in failed. Please sign in.",
       failedTitle: "Sign up failed",
-      emailTaken: "An account with that email already exists.",
+      emailTaken:
+        "An account already uses this email address. Sign in instead, or register with a different email.",
     },
     login: {
       successTitle: "Signed in",
