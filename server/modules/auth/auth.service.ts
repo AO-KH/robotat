@@ -3,7 +3,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { scrypt, randomBytes, timingSafeEqual, createHash, createHmac } from "crypto";
+import { scrypt, randomBytes, randomInt, timingSafeEqual, createHash, createHmac } from "crypto";
 import { promisify } from "util";
 import { pool } from "../../lib/db";
 import { env } from "../../lib/env";
@@ -39,9 +39,43 @@ export function generateToken(): { token: string; tokenHash: string } {
   return { token, tokenHash: hashToken(token) };
 }
 
+/**
+ * Mint a 6-digit email verification code and its storage hash.
+ *
+ * `randomInt` rather than `randomBytes(...) % 1_000_000`: the modulo of a byte range
+ * that is not a multiple of a million is biased toward the low codes, and a code space
+ * this small cannot afford to hand out some values more often than others. `randomInt`
+ * rejects and re-draws instead.
+ *
+ * Padded, so 42 is "000042" and every code is six characters — a five-character code in
+ * a six-box input is the kind of thing that gets reported as "the code doesn't work".
+ */
+export function generateVerificationCode(): { code: string; tokenHash: string } {
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  return { code, tokenHash: hashToken(code) };
+}
+
 /** Token lifetimes. */
 export const PASSWORD_RESET_TTL_MS = 1000 * 60 * 60; // 1 hour
-export const EMAIL_VERIFY_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+
+/**
+ * Fifteen minutes, where the emailed link had twenty-four hours.
+ *
+ * A 32-byte token is unguessable for as long as you care to leave it valid. A 6-digit
+ * code is one of a million, so its lifetime is part of its strength: the window in which
+ * guesses can be made is exactly this long, and it is also roughly how long someone will
+ * sit with the signup screen open before giving up and asking for a new one.
+ */
+export const EMAIL_VERIFY_TTL_MS = 1000 * 60 * 15;
+
+/**
+ * Wrong guesses allowed against one verification code before it is burned.
+ *
+ * Five is enough to survive a genuine typo or two and nowhere near enough to search a
+ * million codes. Combined with the fifteen-minute window and the code only ever being
+ * checked against the signed-in user's own token, guessing is not a practical attack.
+ */
+export const MAX_VERIFY_ATTEMPTS = 5;
 
 /* ============================================================
  * Bearer tokens — stateless auth for the native app / API clients.

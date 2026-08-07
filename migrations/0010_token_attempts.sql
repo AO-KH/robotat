@@ -1,0 +1,16 @@
+-- Count wrong guesses against a token, so a short code can be a short code.
+--
+-- Email verification moves from a 32-byte random token in a link to a 6-digit code the
+-- customer types. That is the right shape for a phone — a link sends them out to Mail,
+-- then Safari, then back, and inside the iOS app it needs universal-link handling just
+-- to return — but it changes the security problem entirely.
+--
+-- A 32-byte token has 2^256 possibilities and needs no rate limiting to be unguessable.
+-- A 6-digit code has 1,000,000, and the old 24-hour lifetime with unlimited attempts
+-- would let anyone walk the whole space against a known address. Three things carry the
+-- difference: the code is only ever checked against the signed-in user's own token, the
+-- lifetime drops to 15 minutes, and this column ends it after a handful of wrong guesses.
+--
+-- Counted per token rather than per IP: an attacker changes IP for free, and the thing
+-- worth protecting is one specific account's code.
+ALTER TABLE "auth_tokens" ADD COLUMN "attempts" integer DEFAULT 0 NOT NULL;

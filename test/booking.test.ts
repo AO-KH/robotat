@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
 import { DAILY_ASSESSMENT_LIMIT } from "@shared/schema";
-import { getApp, resetDb, closeDb, newUser, ageAllAssessments } from "./helpers";
+import { getApp, resetDb, closeDb, newUser, ageAllAssessments, verifyUser } from "./helpers";
 
 let app: Express;
 
@@ -46,6 +46,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
   it("creates a booking tied to the user and lists it back", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser());
+    await verifyUser("test.user@example.com");
 
     const created = await agent.post("/api/assessments").send({
       name: "Test User",
@@ -72,9 +73,39 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     expect(list.body[0].company).toBe("Green Fields");
   });
 
+  it("refuses to book until the email address is confirmed", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "unconfirmed@example.com" }));
+
+    const blocked = await agent
+      .post("/api/assessments")
+      .send({ name: "Unconfirmed", email: "unconfirmed@example.com" });
+    expect(blocked.status).toBe(403);
+    expect(blocked.body.field).toBe("emailVerified");
+
+    // Signing in and reading stay open — only the booking is held back.
+    expect((await agent.get("/api/auth/me")).status).toBe(200);
+    expect((await agent.get("/api/assessments")).status).toBe(200);
+
+    // And nothing was written.
+    expect((await agent.get("/api/assessments")).body).toHaveLength(0);
+  });
+
+  it("lets the same account book the moment it confirms", async () => {
+    // The route re-reads the user rather than trusting the session copy, so confirming
+    // on another device works without signing out and back in here.
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "later@example.com" }));
+    expect((await agent.post("/api/assessments").send({ name: "Layla", email: "later@example.com" })).status).toBe(403);
+
+    await verifyUser("later@example.com");
+    expect((await agent.post("/api/assessments").send({ name: "Layla", email: "later@example.com" })).status).toBe(201);
+  });
+
   it("records the language the booking was made in", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ email: "sara@example.com" }));
+    await verifyUser("sara@example.com");
     const created = await agent
       .post("/api/assessments")
       .send({ name: "سارة", email: "sara@example.com", locale: "ar" });
@@ -89,6 +120,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     // moment they booked.
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ email: "ar.user@example.com", locale: "ar" }));
+    await verifyUser("ar.user@example.com");
     const created = await agent
       .post("/api/assessments")
       .send({ name: "سارة", email: "ar.user@example.com" });
@@ -100,6 +132,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
   it("rejects a language it cannot write, rather than storing it", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ email: "fr@example.com" }));
+    await verifyUser("fr@example.com");
     const created = await agent
       .post("/api/assessments")
       .send({ name: "Luc", email: "fr@example.com", locale: "fr" });
@@ -113,6 +146,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
   it(`allows exactly ${DAILY_ASSESSMENT_LIMIT} bookings, then refuses with 429`, async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ email: "busy@example.com" }));
+    await verifyUser("busy@example.com");
 
     for (let i = 0; i < DAILY_ASSESSMENT_LIMIT; i++) {
       const ok = await agent.post("/api/assessments").send({ name: "Busy", email: "busy@example.com" });
@@ -134,6 +168,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     // write — the exact race this fires eight at once to catch.
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ email: "racer@example.com" }));
+    await verifyUser("racer@example.com");
 
     const results = await Promise.all(
       Array.from({ length: 8 }, () =>
@@ -156,6 +191,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     // that counts per IP, and in this test both accounts share one.
     const alice = request.agent(app);
     await alice.post("/api/auth/register").send(newUser({ email: "alice@example.com" }));
+    await verifyUser("alice@example.com");
     for (let i = 0; i < DAILY_ASSESSMENT_LIMIT; i++) {
       await alice.post("/api/assessments").send({ name: "Alice", email: "alice@example.com" });
     }
@@ -163,6 +199,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
 
     const bob = request.agent(app);
     await bob.post("/api/auth/register").send(newUser({ email: "bob2@example.com" }));
+    await verifyUser("bob2@example.com");
     const bobFirst = await bob.post("/api/assessments").send({ name: "Bob", email: "bob2@example.com" });
     expect(bobFirst.status).toBe(201);
   });
@@ -170,6 +207,7 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
   it("ignores bookings that have aged out of the window", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ email: "returning@example.com" }));
+    await verifyUser("returning@example.com");
     for (let i = 0; i < DAILY_ASSESSMENT_LIMIT; i++) {
       await agent.post("/api/assessments").send({ name: "Returning", email: "returning@example.com" });
     }
@@ -186,10 +224,12 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
   it("only lists the signed-in user's own bookings", async () => {
     const alice = request.agent(app);
     await alice.post("/api/auth/register").send(newUser({ email: "alice@example.com" }));
+    await verifyUser("alice@example.com");
     await alice.post("/api/assessments").send({ name: "Alice", email: "alice@example.com" });
 
     const bob = request.agent(app);
     await bob.post("/api/auth/register").send(newUser({ email: "bob@example.com" }));
+    await verifyUser("bob@example.com");
 
     const bobList = await bob.get("/api/assessments");
     expect(bobList.status).toBe(200);

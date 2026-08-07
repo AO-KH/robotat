@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { getApp, resetDb, closeDb, newUser, makeStaff } from "./helpers";
+import { getApp, resetDb, closeDb, newUser, makeStaff, verifyUser } from "./helpers";
 
 let app: Express;
 
@@ -19,6 +19,7 @@ afterAll(async () => {
 async function customerWithBooking(email: string) {
   const agent = request.agent(app);
   await agent.post("/api/auth/register").send(newUser({ email }));
+  await verifyUser(email);
   const res = await agent.post("/api/assessments").send({ name: "Customer", email });
   return { agent, assessmentId: res.body.assessment.id as number };
 }
@@ -27,6 +28,7 @@ async function customerWithBooking(email: string) {
 async function staffAgent(email = "staff@example.com") {
   const agent = request.agent(app);
   await agent.post("/api/auth/register").send(newUser({ email }));
+  await verifyUser(email);
   await makeStaff(email); // deserializeUser reloads the row, so the next request is staff
   return agent;
 }
@@ -108,6 +110,7 @@ describe("admin — user list", () => {
   it("counts each account's bookings, and lists accounts that have none", async () => {
     const buyer = request.agent(app);
     await buyer.post("/api/auth/register").send(newUser({ email: "buyer@example.com" }));
+    await verifyUser("buyer@example.com");
     await buyer.post("/api/assessments").send({ name: "Buyer", email: "buyer@example.com" });
     await buyer.post("/api/assessments").send({ name: "Buyer", email: "buyer@example.com" });
 
@@ -115,6 +118,7 @@ describe("admin — user list", () => {
     // would silently drop.
     const lurker = request.agent(app);
     await lurker.post("/api/auth/register").send(newUser({ email: "lurker@example.com" }));
+    await verifyUser("lurker@example.com");
 
     const staff = await staffAgent();
     const res = await staff.get("/api/admin/users");
@@ -132,7 +136,8 @@ describe("admin — user list", () => {
     const res = await staff.get("/api/admin/users");
     const row = res.body.find((u: { email: string }) => u.email === "ar.user@example.com");
 
-    expect(row).toMatchObject({ role: "customer", emailVerified: false, locale: "en" });
+    // customerWithBooking confirms the address, because booking now requires it.
+    expect(row).toMatchObject({ role: "customer", emailVerified: true, locale: "en" });
     expect(typeof row.name).toBe("string");
     expect(row.createdAt).toBeTruthy();
   });

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import type { Request } from "express";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
@@ -13,6 +14,8 @@ import {
   toPublicUser,
   issueToken,
   generateToken,
+  generateVerificationCode,
+  MAX_VERIFY_ATTEMPTS,
   hashToken,
   PASSWORD_RESET_TTL_MS,
   EMAIL_VERIFY_TTL_MS,
@@ -28,6 +31,8 @@ import {
   markEmailVerified,
   createAuthToken,
   getValidAuthToken,
+  getLiveVerificationToken,
+  recordFailedAttempt,
   markAuthTokenUsed,
   invalidateUserTokens,
 } from "./auth.storage";
@@ -57,19 +62,18 @@ function appOrigin(req: Request): string {
 }
 
 /** Mint + store a verification token for a user and email them the link. Best-effort. */
-async function sendEmailVerification(req: Request, user: User): Promise<string> {
+async function sendEmailVerification(user: User): Promise<string> {
   await invalidateUserTokens(user.id, "email_verification");
-  const { token, tokenHash } = generateToken();
+  const { code, tokenHash } = generateVerificationCode();
   await createAuthToken({
     userId: user.id,
     kind: "email_verification",
     tokenHash,
     expiresAt: new Date(Date.now() + EMAIL_VERIFY_TTL_MS),
   });
-  const link = `${appOrigin(req)}/verify-email?token=${token}`;
-  const { subject, body } = emailVerificationMessage(user.name, link, user.locale);
+  const { subject, body } = emailVerificationMessage(user.name, code, user.locale);
   await sendUserEmail(user.email, subject, body);
-  return token;
+  return code;
 }
 
 export const authRoutes = Router();
@@ -96,7 +100,7 @@ authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
     const user = await createUser({ name: input.name, email: input.email, passwordHash, locale: input.locale });
 
     // Fire off the verification email (best-effort — never block/fault signup).
-    sendEmailVerification(req, user).catch((err) =>
+    sendEmailVerification(user).catch((err) =>
       log(`verification email failed for ${user.email}: ${String(err)}`, "auth"),
     );
 
@@ -306,18 +310,61 @@ authRoutes.post(api.auth.resetPassword.path, authLimiter, async (req, res, next)
   }
 });
 
-// POST /api/auth/verify-email — redeem a verification token. Returns the updated user.
-authRoutes.post(api.auth.verifyEmail.path, async (req, res, next) => {
+/*
+  POST /api/auth/verify-email — redeem the 6-digit code. Returns the updated user.
+
+  Behind requireAuth, which is load-bearing rather than convenience. A 6-digit code is
+  not unique: at any moment several accounts hold the same one, so looking a code up by
+  its hash the way the password-reset token does would hand whoever typed "000042" a
+  stranger's account. The code is only ever compared against the signed-in user's own
+  live token, which also means an attacker must hold a session for the account they are
+  guessing at before guessing is even possible.
+*/
+authRoutes.post(api.auth.verifyEmail.path, requireAuth, async (req, res, next) => {
   try {
     const input = api.auth.verifyEmail.input.parse(req.body);
-    const token = await getValidAuthToken("email_verification", hashToken(input.token));
+    const sessionUser = req.user as User;
+
+    // Re-read: the session copy can predate a verification done on another device.
+    const user = await getUserById(sessionUser.id);
+    if (!user) return res.status(401).json({ message: "Not signed in" });
+    if (user.emailVerifiedAt) return res.status(200).json(toPublicUser(user));
+
+    const token = await getLiveVerificationToken(user.id);
     if (!token) {
-      return res.status(400).json({ message: "This verification link is invalid or has expired.", field: "token" });
+      return res.status(400).json({ message: "That code has expired. Ask for a new one.", field: "code" });
     }
 
-    const user = await markEmailVerified(token.userId);
+    if (token.attempts >= MAX_VERIFY_ATTEMPTS) {
+      await markAuthTokenUsed(token.id);
+      return res.status(429).json({ message: "Too many incorrect codes. Ask for a new one." });
+    }
+
+    /*
+      timingSafeEqual over ===, on the hashes rather than the codes.
+
+      Comparing hashes means both sides are always 64 characters, so the lengths match
+      and the comparison cannot throw on a short input. Comparing raw codes would leak
+      length through the exception and content through the early exit of ===. The margin
+      a timing attack buys against six digits is small, but it costs one function call.
+    */
+    const supplied = Buffer.from(hashToken(input.code), "hex");
+    const expected = Buffer.from(token.tokenHash, "hex");
+    const ok = supplied.length === expected.length && timingSafeEqual(supplied, expected);
+
+    if (!ok) {
+      const attempts = await recordFailedAttempt(token.id);
+      const remaining = Math.max(MAX_VERIFY_ATTEMPTS - attempts, 0);
+      if (remaining === 0) {
+        await markAuthTokenUsed(token.id);
+        return res.status(429).json({ message: "Too many incorrect codes. Ask for a new one." });
+      }
+      return res.status(400).json({ message: "That code is not right.", field: "code" });
+    }
+
+    const verified = await markEmailVerified(token.userId);
     await markAuthTokenUsed(token.id);
-    res.status(200).json(toPublicUser(user));
+    res.status(200).json(toPublicUser(verified));
   } catch (err) {
     if (handleZodError(err, res)) return;
     next(err);
@@ -333,8 +380,8 @@ authRoutes.post(api.auth.resendVerification.path, requireAuth, authLimiter, asyn
     if (user.emailVerifiedAt) {
       return res.status(200).json({ ok: true, alreadyVerified: true });
     }
-    const token = await sendEmailVerification(req, user);
-    res.status(200).json({ ok: true, ...(EXPOSE_DEV_TOKEN ? { devToken: token } : {}) });
+    const code = await sendEmailVerification(user);
+    res.status(200).json({ ok: true, ...(EXPOSE_DEV_TOKEN ? { devToken: code } : {}) });
   } catch (err) {
     next(err);
   }

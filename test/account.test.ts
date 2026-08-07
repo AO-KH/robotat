@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { getApp, resetDb, closeDb, newUser } from "./helpers";
+import { getApp, resetDb, closeDb, newUser, verifyUser } from "./helpers";
 
 let app: Express;
 
@@ -19,6 +19,7 @@ describe("assessment detail (GET /api/assessments/:id)", () => {
   it("returns the owner's booking and 404s for someone else's", async () => {
     const owner = request.agent(app);
     await owner.post("/api/auth/register").send(newUser({ email: "owner@example.com" }));
+    await verifyUser("owner@example.com");
     const created = await owner.post("/api/assessments").send({ name: "Owner", email: "owner@example.com" });
     const id = created.body.assessment.id;
 
@@ -28,6 +29,7 @@ describe("assessment detail (GET /api/assessments/:id)", () => {
 
     const other = request.agent(app);
     await other.post("/api/auth/register").send(newUser({ email: "other@example.com" }));
+    await verifyUser("other@example.com");
     expect((await other.get(`/api/assessments/${id}`)).status).toBe(404); // not theirs
     expect((await request(app).get(`/api/assessments/${id}`)).status).toBe(401); // signed out
   });
@@ -37,6 +39,7 @@ describe("profile (PATCH /api/auth/profile)", () => {
   it("updates the name", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser());
+    await verifyUser("test.user@example.com");
     const res = await agent.patch("/api/auth/profile").send({ name: "New Name" });
     expect(res.status).toBe(200);
     expect(res.body.name).toBe("New Name");
@@ -52,6 +55,7 @@ describe("change password (PATCH /api/auth/password)", () => {
   it("changes the password when the current one is correct", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ password: "password123" }));
+    await verifyUser("test.user@example.com");
 
     const res = await agent
       .patch("/api/auth/password")
@@ -67,6 +71,7 @@ describe("change password (PATCH /api/auth/password)", () => {
   it("rejects a wrong current password (400) and a too-short new one (400)", async () => {
     const agent = request.agent(app);
     await agent.post("/api/auth/register").send(newUser({ password: "password123" }));
+    await verifyUser("test.user@example.com");
 
     const wrong = await agent
       .patch("/api/auth/password")

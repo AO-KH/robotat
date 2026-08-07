@@ -133,7 +133,9 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
-    // Redeem an email-verification token. Returns the updated user.
+    // Redeem the 6-digit code emailed at registration. Requires the session that asked
+    // for it: a 6-digit code is not unique across users, so it is only ever checked
+    // against the signed-in account's own code.
     verifyEmail: {
       method: "POST" as const,
       path: "/api/auth/verify-email" as const,
@@ -141,6 +143,8 @@ export const api = {
       responses: {
         200: publicUserSchema,
         400: errorSchemas.validation,
+        401: errorSchemas.unauthorized,
+        429: errorSchemas.rateLimited,
       },
     },
     // Re-send the verification email to the signed-in user.
@@ -167,6 +171,8 @@ export const api = {
         }),
         400: errorSchemas.validation,
         401: errorSchemas.unauthorized,
+        // Signed in, but the email address has not been confirmed yet.
+        403: errorSchemas.validation,
         429: errorSchemas.rateLimited,
       },
     },

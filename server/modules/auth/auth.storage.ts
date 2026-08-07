@@ -166,6 +166,47 @@ export async function getValidAuthToken(kind: AuthTokenKind, tokenHash: string):
   return token;
 }
 
+/**
+ * The live verification code for one user, whatever it is.
+ *
+ * Looked up by user rather than by code hash, which is the difference between a 6-digit
+ * code and a 32-byte token. A long token is unique enough to find on its own; a code is
+ * one of a million, so several users hold the same one at any moment and finding "the
+ * row whose hash is 000042" would redeem a stranger's. The caller compares the typed
+ * code against this row, so a code is only ever valid for the account that asked for it.
+ */
+export async function getLiveVerificationToken(userId: number): Promise<AuthToken | undefined> {
+  const [token] = await db
+    .select()
+    .from(authTokens)
+    .where(
+      and(
+        eq(authTokens.userId, userId),
+        eq(authTokens.kind, "email_verification"),
+        isNull(authTokens.usedAt),
+        gt(authTokens.expiresAt, new Date()),
+      ),
+    );
+  return token;
+}
+
+/**
+ * Count one wrong guess, and report how many have been made.
+ *
+ * Incremented in SQL and read back from the same statement rather than fetched, added to
+ * and written: two requests guessing at once would otherwise both read four, both write
+ * five, and between them get an extra attempt for free. Small, but the whole point of the
+ * counter is that it cannot be worn down.
+ */
+export async function recordFailedAttempt(id: number): Promise<number> {
+  const [row] = await db
+    .update(authTokens)
+    .set({ attempts: sql`${authTokens.attempts} + 1` })
+    .where(eq(authTokens.id, id))
+    .returning({ attempts: authTokens.attempts });
+  return row?.attempts ?? 0;
+}
+
 export async function markAuthTokenUsed(id: number): Promise<void> {
   await db.update(authTokens).set({ usedAt: new Date() }).where(eq(authTokens.id, id));
 }

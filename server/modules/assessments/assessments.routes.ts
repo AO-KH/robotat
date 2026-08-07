@@ -3,6 +3,7 @@ import { api } from "@shared/routes";
 import { DAILY_ASSESSMENT_LIMIT, type User } from "@shared/schema";
 import { handleZodError } from "../../lib/errors";
 import { requireAuth } from "../auth/auth.service";
+import { getUserById } from "../auth/auth.storage";
 import { deliverAssessment, buildWhatsappLink, buildMailtoLink } from "../../lib/notify";
 import {
   createAssessmentWithinLimit,
@@ -18,7 +19,26 @@ export const assessmentRoutes = Router();
 assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res, next) => {
   try {
     const input = api.assessments.create.input.parse(req.body);
-    const user = req.user as User;
+    const sessionUser = req.user as User;
+
+    /*
+      A booking sends an agronomist to a farm, so it is the one action worth holding back
+      until the address it will be confirmed to is known to work. Registering, signing in
+      and browsing all stay open — the gate is here rather than on the session, because
+      locking someone out of the whole app over an unread email loses the customer, while
+      losing a wasted site visit is the point.
+
+      Re-read rather than trusting `req.user`: the session copy was serialised at login
+      and would still say unverified after the customer entered their code on a phone
+      while the laptop session stayed open.
+    */
+    const user = (await getUserById(sessionUser.id)) ?? sessionUser;
+    if (!user.emailVerifiedAt) {
+      return res.status(403).json({
+        message: "Confirm your email address before booking a site assessment.",
+        field: "emailVerified",
+      });
+    }
 
     /*
       Bookings are capped per account per rolling 24 hours, and the cap is enforced in

@@ -88,33 +88,76 @@ describe("password reset", () => {
 });
 
 describe("email verification", () => {
-  it("verifies an email via a token and flips me.emailVerified", async () => {
+  /** Register and return the agent plus the 6-digit code that was emailed. */
+  async function registerAndGetCode(email = "test.user@example.com") {
     const agent = request.agent(app);
-    await agent.post("/api/auth/register").send(newUser());
-
-    // Grab a fresh verification token via resend (authed).
+    await agent.post("/api/auth/register").send(newUser({ email }));
+    // Outside production the code comes back in the response so tests need no inbox.
     const resend = await agent.post("/api/auth/resend-verification").send({});
-    expect(resend.status).toBe(200);
-    const token = resend.body.devToken as string;
-    expect(typeof token).toBe("string");
+    return { agent, code: resend.body.devToken as string };
+  }
 
-    const verify = await request(app).post("/api/auth/verify-email").send({ token });
+  it("verifies with the 6-digit code and flips me.emailVerified", async () => {
+    const { agent, code } = await registerAndGetCode();
+    expect(code).toMatch(/^\d{6}$/);
+
+    const verify = await agent.post("/api/auth/verify-email").send({ code });
     expect(verify.status).toBe(200);
     expect(verify.body.emailVerified).toBe(true);
 
     const me = await agent.get("/api/auth/me");
     expect(me.body.emailVerified).toBe(true);
+  });
 
-    // Single use: the same token can't verify again.
-    const again = await request(app).post("/api/auth/verify-email").send({ token });
-    expect(again.status).toBe(400);
+  it("accepts a code pasted with spaces in it", async () => {
+    // "123 456" is what comes out of an email when someone selects the digits.
+    const { agent, code } = await registerAndGetCode();
+    const spaced = `${code.slice(0, 3)} ${code.slice(3)}`;
+    expect((await agent.post("/api/auth/verify-email").send({ code: spaced })).status).toBe(200);
+  });
+
+  it("needs the session that asked for the code", async () => {
+    // The whole reason this endpoint is authed: six digits are not unique across
+    // accounts, so a code with no session attached could only ever be guessed at
+    // someone else's account.
+    const { code } = await registerAndGetCode();
+    expect((await request(app).post("/api/auth/verify-email").send({ code })).status).toBe(401);
+  });
+
+  it("rejects a wrong code, and burns the code after five tries", async () => {
+    const { agent, code } = await registerAndGetCode();
+    const wrong = String((Number(code) + 1) % 1_000_000).padStart(6, "0");
+
+    for (let i = 0; i < 4; i++) {
+      const res = await agent.post("/api/auth/verify-email").send({ code: wrong });
+      expect(res.status).toBe(400);
+    }
+
+    // Fifth wrong guess exhausts it...
+    expect((await agent.post("/api/auth/verify-email").send({ code: wrong })).status).toBe(429);
+    // ...and the real code is dead too, so guessing cannot be resumed by getting lucky.
+    expect((await agent.post("/api/auth/verify-email").send({ code })).status).toBe(400);
+  });
+
+  it("issues a new code on resend and retires the old one", async () => {
+    const { agent, code: first } = await registerAndGetCode();
+    const second = (await agent.post("/api/auth/resend-verification").send({})).body.devToken as string;
+
+    expect(second).not.toBe(first);
+    expect((await agent.post("/api/auth/verify-email").send({ code: first })).status).toBe(400);
+    expect((await agent.post("/api/auth/verify-email").send({ code: second })).status).toBe(200);
+  });
+
+  it("rejects anything that is not six digits", async () => {
+    const { agent } = await registerAndGetCode();
+    for (const code of ["12345", "1234567", "abcdef", ""]) {
+      expect((await agent.post("/api/auth/verify-email").send({ code })).status).toBe(400);
+    }
   });
 
   it("resend on an already-verified account reports alreadyVerified", async () => {
-    const agent = request.agent(app);
-    await agent.post("/api/auth/register").send(newUser());
-    const resend = await agent.post("/api/auth/resend-verification").send({});
-    await request(app).post("/api/auth/verify-email").send({ token: resend.body.devToken });
+    const { agent, code } = await registerAndGetCode();
+    await agent.post("/api/auth/verify-email").send({ code });
 
     const second = await agent.post("/api/auth/resend-verification").send({});
     expect(second.status).toBe(200);

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { getApp, resetDb, closeDb, newUser } from "./helpers";
+import { getApp, resetDb, closeDb, newUser, verifyUser } from "./helpers";
 import { pool } from "../server/lib/db";
 
 /**
@@ -73,6 +73,7 @@ describe("delete account (DELETE /api/auth/account)", () => {
     const agent = request.agent(app);
     const creds = newUser({ email: "fahad@sunfarms.example" });
     await agent.post("/api/auth/register").send(creds);
+    await verifyUser(creds.email);
 
     const booking = {
       name: "Fahad Al-Qahtani",

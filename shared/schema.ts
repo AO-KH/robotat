@@ -63,6 +63,9 @@ export const authTokens = pgTable("auth_tokens", {
   tokenHash: text("token_hash").notNull(), // sha256 of the raw token
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"), // null until redeemed; enforces single use
+  // Wrong guesses so far. A 6-digit verification code needs this; a 32-byte reset
+  // token does not, but sharing one table is simpler than splitting it for one column.
+  attempts: integer("attempts").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -79,8 +82,17 @@ export const resetPasswordSchema = z.object({
 });
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
+/**
+ * The 6-digit code emailed after registration.
+ *
+ * Trimmed and stripped of spaces before validating: people paste "123 456" out of an
+ * email, and rejecting that as malformed teaches them nothing about what was wrong.
+ */
 export const verifyEmailSchema = z.object({
-  token: z.string().min(1, "Verification token is required"),
+  code: z
+    .string()
+    .transform((v) => v.replace(/\s/g, ""))
+    .pipe(z.string().regex(/^\d{6}$/, "Enter the 6-digit code from your email")),
 });
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 

@@ -335,11 +335,13 @@ const ACCOUNT = {
         `Open the link below to choose a new one — it expires in 1 hour:\n\n${link}\n\n` +
         `If you didn't request this, you can safely ignore this email.${SIGN.en}`,
     }),
-    verify: (name: string, link: string): Message => ({
-      subject: "Confirm your ROBOTAT email",
+    verify: (name: string, code: string): Message => ({
+      // The code is in the subject as well as the body: on a phone that often makes it
+      // readable straight from the notification, without opening the message at all.
+      subject: `${code} is your ROBOTAT confirmation code`,
       body:
-        `Hi ${name},\n\nWelcome to ROBOTAT! Please confirm your email address by opening ` +
-        `the link below (valid for 24 hours):\n\n${link}\n\n` +
+        `Hi ${name},\n\nWelcome to ROBOTAT! Your confirmation code is:\n\n${code}\n\n` +
+        `Enter it in the app to finish setting up your account. It expires in 15 minutes.\n\n` +
         `If you didn't create an account, you can ignore this email.${SIGN.en}`,
     }),
   },
@@ -351,11 +353,11 @@ const ACCOUNT = {
         `افتح الرابط أدناه لاختيار كلمة مرور جديدة — تنتهي صلاحيته خلال ساعة واحدة:\n\n${link}\n\n` +
         `إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة بأمان.${SIGN.ar}`,
     }),
-    verify: (name: string, link: string): Message => ({
-      subject: "تأكيد بريدك الإلكتروني في ROBOTAT",
+    verify: (name: string, code: string): Message => ({
+      subject: `${code} هو رمز التأكيد الخاص بك في ROBOTAT`,
       body:
-        `مرحباً ${name}،\n\nأهلاً بك في ROBOTAT! يُرجى تأكيد بريدك الإلكتروني بفتح ` +
-        `الرابط أدناه (صالح لمدة 24 ساعة):\n\n${link}\n\n` +
+        `مرحباً ${name}،\n\nأهلاً بك في ROBOTAT! رمز التأكيد الخاص بك هو:\n\n${code}\n\n` +
+        `أدخله في التطبيق لإكمال إعداد حسابك. تنتهي صلاحيته خلال 15 دقيقة.\n\n` +
         `إذا لم تُنشئ حساباً، يمكنك تجاهل هذه الرسالة.${SIGN.ar}`,
     }),
   },
@@ -366,7 +368,7 @@ export function passwordResetMessage(name: string, link: string, locale?: string
   return ACCOUNT[resolveLocale(locale)].reset(name, link);
 }
 
-/** Email-verification body. Pure/testable. */
-export function emailVerificationMessage(name: string, link: string, locale?: string | null): Message {
-  return ACCOUNT[resolveLocale(locale)].verify(name, link);
+/** Email-verification body carrying the 6-digit code. Pure/testable. */
+export function emailVerificationMessage(name: string, code: string, locale?: string | null): Message {
+  return ACCOUNT[resolveLocale(locale)].verify(name, code);
 }
