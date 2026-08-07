@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Assessment, AssessmentStatus, UpdateAssessmentInput, AnalyticsSummary } from "@shared/schema";
+import type {
+  AdminUserSummary,
+  Assessment,
+  AssessmentStatus,
+  UpdateAssessmentInput,
+  AnalyticsSummary,
+} from "@shared/schema";
 import { useCurrentUser } from "@/features/auth/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
@@ -32,6 +38,20 @@ export function useAllAssessments(status?: AssessmentStatus) {
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load assessments");
       return (await res.json()) as Assessment[];
+    },
+  });
+}
+
+/** Every registered account with its booking count (staff only). */
+export function useAdminUsers() {
+  const isStaff = useIsStaff();
+  return useQuery<AdminUserSummary[]>({
+    queryKey: ["/api/admin/users"],
+    enabled: isStaff,
+    queryFn: async () => {
+      const res = await fetch("/api/admin/users", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load users");
+      return (await res.json()) as AdminUserSummary[];
     },
   });
 }

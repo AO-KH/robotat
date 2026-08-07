@@ -1,6 +1,51 @@
-import { assessments, type Assessment, type AssessmentStatus } from "@shared/schema";
+import {
+  assessments,
+  users,
+  type AdminUserSummary,
+  type Assessment,
+  type AssessmentStatus,
+} from "@shared/schema";
 import { db } from "../../lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count, max } from "drizzle-orm";
+
+/**
+ * Every registered account, newest first, with how much each has booked.
+ *
+ * The column list is written out rather than using `db.select()` on the table, and that
+ * is the security property of this function, not a style preference: a bare select
+ * returns every column, and one of them is `password_hash`. Naming the columns means a
+ * future column is absent until somebody deliberately adds it here, instead of being
+ * published to the admin screen — and onwards to anything with a staff session — the
+ * moment it is created.
+ *
+ * A left join keeps accounts that have never booked, which are exactly the ones worth
+ * seeing: someone who registered and then did not go through with it.
+ */
+export async function listUsersWithBookingCounts(): Promise<AdminUserSummary[]> {
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      createdAt: users.createdAt,
+      emailVerifiedAt: users.emailVerifiedAt,
+      locale: users.locale,
+      // count() over the joined column, not over the row: a left join with no match
+      // yields one row of nulls, which counts as 1 if you count the row itself.
+      bookingCount: count(assessments.id),
+      lastBookingAt: max(assessments.createdAt),
+    })
+    .from(users)
+    .leftJoin(assessments, eq(assessments.userId, users.id))
+    .groupBy(users.id)
+    .orderBy(desc(users.createdAt));
+
+  return rows.map(({ emailVerifiedAt, ...row }) => ({
+    ...row,
+    emailVerified: emailVerifiedAt != null,
+  }));
+}
 
 /** Every booking (optionally filtered by status), newest first. */
 export async function listAllAssessments(status?: AssessmentStatus): Promise<Assessment[]> {

@@ -16,6 +16,7 @@ import {
   registerPushTokenSchema,
   unregisterPushTokenSchema,
   type PublicUser,
+  type AdminUserSummary,
   type Assessment,
   type AnalyticsSummary,
   type Product,
@@ -210,6 +211,16 @@ export const api = {
         401: errorSchemas.unauthorized,
         403: errorSchemas.unauthorized,
         404: errorSchemas.notFound,
+      },
+    },
+    // Staff-only. Every registered account, with how much each has booked.
+    listUsers: {
+      method: "GET" as const,
+      path: "/api/admin/users" as const,
+      responses: {
+        200: z.array(z.custom<AdminUserSummary>()),
+        401: errorSchemas.unauthorized,
+        403: errorSchemas.unauthorized,
       },
     },
     // Staff-only. Aggregate analytics (page views, unique visitors, booking funnel).

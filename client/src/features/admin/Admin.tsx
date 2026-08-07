@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, BarChart3 } from "lucide-react";
-import { ASSESSMENT_STATUSES, type Assessment, type AssessmentStatus } from "@shared/schema";
+import {
+  Loader2, ShieldCheck, MapPin, Mail, Phone, Building2, BarChart3,
+  Users, ClipboardList, CalendarDays,
+} from "lucide-react";
+import {
+  ASSESSMENT_STATUSES,
+  type AdminUserSummary,
+  type Assessment,
+  type AssessmentStatus,
+} from "@shared/schema";
 import { QueryState } from "@/components/QueryState";
 import { useCurrentUser } from "@/features/auth/use-auth";
-import { useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
+import { useAdminUsers, useAllAssessments, useUpdateAssessment } from "@/features/admin/use-admin";
 import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 import { riseOnMount } from "@/lib/motion";
+
+type Tab = "bookings" | "users";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -111,14 +121,69 @@ function AssessmentCard({ a }: { a: Assessment }) {
   );
 }
 
+function UserRow({ u }: { u: AdminUserSummary }) {
+  const { t, lang } = useI18n();
+  const locale = lang === "ar" ? "ar" : "en-US";
+
+  const bookings =
+    u.bookingCount === 0
+      ? t("admin.noBookingsYet")
+      : u.bookingCount === 1
+        ? t("admin.oneBooking")
+        : t("admin.bookingsCount", { count: u.bookingCount });
+
+  return (
+    <div className="surface rounded-2xl p-5">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+        <span className="text-body font-semibold">{u.name}</span>
+        {u.role === "staff" && (
+          <span className="px-2.5 py-0.5 rounded-full text-label font-semibold uppercase tracking-wider border bg-[#a855f7]/10 text-[#c084fc] border-[#a855f7]/20">
+            {t("admin.roleStaff")}
+          </span>
+        )}
+        <span
+          className={`px-2.5 py-0.5 rounded-full text-label font-semibold uppercase tracking-wider border ${
+            u.emailVerified
+              ? "bg-[#5eead4]/10 text-[#5eead4] border-[#5eead4]/20"
+              : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+          }`}
+        >
+          {u.emailVerified ? t("admin.verified") : t("admin.unverified")}
+        </span>
+        {/* The language every message to this person is written in. */}
+        <span className="px-2 py-0.5 rounded-full text-label font-normal uppercase tracking-wider border border-white/10 text-muted-foreground font-mono">
+          {u.locale}
+        </span>
+      </div>
+
+      <div className="mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-body text-muted-foreground">
+        <span className="flex items-center gap-2 truncate">
+          <Mail className="w-3.5 h-3.5 shrink-0" /> {u.email}
+        </span>
+        <span className="flex items-center gap-2">
+          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+          {t("admin.joined", { date: fmtDate(u.createdAt, locale) })}
+        </span>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-white/5 text-body text-muted-foreground">
+        {bookings}
+        {u.lastBookingAt ? ` · ${fmtDate(u.lastBookingAt, locale)}` : ""}
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [, setLocation] = useLocation();
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { t } = useI18n();
+  const [tab, setTab] = useState<Tab>("bookings");
   const [filter, setFilter] = useState<AssessmentStatus | "all">("all");
   useSeo({ title: "Admin", noindex: true });
   const { data: assessments = [], isLoading, isLoadingError, isPaused, refetch } =
     useAllAssessments(filter === "all" ? undefined : filter);
+  const users = useAdminUsers();
 
   // Guard: only staff. Bounce everyone else.
   useEffect(() => {
@@ -143,7 +208,9 @@ export default function Admin() {
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-7 h-7 text-[#c084fc]" />
-            <h1 className="text-heading font-semibold">{t("admin.assessments")}</h1>
+            <h1 className="text-heading font-semibold">
+              {tab === "bookings" ? t("admin.assessments") : t("admin.tabUsers")}
+            </h1>
           </div>
           <Link
             href="/admin/analytics"
@@ -152,8 +219,58 @@ export default function Admin() {
             <BarChart3 className="w-4 h-4" /> {t("admin.analytics")}
           </Link>
         </div>
-        <p className="text-body text-muted-foreground mb-8">{t("admin.manageBookings")}</p>
+        <p className="text-body text-muted-foreground mb-8">
+          {tab === "bookings" ? t("admin.manageBookings") : t("admin.manageUsers")}
+        </p>
 
+        {/*
+          Tabs, with `role="tab"` rather than styled buttons: a screen reader then
+          announces "tab 1 of 2, selected" instead of reading two unrelated buttons and
+          leaving the relationship between them to be inferred.
+        */}
+        <div role="tablist" aria-label={t("admin.assessments")} className="flex gap-2 mb-6 border-b border-white/5">
+          {(["bookings", "users"] as const).map((key) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={`min-h-[44px] px-4 inline-flex items-center gap-2 text-body font-semibold border-b-2 -mb-px transition-colors ${
+                tab === key
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {key === "bookings" ? <ClipboardList className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+              {key === "bookings" ? t("admin.tabBookings") : t("admin.tabUsers")}
+            </button>
+          ))}
+        </div>
+
+        {tab === "users" ? (
+          <QueryState
+            isLoading={users.isLoading}
+            isLoadingError={users.isLoadingError}
+            isOffline={users.isPaused}
+            isEmpty={(users.data ?? []).length === 0}
+            onRetry={() => users.refetch()}
+            loadingLabel={t("state.loading")}
+            errorTitle={t("state.errorTitle")}
+            errorBody={t("state.errorBody")}
+            retryLabel={t("state.retry")}
+            offlineTitle={t("state.offlineTitle")}
+            offlineBody={t("state.offlineBody")}
+            emptyTitle={t("admin.noUsers")}
+            emptyBody={t("admin.usersAppear")}
+          >
+            <motion.div {...riseOnMount} className="space-y-3">
+              {(users.data ?? []).map((u) => (
+                <UserRow key={u.id} u={u} />
+              ))}
+            </motion.div>
+          </QueryState>
+        ) : (
+          <>
         {/* Status filter chips */}
         <div className="flex flex-wrap gap-2 mb-8">
           {filters.map((f) => (
@@ -192,6 +309,8 @@ export default function Admin() {
             ))}
           </motion.div>
         </QueryState>
+          </>
+        )}
       </div>
     </div>
   );

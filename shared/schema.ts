@@ -33,6 +33,20 @@ export type PublicUser = Pick<User, "id" | "name" | "email" | "role" | "createdA
   emailVerified: boolean;
 };
 
+/**
+ * A registered account as the staff user list shows it.
+ *
+ * Built on PublicUser rather than on User, so the password hash is excluded by the type
+ * and not merely by remembering to leave it out. `locale` is included because it decides
+ * which language every message to this person is written in, which is the sort of thing
+ * staff need to see when a customer says they were written to in the wrong one.
+ */
+export type AdminUserSummary = PublicUser & {
+  locale: string;
+  bookingCount: number;
+  lastBookingAt: Date | null;
+};
+
 /* ============================================================
  * Auth tokens — single-use, hashed tokens for password reset
  * and email verification (the raw token is emailed, never stored).

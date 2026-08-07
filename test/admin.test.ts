@@ -83,3 +83,57 @@ describe("admin — assessments", () => {
     expect((await staff.patch("/api/admin/assessments/9999").send({ status: "scheduled" })).status).toBe(404);
   });
 });
+
+describe("admin — user list", () => {
+  it("is staff-only: 401 signed out, 403 as a customer", async () => {
+    expect((await request(app).get("/api/admin/users")).status).toBe(401);
+    const { agent } = await customerWithBooking("nosy@example.com");
+    expect((await agent.get("/api/admin/users")).status).toBe(403);
+  });
+
+  it("never returns the password hash", async () => {
+    // The query names its columns instead of selecting the whole row. This asserts the
+    // outcome rather than the technique, so it still holds if the query is rewritten.
+    await customerWithBooking("hash@example.com");
+    const staff = await staffAgent();
+
+    const res = await staff.get("/api/admin/users");
+    expect(res.status).toBe(200);
+    const serialised = JSON.stringify(res.body);
+    expect(serialised).not.toMatch(/passwordHash|password_hash/);
+    // The scrypt hashes this app writes are "<hex>.<hex>"; make sure no field carries one.
+    expect(serialised).not.toMatch(/[0-9a-f]{32,}\.[0-9a-f]{16,}/);
+  });
+
+  it("counts each account's bookings, and lists accounts that have none", async () => {
+    const buyer = request.agent(app);
+    await buyer.post("/api/auth/register").send(newUser({ email: "buyer@example.com" }));
+    await buyer.post("/api/assessments").send({ name: "Buyer", email: "buyer@example.com" });
+    await buyer.post("/api/assessments").send({ name: "Buyer", email: "buyer@example.com" });
+
+    // Registered, never booked — the row most worth seeing, and the one an inner join
+    // would silently drop.
+    const lurker = request.agent(app);
+    await lurker.post("/api/auth/register").send(newUser({ email: "lurker@example.com" }));
+
+    const staff = await staffAgent();
+    const res = await staff.get("/api/admin/users");
+
+    const byEmail = Object.fromEntries(res.body.map((u: { email: string }) => [u.email, u]));
+    expect(byEmail["buyer@example.com"].bookingCount).toBe(2);
+    expect(byEmail["lurker@example.com"].bookingCount).toBe(0);
+    expect(byEmail["lurker@example.com"].lastBookingAt).toBeNull();
+    expect(byEmail["buyer@example.com"].lastBookingAt).not.toBeNull();
+  });
+
+  it("carries the fields staff actually need", async () => {
+    await customerWithBooking("ar.user@example.com");
+    const staff = await staffAgent();
+    const res = await staff.get("/api/admin/users");
+    const row = res.body.find((u: { email: string }) => u.email === "ar.user@example.com");
+
+    expect(row).toMatchObject({ role: "customer", emailVerified: false, locale: "en" });
+    expect(typeof row.name).toBe("string");
+    expect(row.createdAt).toBeTruthy();
+  });
+});

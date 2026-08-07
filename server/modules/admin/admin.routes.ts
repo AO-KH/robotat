@@ -3,7 +3,12 @@ import { api } from "@shared/routes";
 import { handleZodError } from "../../lib/errors";
 import { requireStaff } from "../auth/auth.service";
 import { notifyCustomerStatusChange } from "../../lib/notify";
-import { listAllAssessments, getAssessmentById, updateAssessment } from "./admin.storage";
+import {
+  listAllAssessments,
+  getAssessmentById,
+  updateAssessment,
+  listUsersWithBookingCounts,
+} from "./admin.storage";
 
 export const adminRoutes = Router();
 
@@ -15,6 +20,15 @@ adminRoutes.get(api.admin.listAssessments.path, requireStaff, async (req, res, n
     res.status(200).json(list);
   } catch (err) {
     if (handleZodError(err, res)) return;
+    next(err);
+  }
+});
+
+// GET /api/admin/users — staff-only, every registered account with its booking count.
+adminRoutes.get(api.admin.listUsers.path, requireStaff, async (_req, res, next) => {
+  try {
+    res.status(200).json(await listUsersWithBookingCounts());
+  } catch (err) {
     next(err);
   }
 });
