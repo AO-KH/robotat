@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { Assessment } from "@shared/schema";
 import {
   bookingConfirmationMessage,
+  businessBookingTemplateParams,
   customerStatusMessage,
   customerStatusPush,
   customerStatusTemplateParams,
@@ -84,6 +85,45 @@ describe("bookingConfirmationMessage", () => {
     const msg = bookingConfirmationMessage(fixture());
     expect(msg.body).toMatch(/received/i);
     expect(msg.body).not.toMatch(/status/i);
+  });
+});
+
+describe("businessBookingTemplateParams", () => {
+  it("carries the same facts as the notification email", () => {
+    const p = businessBookingTemplateParams(
+      fixture({ phone: "+966555998877", landSize: "60", location: "Al-Kharj", message: "Date palms." }),
+    );
+    expect(p).toHaveLength(5);
+    expect(p[0]).toBe("Sara");
+    expect(p[1]).toBe("#7");
+    expect(p[2]).toContain("+966555998877");
+    expect(p[3]).toBe("60 ha · Al-Kharj");
+    expect(p[4]).toBe("Date palms.");
+  });
+
+  it("never emits an empty parameter", () => {
+    // Meta's placeholders are positional and not optional; an empty string fails the
+    // whole send, so a booking with nothing but a name and email must still fill five.
+    const p = businessBookingTemplateParams(fixture({ phone: null, landSize: null, location: null, message: null }));
+    expect(p).toHaveLength(5);
+    for (const value of p) expect(value.length).toBeGreaterThan(0);
+  });
+
+  it("collapses newlines and caps a long note", () => {
+    // Parameters reject newlines, tabs and runs of four spaces, and an over-long one
+    // fails the send rather than being truncated by Meta.
+    const p = businessBookingTemplateParams(fixture({ message: `line one\nline two\t\tand    more` }));
+    expect(p[4]).toBe("line one line two and more");
+
+    const long = businessBookingTemplateParams(fixture({ message: "x".repeat(500) }));
+    expect(long[4].length).toBeLessThanOrEqual(300);
+    expect(long[4].endsWith("…")).toBe(true);
+  });
+
+  it("stays English even for an Arabic booking", () => {
+    // Staff read this one, not the customer — it mirrors the English business email.
+    const p = businessBookingTemplateParams(fixture({ locale: "ar", landSize: "60" }));
+    expect(p[3]).toContain("ha");
   });
 });
 
@@ -213,11 +253,31 @@ describe("notifyConfigWarnings", () => {
     expect(warnings.some((w) => w.includes("WHATSAPP_STATUS_TEMPLATE"))).toBe(true);
   });
 
+  it("warns when the business alert has no template either", () => {
+    // Harder to spot than the customer one: nobody messages the business line to ask
+    // for its own alerts, so the 24-hour window is essentially always shut.
+    const warnings = notifyConfigWarnings({ WHATSAPP_TOKEN: "t", WHATSAPP_PHONE_ID: "p" });
+    expect(warnings.some((w) => w.includes("WHATSAPP_BOOKING_TEMPLATE"))).toBe(true);
+  });
+
+  it("warns when credentials are live but the number is still the placeholder", () => {
+    // Sends are attempted and logged as pushed — to a number that does not exist.
+    const warnings = notifyConfigWarnings({
+      WHATSAPP_TOKEN: "t",
+      WHATSAPP_PHONE_ID: "p",
+      WHATSAPP_STATUS_TEMPLATE: "robotat_status_update",
+      WHATSAPP_BOOKING_TEMPLATE: "robotat_new_booking",
+    });
+    expect(warnings.some((w) => w.includes("WHATSAPP_BUSINESS_NUMBER"))).toBe(true);
+  });
+
   it("stays quiet when WhatsApp is fully configured", () => {
     const warnings = notifyConfigWarnings({
       WHATSAPP_TOKEN: "t",
       WHATSAPP_PHONE_ID: "p",
       WHATSAPP_STATUS_TEMPLATE: "robotat_status_update",
+      WHATSAPP_BOOKING_TEMPLATE: "robotat_new_booking",
+      WHATSAPP_BUSINESS_NUMBER: "966555998877",
     });
     expect(warnings).toEqual([]);
   });

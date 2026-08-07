@@ -202,6 +202,42 @@ export function customerStatusPush(a: Assessment): Push {
  * this channel means registering a second template and selecting it by locale, which
  * needs the Meta Business account.
  */
+/**
+ * Collapse a value into something Meta will accept as a template parameter.
+ *
+ * `toLocaleString` can emit a narrow no-break space (U+202F) before AM/PM, which is not
+ * matched by \s in every runtime — hence the explicit character class rather than a
+ * bare \s+. Also caps length: a customer's free-text note can run to paragraphs, and an
+ * over-long parameter fails the whole send rather than being trimmed.
+ */
+function cleanParam(s: string, max = 300): string {
+  const collapsed = s.replace(/[\s  ]+/g, " ").trim();
+  return collapsed.length > max ? `${collapsed.slice(0, max - 1)}…` : collapsed;
+}
+
+/**
+ * The business's own booking alert, as five template parameters.
+ *
+ * Same information as the notification email, rearranged to fit Meta's shape: the
+ * prose and line breaks live in the template registered with Meta, and only the values
+ * travel here. Parameters are positional and not optional, so every one of the five is
+ * always present — a booking with no phone or no land size sends an em dash rather
+ * than an empty string, which Meta rejects.
+ *
+ * English, like the notification email it mirrors: this one is read by staff, not by
+ * the customer, so it does not follow `a.locale`.
+ */
+export function businessBookingTemplateParams(a: Assessment): [string, string, string, string, string] {
+  const site = [a.landSize ? `${a.landSize} ha` : null, a.location].filter(Boolean).join(" · ");
+  return [
+    cleanParam(a.name),
+    `#${a.id}`,
+    cleanParam([a.phone, a.email].filter(Boolean).join(" / ")),
+    cleanParam(site) || "—",
+    cleanParam(a.message ?? "") || "—",
+  ];
+}
+
 export function customerStatusTemplateParams(a: Assessment): [string, string, string] {
   const when = scheduledFor(a, "en");
 
@@ -220,12 +256,7 @@ export function customerStatusTemplateParams(a: Assessment): [string, string, st
       phrase = a.status;
   }
 
-  // Collapse anything Meta would reject. `toLocaleString` can emit a narrow no-break
-  // space (U+202F) before AM/PM, which is not matched by \s in every runtime — hence
-  // the explicit character class rather than a bare \s+.
-  const clean = (s: string) => s.replace(/[\s  ]+/g, " ").trim();
-
-  return [clean(a.name), `#${a.id}`, clean(phrase)];
+  return [cleanParam(a.name), `#${a.id}`, cleanParam(phrase)];
 }
 
 /* ============================================================

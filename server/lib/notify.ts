@@ -1,13 +1,19 @@
 import nodemailer from "nodemailer";
 import type { Assessment } from "@shared/schema";
 import { log } from "./log";
-import { bookingConfirmationMessage, customerStatusMessage, customerStatusTemplateParams } from "./messages";
+import {
+  bookingConfirmationMessage,
+  businessBookingTemplateParams,
+  customerStatusMessage,
+  customerStatusTemplateParams,
+} from "./messages";
 
 // Re-exported so the many modules and tests already importing these from notify.ts
 // keep working. They live in ./messages now — see the note there on the import
 // cycle between this module and ./apns that the split removes.
 export {
   bookingConfirmationMessage,
+  businessBookingTemplateParams,
   customerStatusMessage,
   customerStatusPush,
   customerStatusTemplateParams,
@@ -30,6 +36,14 @@ import { deleteTokensByValue, getTokensForUser } from "../modules/push/push.stor
  * notifyConfigWarnings() flags relying on it in production.
  */
 const FALLBACK_ASSESSMENT_INBOX = "assessments@nasl-tech.com";
+
+/**
+ * Stand-in WhatsApp number used when WHATSAPP_BUSINESS_NUMBER is unset.
+ *
+ * Not a real line. It keeps the click-to-chat link well-formed in development;
+ * notifyConfigWarnings() flags it if it survives into a live Cloud API setup.
+ */
+const PLACEHOLDER_WHATSAPP_NUMBER = "966500000000";
 
 /**
  * Delivery of new assessment bookings to the business, two ways:
@@ -84,7 +98,7 @@ function userMessage(lead: Lead): string {
 
 /** Digits-only phone number for the business WhatsApp line (env-configured). */
 function businessWhatsappNumber(): string {
-  return (process.env.WHATSAPP_BUSINESS_NUMBER || "966500000000").replace(/[^\d]/g, "");
+  return (process.env.WHATSAPP_BUSINESS_NUMBER || PLACEHOLDER_WHATSAPP_NUMBER).replace(/[^\d]/g, "");
 }
 
 /** Build a wa.me deep link that opens WhatsApp with the booking pre-filled. */
@@ -209,18 +223,44 @@ async function sendWhatsappCloudApi(a: Assessment): Promise<void> {
     return;
   }
 
+  const template = process.env.WHATSAPP_BOOKING_TEMPLATE;
+
+  /*
+    A template when one is configured, plain text otherwise — the same trade-off as
+    whatsappCustomer(), and for the same reason.
+
+    This alert is business-initiated: nobody messaged the ROBOTAT number to ask for it.
+    Meta only delivers plain text inside the 24-hour window a recipient's own last
+    message opens, so unless someone happened to WhatsApp the business number within
+    the last day, the text path fails with error 131047 and the alert never arrives —
+    while the booking itself succeeds and the email still lands. Text stays as the
+    fallback because it needs no Meta approval, which keeps local development workable.
+  */
+  const payload = template
+    ? {
+        messaging_product: "whatsapp",
+        to,
+        type: "template",
+        template: {
+          name: template,
+          language: { code: process.env.WHATSAPP_TEMPLATE_LANG || "en" },
+          components: [
+            {
+              type: "body",
+              parameters: businessBookingTemplateParams(a).map((text) => ({ type: "text", text })),
+            },
+          ],
+        },
+      }
+    : { messaging_product: "whatsapp", to, type: "text", text: { body: summaryLines(a).join("\n") } };
+
   const res = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${WHATSAPP_TOKEN}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: summaryLines(a).join("\n") },
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -401,6 +441,23 @@ export function notifyConfigWarnings(env: NodeJS.ProcessEnv = process.env): stri
         "own last message. Outside it they fail with error 131047 and the customer is never " +
         "told their visit was scheduled. Register a template in the WhatsApp Manager and set " +
         "its name here.",
+    );
+  }
+  if (whatsappLive && !env.WHATSAPP_BOOKING_TEMPLATE) {
+    warnings.push(
+      "WHATSAPP_BOOKING_TEMPLATE is not set. New-booking alerts to the business number " +
+        "will be sent as plain text, which Meta only delivers inside the 24-hour window a " +
+        "recipient's own last message opens. Nobody messages the business line to ask for " +
+        "its own alerts, so that window is normally shut and the alert fails with error " +
+        "131047 — while the booking succeeds and the email still arrives, so nothing looks " +
+        "wrong. Register a template in the WhatsApp Manager and set its name here.",
+    );
+  }
+  if (whatsappLive && (env.WHATSAPP_BUSINESS_NUMBER || PLACEHOLDER_WHATSAPP_NUMBER) === PLACEHOLDER_WHATSAPP_NUMBER) {
+    warnings.push(
+      `WHATSAPP_BUSINESS_NUMBER is still the placeholder ${PLACEHOLDER_WHATSAPP_NUMBER}, which ` +
+        "is not a real line. Cloud API credentials are set, so booking alerts are being sent — " +
+        "to nobody. Set it to the number that should receive them, in full international form.",
     );
   }
   if (env.WHATSAPP_TOKEN && !env.WHATSAPP_PHONE_ID) {
