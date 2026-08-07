@@ -427,6 +427,8 @@ export const en = {
       successTitle: "Assessment requested",
       successBody: "Our agronomy team will reach out to schedule your visit.",
       failedTitle: "Booking failed",
+      limitReached:
+        "You can book up to {limit} site assessments a day. Please try again tomorrow, or reply to one of your existing requests.",
     },
     adminUpdate: {
       successTitle: "Updated",

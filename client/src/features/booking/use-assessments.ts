@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type BookAssessmentInput } from "@shared/routes";
-import type { Assessment } from "@shared/schema";
+import { DAILY_ASSESSMENT_LIMIT, type Assessment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { apiError, errorText } from "@/lib/api-error";
@@ -84,6 +84,9 @@ export function useBookAssessment() {
         description: errorText(err, {
           400: t("toast.shared.invalid"),
           401: t("toast.shared.signedOut"),
+          // The number comes from the shared constant the server enforces, so the
+          // message cannot quote a limit that is no longer the one being applied.
+          429: t("toast.booking.limitReached", { limit: DAILY_ASSESSMENT_LIMIT }),
         }),
         variant: "destructive",
       });

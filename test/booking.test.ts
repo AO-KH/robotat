@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { getApp, resetDb, closeDb, newUser } from "./helpers";
+import { DAILY_ASSESSMENT_LIMIT } from "@shared/schema";
+import { getApp, resetDb, closeDb, newUser, ageAllAssessments } from "./helpers";
 
 let app: Express;
 
@@ -107,6 +108,56 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     // a language with no dictionary behind it is a client bug, and storing it would mean
     // every later message silently resolved back to English with nothing recording why.
     expect(created.status).toBe(400);
+  });
+
+  it(`allows exactly ${DAILY_ASSESSMENT_LIMIT} bookings, then refuses with 429`, async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "busy@example.com" }));
+
+    for (let i = 0; i < DAILY_ASSESSMENT_LIMIT; i++) {
+      const ok = await agent.post("/api/assessments").send({ name: "Busy", email: "busy@example.com" });
+      expect(ok.status).toBe(201);
+    }
+
+    const blocked = await agent.post("/api/assessments").send({ name: "Busy", email: "busy@example.com" });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.message).toContain(String(DAILY_ASSESSMENT_LIMIT));
+
+    // Refused, not silently dropped: the row must not exist.
+    const list = await agent.get("/api/assessments");
+    expect(list.body).toHaveLength(DAILY_ASSESSMENT_LIMIT);
+  });
+
+  it("counts per account, so one user hitting the limit does not block another", async () => {
+    // The reason this is counted in the database rather than by express-rate-limit:
+    // that counts per IP, and in this test both accounts share one.
+    const alice = request.agent(app);
+    await alice.post("/api/auth/register").send(newUser({ email: "alice@example.com" }));
+    for (let i = 0; i < DAILY_ASSESSMENT_LIMIT; i++) {
+      await alice.post("/api/assessments").send({ name: "Alice", email: "alice@example.com" });
+    }
+    expect((await alice.post("/api/assessments").send({ name: "Alice", email: "alice@example.com" })).status).toBe(429);
+
+    const bob = request.agent(app);
+    await bob.post("/api/auth/register").send(newUser({ email: "bob2@example.com" }));
+    const bobFirst = await bob.post("/api/assessments").send({ name: "Bob", email: "bob2@example.com" });
+    expect(bobFirst.status).toBe(201);
+  });
+
+  it("ignores bookings that have aged out of the window", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "returning@example.com" }));
+    for (let i = 0; i < DAILY_ASSESSMENT_LIMIT; i++) {
+      await agent.post("/api/assessments").send({ name: "Returning", email: "returning@example.com" });
+    }
+    expect((await agent.post("/api/assessments").send({ name: "Returning", email: "returning@example.com" })).status).toBe(429);
+
+    // Age them past the window. A rolling 24 hours means the allowance returns as the
+    // oldest booking falls out of it, not at some fixed hour of the night.
+    await ageAllAssessments();
+
+    const afterwards = await agent.post("/api/assessments").send({ name: "Returning", email: "returning@example.com" });
+    expect(afterwards.status).toBe(201);
   });
 
   it("only lists the signed-in user's own bookings", async () => {

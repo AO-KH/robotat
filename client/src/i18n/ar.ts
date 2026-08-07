@@ -415,6 +415,8 @@ export const ar: Dictionary = {
       successTitle: "تم طلب التقييم",
       successBody: "سيتواصل معك فريقنا الزراعي لجدولة الزيارة.",
       failedTitle: "تعذّر الحجز",
+      limitReached:
+        "يمكنك حجز {limit} زيارات تقييم كحد أقصى في اليوم. يُرجى المحاولة غداً، أو الرد على أحد طلباتك الحالية.",
     },
     adminUpdate: {
       successTitle: "تم التحديث",

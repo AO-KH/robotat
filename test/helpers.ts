@@ -32,6 +32,17 @@ export async function makeStaff(email: string): Promise<void> {
   await pool.query("UPDATE users SET role = 'staff' WHERE email = $1", [email.toLowerCase()]);
 }
 
+/**
+ * Age every booking so it falls outside the daily-limit window.
+ *
+ * Time is the one input a request cannot supply, so a rolling window is otherwise
+ * only testable by waiting a day. Moving the rows backwards is the same assertion
+ * with none of the wait.
+ */
+export async function ageAllAssessments(interval = "25 hours"): Promise<void> {
+  await pool.query(`UPDATE assessments SET created_at = now() - $1::interval`, [interval]);
+}
+
 /** A valid registration payload with a unique-ish email. */
 export function newUser(overrides: Partial<{ name: string; email: string; password: string; locale: string }> = {}) {
   return {

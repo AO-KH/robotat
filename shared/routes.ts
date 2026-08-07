@@ -23,6 +23,7 @@ import {
 
 export const errorSchemas = {
   validation: z.object({ message: z.string(), field: z.string().optional() }),
+  rateLimited: z.object({ message: z.string() }),
   notFound: z.object({ message: z.string() }),
   unauthorized: z.object({ message: z.string() }),
   internal: z.object({ message: z.string() }),
@@ -165,6 +166,7 @@ export const api = {
         }),
         400: errorSchemas.validation,
         401: errorSchemas.unauthorized,
+        429: errorSchemas.rateLimited,
       },
     },
     list: {

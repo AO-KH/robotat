@@ -165,6 +165,25 @@ export const bookAssessmentSchema = z.object({
 });
 export type BookAssessmentInput = z.infer<typeof bookAssessmentSchema>;
 
+/**
+ * How many site assessments one account may book per rolling 24 hours.
+ *
+ * A site assessment sends an agronomist to a farm, so the ceiling is about protecting
+ * a real-world diary, not about server load. Three is generous for anyone booking
+ * honestly — a farm with several sites can still raise three a day, every day — while
+ * a stuck submit button or a script cannot bury the team in work that has to be read
+ * and dismissed by hand.
+ *
+ * Rolling 24 hours rather than a calendar day, for two reasons. There is no timezone
+ * to argue about: a calendar day would reset at 03:00 in Riyadh if the server counted
+ * in UTC. And it cannot be sidestepped by booking three at 23:59 and three more a
+ * minute later.
+ *
+ * Shared so the server enforces this number and the client's message quotes it. Kept
+ * in one place because two copies drift, and the copy is the half nobody remembers.
+ */
+export const DAILY_ASSESSMENT_LIMIT = 3;
+
 /* ============================================================
  * Push tokens — device tokens for native notifications (APNs)
  * ========================================================== */
