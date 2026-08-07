@@ -6,7 +6,14 @@ sites. Visitors browse the products and services; registered users book a **site
 assessment** and track its status. Each booking reaches the business two ways —
 **WhatsApp** and **email**.
 
-A single Express server serves both the API and the React client on one port.
+A single Express server serves both the API and the React client on one port. The
+same client is bundled into a **native iOS app** via Capacitor, which is why several
+decisions here look stricter than a website needs: no launch-time network requests,
+a 44px touch floor, and bearer-token auth alongside session cookies.
+
+Bilingual throughout — English and Arabic, with full RTL. Arabic is a first-class
+language here, not a translation layer: if a string is user-facing, it is in both
+dictionaries.
 
 ## Tech stack
 
@@ -14,7 +21,8 @@ A single Express server serves both the API and the React client on one port.
 |--------------|------|
 | Frontend     | React 18, Vite 7, Wouter (routing), TanStack Query, Tailwind CSS, shadcn/ui, Framer Motion |
 | Backend      | Express 5 + TypeScript (run via `tsx`), Passport (local strategy), express-session |
-| Database     | PostgreSQL via Drizzle ORM (`drizzle-orm/node-postgres`) |
+| Database     | PostgreSQL via Drizzle ORM (`drizzle-orm/node-postgres`), hand-authored migrations |
+| Native       | Capacitor 7 (iOS). Bearer-token auth for the `capacitor://` origin; APNs push with no third-party SDK |
 | Shared       | Zod schemas + a typed API contract used by client **and** server |
 
 ## Project structure
@@ -90,11 +98,16 @@ API push when Meta credentials are provided.
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev`     | Start the dev server (Vite middleware + API) on port 5000 |
-| `npm run build`   | Production build |
-| `npm start`       | Run the production build |
-| `npm run check`   | TypeScript typecheck |
-| `npm run db:push` | Push the Drizzle schema to the database |
+| `npm run dev`        | Start the dev server (Vite middleware + API) on port 5000 |
+| `npm test`           | Vitest + Supertest suite (needs a `robotat_test` DB — see `.env.test`) |
+| `npm run check`      | TypeScript typecheck |
+| `npm run build`      | Production build |
+| `npm start`          | Run the production build |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run dev:staff`  | Mint a disposable **staff** account so `/admin` can be opened. Prints a generated password once; refuses to run in production. Remove it with `npm run dev:staff -- --delete <email>` |
+| `npm run cap:sync:ios` | Copy the web build into the native iOS project |
+
+`db:push` and `db:generate` exist but **should not be used** — see Conventions.
 
 ## Deployment
 
@@ -124,7 +137,24 @@ migrate → tests → build against a Postgres service on every push and PR.
 - **API contract first.** Add an endpoint to `shared/routes.ts` (method, path, Zod
   input, typed responses), then implement it in the matching `server/modules/*`
   and consume it from a `client/src/features/*` hook.
-- **Schema + Zod** live together in `shared/schema.ts`; run `npm run db:push` after
-  changing tables.
-- **Data fetching** goes through TanStack Query hooks under each feature.
+- **Schema + Zod** live together in `shared/schema.ts`.
+- **Migrations are hand-authored — do not run `db:generate` or `db:push`.** After
+  changing a table, write the `.sql` yourself under `migrations/`, add its entry to
+  `meta/_journal.json`, and generate `meta/NNNN_snapshot.json` with a script rather
+  than by hand (they are large and drift silently). Then `npm run db:migrate`. All
+  nine migrations are committed, and `npx drizzle-kit check` verifies the chain.
+  `db:push` would apply schema changes without recording them, which desynchronises
+  every other environment from this one.
+- **Data fetching** goes through TanStack Query hooks under each feature. Every
+  fetched list renders through `QueryState` so it has loading, failure, offline and
+  empty branches — not just a happy path.
+- **Copy lives in the dictionaries.** No user-facing string is written inline, in a
+  component or a hook. Both `en.ts` and `ar.ts` or neither.
+- **Three guard tests enforce the design system**, and they fail the build rather
+  than merely advising:
+  | Guard | Rule |
+  |---|---|
+  | `test/type-scale.test.ts` | Five type roles only; no arbitrary `text-[Npx]`, and only `font-normal`/`font-semibold` |
+  | `test/tap-targets.test.ts` | No interactive element declared under 44px |
+  | `test/no-hidden-content.test.ts` | Nothing renders at `opacity: 0` waiting for an animation — content must be visible at first paint |
 - Path aliases: `@/…` → `client/src/…`, `@shared/…` → `shared/…`, `@assets/…` → `attached_assets/…`.
