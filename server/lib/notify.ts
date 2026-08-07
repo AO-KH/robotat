@@ -1,12 +1,13 @@
 import nodemailer from "nodemailer";
 import type { Assessment } from "@shared/schema";
 import { log } from "./log";
-import { customerStatusMessage, customerStatusTemplateParams } from "./messages";
+import { bookingConfirmationMessage, customerStatusMessage, customerStatusTemplateParams } from "./messages";
 
 // Re-exported so the many modules and tests already importing these from notify.ts
 // keep working. They live in ./messages now — see the note there on the import
 // cycle between this module and ./apns that the split removes.
 export {
+  bookingConfirmationMessage,
   customerStatusMessage,
   customerStatusPush,
   customerStatusTemplateParams,
@@ -113,6 +114,29 @@ async function sendEmail(a: Assessment): Promise<void> {
 }
 
 /**
+ * Confirm to the customer that their booking arrived.
+ *
+ * `replyTo` is the business inbox, not `a.email`. The business notice sets reply-to to
+ * the customer so staff can answer them; copying that pattern here would point the
+ * customer's reply back at themselves, and the message explicitly invites a reply to
+ * correct a wrong phone number.
+ */
+async function sendCustomerConfirmation(a: Assessment): Promise<void> {
+  // The column is NOT NULL, but this also runs for rows built by callers rather than by
+  // the insert, and a confirmation to nobody would throw inside the SMTP client.
+  if (!a.email) return;
+
+  const { subject, body } = bookingConfirmationMessage(a);
+  await deliverEmail({
+    to: a.email,
+    replyTo: process.env.ASSESSMENT_INBOX || FALLBACK_ASSESSMENT_INBOX,
+    subject,
+    text: body,
+    context: `confirmation for assessment #${a.id}`,
+  });
+}
+
+/**
  * The one place mail leaves this process.
  *
  * Every send went through its own `createTransport` + `sendMail` pair, which meant a
@@ -209,7 +233,9 @@ async function sendWhatsappCloudApi(a: Assessment): Promise<void> {
 
 /** Fire both delivery channels; never throws (a delivery failure must not fail the booking). */
 export async function deliverAssessment(a: Assessment): Promise<void> {
-  await Promise.allSettled([sendEmail(a), sendWhatsappCloudApi(a)]);
+  // allSettled, so the customer's confirmation still goes out when the business notice
+  // fails and vice versa. Losing one is bad; losing both because the first threw is worse.
+  await Promise.allSettled([sendEmail(a), sendCustomerConfirmation(a), sendWhatsappCloudApi(a)]);
 }
 
 /* ============================================================

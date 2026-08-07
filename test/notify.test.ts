@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Assessment } from "@shared/schema";
 import {
+  bookingConfirmationMessage,
   customerStatusMessage,
   customerStatusTemplateParams,
   notifyConfigWarnings,
@@ -43,6 +44,43 @@ describe("customerStatusMessage", () => {
   it("completed and cancelled produce distinct, on-topic messages", () => {
     expect(customerStatusMessage(fixture({ status: "completed" })).subject).toMatch(/complete/i);
     expect(customerStatusMessage(fixture({ status: "cancelled" })).subject).toMatch(/cancel/i);
+  });
+});
+
+describe("bookingConfirmationMessage", () => {
+  it("carries the reference number in both subject and body", () => {
+    const msg = bookingConfirmationMessage(fixture());
+    // The subject is where a customer looks first when hunting for the reference.
+    expect(msg.subject).toContain("#7");
+    expect(msg.body).toContain("#7");
+    expect(msg.body).toContain("Sara");
+  });
+
+  it("echoes back the details the customer entered", () => {
+    const msg = bookingConfirmationMessage(
+      fixture({ phone: "+966501234567", landSize: "25", location: "Al-Kharj" }),
+    );
+    expect(msg.body).toContain("+966501234567");
+    expect(msg.body).toContain("25 ha");
+    expect(msg.body).toContain("Al-Kharj");
+  });
+
+  it("omits the details block entirely when only name and email were given", () => {
+    // Individual bookings post company as "" rather than null, so a falsiness check is
+    // what keeps an empty "Company:" line out of the mail.
+    const msg = bookingConfirmationMessage(fixture({ company: "" }));
+    expect(msg.body).not.toMatch(/What you told us/);
+    expect(msg.body).not.toMatch(/Company:/);
+    expect(msg.body).not.toMatch(/undefined|null/);
+  });
+
+  it("reads as a receipt, not a status change", () => {
+    // Guards against this being folded into customerStatusMessage later: a pending
+    // booking there produces "The status ... is now: pending", which tells a customer
+    // nothing and names an internal state back at them.
+    const msg = bookingConfirmationMessage(fixture());
+    expect(msg.body).toMatch(/received/i);
+    expect(msg.body).not.toMatch(/status/i);
   });
 });
 

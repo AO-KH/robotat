@@ -136,6 +136,41 @@ export function customerStatusTemplateParams(a: Assessment): [string, string, st
   return [clean(a.name), `#${a.id}`, clean(phrase)];
 }
 
+/**
+ * Booking confirmation — the first thing a customer hears after submitting the form.
+ *
+ * Until this existed, the only automated message they got was a status change, which
+ * happens whenever staff get around to it. So a customer filled in the form and then
+ * heard nothing: no reference number, and no way to tell their request had arrived at
+ * all. The web app papers over this by opening their mail client on submit, which does
+ * nothing in the iOS app and nothing for anyone without a mail client configured.
+ *
+ * It echoes back what they entered rather than only acknowledging receipt. A mistyped
+ * phone number or a land size off by a decimal place is cheapest to catch now, while
+ * they still remember typing it — and a wrong phone number is exactly the kind of
+ * error that otherwise surfaces as an agronomist failing to reach them.
+ */
+export function bookingConfirmationMessage(a: Assessment): { subject: string; body: string } {
+  // Only what the customer actually filled in. Individual bookings post company as "",
+  // so this filters on falsiness rather than on null.
+  const details = [
+    a.phone ? `Phone: ${a.phone}` : null,
+    a.company ? `Company: ${a.company}` : null,
+    a.landSize ? `Land size: ${a.landSize} ha` : null,
+    a.location ? `Location: ${a.location}` : null,
+  ].filter(Boolean);
+
+  return {
+    subject: `We've received your site assessment request (#${a.id})`,
+    body:
+      `Hi ${a.name},\n\nThanks — we've received your request for a ROBOTAT site assessment. ` +
+      `Your reference is #${a.id}.\n\n` +
+      (details.length > 0 ? `What you told us:\n${details.join("\n")}\n\n` : "") +
+      `Our agronomy team will review it and contact you to arrange a visit. If anything ` +
+      `above is wrong, reply to this email and we'll put it right.${SIGN}`,
+  };
+}
+
 /** Password-reset email body. Pure/testable. */
 export function passwordResetMessage(name: string, link: string): { subject: string; body: string } {
   return {
