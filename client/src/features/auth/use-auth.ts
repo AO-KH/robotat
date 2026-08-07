@@ -285,12 +285,12 @@ export function useVerifyEmail() {
   const qc = useQueryClient();
   const { t } = useI18n();
   return useMutation({
-    mutationFn: async (token: string) => {
+    mutationFn: async (code: string) => {
       const res = await fetch(api.auth.verifyEmail.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(api.auth.verifyEmail.input.parse({ token })),
+        body: JSON.stringify(api.auth.verifyEmail.input.parse({ code })),
       });
       // No toast — VerifyEmail.tsx renders its own translated failure state.
       if (!res.ok) throw await apiError(res, t("toast.shared.generic"));

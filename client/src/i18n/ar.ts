@@ -187,10 +187,17 @@ export const ar: Dictionary = {
     verifiedTitle: "تم تأكيد البريد",
     verifiedSub: "شكراً لك — تم تأكيد عنوان بريدك الإلكتروني.",
     verifyFailedTitle: "فشل التحقّق",
-    verifyFailedSub: "رابط التأكيد غير صالح أو منتهي الصلاحية.",
+    verifyFailedSub: "رمز التأكيد غير صالح أو منتهي الصلاحية.",
     continueToDashboard: "المتابعة إلى اللوحة",
-    bannerText: "يرجى تأكيد عنوان بريدك الإلكتروني لتأمين حسابك.",
-    bannerResend: "إعادة إرسال التأكيد",
+    enterCodeTitle: "تحقّق من بريدك",
+    enterCodeSub: "أرسلنا رمزاً من 6 أرقام إلى {email}. تنتهي صلاحيته خلال 15 دقيقة.",
+    codeLabel: "رمز التأكيد المكوّن من 6 أرقام",
+    codeWrong: "الرمز غير صحيح. تحقّق من الأرقام وحاول مرة أخرى.",
+    codeExhausted: "عدد كبير من المحاولات الخاطئة. اطلب رمزاً جديداً.",
+    resendCode: "إرسال رمز جديد",
+    laterLink: "سأفعل ذلك لاحقاً",
+    bannerText: "أكّد عنوان بريدك الإلكتروني قبل حجز زيارة تقييم.",
+    bannerResend: "أدخل الرمز",
     missingToken: "لا يوجد رمز.",
   },
   booking: {
@@ -430,6 +437,8 @@ export const ar: Dictionary = {
       failedTitle: "تعذّر الحجز",
       limitReached:
         "يمكنك حجز {limit} زيارات تقييم كحد أقصى في اليوم. يُرجى المحاولة غداً، أو الرد على أحد طلباتك الحالية.",
+      confirmEmailFirst:
+        "أكّد عنوان بريدك الإلكتروني أولاً — أرسلنا لك رمزاً من 6 أرقام. افتح لوحتك لإدخاله.",
     },
     adminUpdate: {
       successTitle: "تم التحديث",

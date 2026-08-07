@@ -189,12 +189,20 @@ export const en = {
     verifiedTitle: "Email verified",
     verifiedSub: "Thanks — your email address is confirmed.",
     verifyFailedTitle: "Verification failed",
-    verifyFailedSub: "This confirmation link is invalid or has expired.",
+    verifyFailedSub: "This confirmation code is invalid or has expired.",
     continueToDashboard: "Continue to dashboard",
+    // Code entry
+    enterCodeTitle: "Check your email",
+    enterCodeSub: "We sent a 6-digit code to {email}. It expires in 15 minutes.",
+    codeLabel: "6-digit confirmation code",
+    codeWrong: "That code is not right. Check the digits and try again.",
+    codeExhausted: "Too many incorrect codes. Send yourself a new one.",
+    resendCode: "Send a new code",
+    laterLink: "I'll do this later",
     // Unverified-email banner (dashboard)
-    bannerText: "Please confirm your email address to secure your account.",
-    bannerResend: "Resend confirmation",
-    missingToken: "No token provided.",
+    bannerText: "Confirm your email address before booking a site assessment.",
+    bannerResend: "Enter your code",
+    missingToken: "No code provided.",
   },
   booking: {
     title: "Book a site assessment",
@@ -442,6 +450,8 @@ export const en = {
       failedTitle: "Booking failed",
       limitReached:
         "You can book up to {limit} site assessments a day. Please try again tomorrow, or reply to one of your existing requests.",
+      confirmEmailFirst:
+        "Confirm your email address first — we sent you a 6-digit code. Open your dashboard to enter it.",
     },
     adminUpdate: {
       successTitle: "Updated",

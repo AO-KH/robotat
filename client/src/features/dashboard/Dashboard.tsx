@@ -83,14 +83,19 @@ export default function Dashboard() {
               <MailWarning className="w-5 h-5 shrink-0" />
               <span className="text-body">{t("recover.bannerText")}</span>
             </div>
-            <button
-              onClick={() => resendVerification.mutate()}
-              disabled={resendVerification.isPending}
-              className="shrink-0 min-h-[44px] px-4 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            {/*
+              Goes to the code screen rather than re-sending from here. The code from
+              registration is usually still valid and still in their inbox, so the useful
+              action is "enter it" — and that screen offers a resend for the case where it
+              is not. Sending a second code from here would invalidate the first, which is
+              actively unhelpful for someone who has it open in another tab.
+            */}
+            <Link
+              href="/verify-email"
+              className="shrink-0 min-h-[44px] px-4 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-100 text-body font-semibold transition-colors flex items-center justify-center gap-2"
             >
-              {resendVerification.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {t("recover.bannerResend")}
-            </button>
+            </Link>
           </div>
         )}
 

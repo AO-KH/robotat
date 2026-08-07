@@ -84,6 +84,7 @@ export function useBookAssessment() {
         description: errorText(err, {
           400: t("toast.shared.invalid"),
           401: t("toast.shared.signedOut"),
+          403: t("toast.booking.confirmEmailFirst"),
           // The number comes from the shared constant the server enforces, so the
           // message cannot quote a limit that is no longer the one being applied.
           429: t("toast.booking.limitReached", { limit: DAILY_ASSESSMENT_LIMIT }),
