@@ -65,7 +65,7 @@ export default function ForgotPassword() {
                 <label className="text-body font-semibold text-foreground/80">{t("auth.email")}</label>
                 <div className="relative">
                   <Mail className={iconClass} />
-                  <input type="email" placeholder="you@company.com" className={inputClass} {...form.register("email")} />
+                  <input type="email" placeholder={t("placeholder.email")} className={inputClass} {...form.register("email")} />
                 </div>
                 {form.formState.errors.email && (
                   <p className="text-label text-destructive">{form.formState.errors.email.message}</p>

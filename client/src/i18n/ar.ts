@@ -274,6 +274,12 @@ export const ar: Dictionary = {
     landSize: "مساحة الأرض",
     message: "رسالة",
   },
+  placeholder: {
+    email: "you@example.com",
+    fullName: "اسمك الكامل",
+    landSize: "مثال: 50",
+    mapsLink: "https://maps.app.goo.gl/…",
+  },
   services: {
     endToEnd: "من البداية إلى النهاية",
     autonomyServices: "خدمات القيادة الذاتية",

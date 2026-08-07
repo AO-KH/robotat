@@ -278,6 +278,17 @@ export const en = {
     landSize: "Land size",
     message: "Message",
   },
+  /*
+    Form hints. `email` and `mapsLink` stay Latin in both languages: they are examples of
+    the FORMAT the field accepts, not prose, and an Arabic-script example address would
+    misrepresent what you can actually type in.
+  */
+  placeholder: {
+    email: "you@example.com",
+    fullName: "Your full name",
+    landSize: "e.g. 50",
+    mapsLink: "https://maps.app.goo.gl/…",
+  },
   services: {
     endToEnd: "End-to-End",
     autonomyServices: "Autonomy Services",

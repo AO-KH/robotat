@@ -49,6 +49,8 @@ describe("i18n dictionaries", () => {
     //     would give one product two different Arabic names depending on the page.
     //   - Industry acronyms the Arabic copy already uses untranslated (see home.phases,
     //     which writes "نظام ERP" in prose).
+    //   - Placeholder hints that are examples of the FORMAT a field accepts rather than
+    //     prose. An Arabic-script example address would misrepresent what you can type.
     //
     // No length floor: the Arabic-script test makes one unnecessary. The only value under
     // four characters that reaches this point is lang.en ("EN"), an identifier, and it is
@@ -64,6 +66,8 @@ describe("i18n dictionaries", () => {
       "X-Grass Cutter",
       "X-Cultivator · X-Sprayer",
       "FMS · ERP",
+      "you@example.com",
+      "https://maps.app.goo.gl/…",
     ]);
     const offenders: string[] = [];
 
