@@ -95,10 +95,42 @@ Use `npx cap sync ios` (instead of `copy`) whenever native dependencies change.
 These are the remaining Phase 4 items from the improvement plan — code-level pieces
 can be prototyped anywhere, but building/signing/submitting is Mac-only:
 
-1. **Native push (APNs)** — `@capacitor/push-notifications`, register the device
-   token with the backend, and fan out assessment status-change notifications to it
-   (reuses the Phase 2 notification logic). This is the primary native value for
-   Guideline 4.2.
+1. **Native push (APNs)** — one `npm install` away; **no code change**.
+
+   Everything but the native pod is done and tested. The server stores device tokens
+   (`push_tokens`, `POST /api/push/register` and `/unregister`), `server/lib/apns.ts`
+   signs and sends, and `pushCustomer` in `server/lib/notify.ts` fans a booking status
+   change out to the customer's devices and prunes the ones APNs reports as dead.
+   On the client, `client/src/lib/push.ts` asks for permission, registers the device and
+   — importantly — releases the token on sign-out, before the session is torn down.
+
+   `push.ts` does **not** import `@capacitor/push-notifications`. The plugin's
+   JavaScript half is just `registerPlugin('PushNotifications')` from `@capacitor/core`,
+   which is already a dependency, so the module binds by name instead. That keeps an
+   unbuildable-off-a-Mac dependency out of the tree and the plugin out of the web
+   bundle, and it means the install below needs no follow-up edit anywhere.
+
+   On the Mac:
+
+   ```bash
+   npm install @capacitor/push-notifications   # for the native pod, not the JS
+   npx cap sync ios
+   ```
+
+   Then in Xcode, under **Signing & Capabilities**, add the **Push Notifications**
+   capability (this writes the `aps-environment` entitlement — without it
+   `registrationError` fires and no token is ever issued), and confirm **Background
+   Modes → Remote notifications** if silent pushes are ever added.
+
+   Finally, in the Apple Developer portal create an **Apple Push Notifications service
+   (APNs)** key, download the `.p8` once, and set on the server:
+   `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_PRIVATE_KEY` (the `.p8` contents, newlines as
+   `\n`), `APNS_BUNDLE_ID` (defaults to `com.nasl.robotat`) and `APNS_ENV=production`
+   for a TestFlight/App Store build — the default is the sandbox, which is what a
+   development build needs. See `.env.example`. With those unset, push is switched off
+   and status changes are logged instead of sent, so nothing breaks.
+
+   This is the primary native value for Guideline 4.2.
 2. **Secure token storage** — one `npm install` and two lines away.
 
    The boot sequence is done and tested: `main.tsx` awaits `restoreAuthToken()` before

@@ -11,6 +11,7 @@ import { useI18n } from "@/i18n";
 import { ApiError, apiError, errorText } from "@/lib/api-error";
 import { isNativeApiMode } from "@/lib/api-base";
 import { getAuthToken, setAuthToken } from "@/lib/auth-token";
+import { teardownPush } from "@/lib/push";
 import { ME_KEY, clearSignedInState } from "./auth-state";
 
 /**
@@ -169,6 +170,17 @@ export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
+      /*
+        Release the device's push token first, while this request can still authenticate.
+        `POST /api/push/unregister` is behind `requireAuth`, and both credentials die in
+        the next two steps: the logout request destroys the cookie session, and
+        `clearSignedInState` drops the bearer token. Run after either and it 401s,
+        leaving a `push_tokens` row still naming this user — so the next status change
+        would deliver their booking details to whoever holds the phone next.
+
+        `teardownPush` never rejects, so a failed release cannot block signing out.
+      */
+      await teardownPush();
       await fetch(api.auth.logout.path, { method: "POST", credentials: "include" });
     },
     onSuccess: () => {

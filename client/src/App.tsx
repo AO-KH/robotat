@@ -10,6 +10,8 @@ import { Loader2 } from "lucide-react";
 
 // Context & Layout
 import { I18nProvider } from "@/i18n";
+import { useCurrentUser } from "@/features/auth/use-auth";
+import { initPush } from "@/lib/push";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DemoModalProvider } from "@/features/booking/DemoModalContext";
 import { Navigation } from "@/components/layout/Navigation";
@@ -67,6 +69,30 @@ function ScrollToTop() {
 }
 
 /**
+ * Registers this device for push once somebody is signed in.
+ *
+ * Driven off the cached user rather than called from each auth hook, because all three
+ * moments the registration has to happen — signing in, signing up, and launching with a
+ * session already restored — are the same event seen from here: `ME_KEY` going from
+ * "nobody" to a user. One wiring point, no path left out.
+ *
+ * Keyed on the id so a profile edit, which rewrites the cached user object, does not
+ * re-run it. `initPush` is a no-op off-device and never throws, so this costs the web
+ * a single function call and can fail no page.
+ */
+function PushRegistrar() {
+  const { data: user } = useCurrentUser();
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (userId === undefined) return;
+    void initPush();
+  }, [userId]);
+
+  return null;
+}
+
+/**
  * Shown while a lazily-loaded route's chunk is in flight. Matches QueryState's loading
  * branch — same spinner, same `role="status"` live region — so a screen reader hears
  * the same thing whether it is waiting on code or on data.
@@ -112,6 +138,7 @@ function App() {
               <div className="min-h-screen flex flex-col relative">
                 <BackgroundMesh />
                 <ScrollToTop />
+                <PushRegistrar />
                 <Navigation />
                 <main className="flex-1">
                   {/* Keyed by route: a caught render error doesn't clear itself on prop
