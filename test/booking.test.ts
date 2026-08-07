@@ -71,6 +71,44 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     expect(list.body[0].company).toBe("Green Fields");
   });
 
+  it("records the language the booking was made in", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "sara@example.com" }));
+    const created = await agent
+      .post("/api/assessments")
+      .send({ name: "سارة", email: "sara@example.com", locale: "ar" });
+
+    expect(created.status).toBe(201);
+    expect(created.body.assessment.locale).toBe("ar");
+  });
+
+  it("falls back to the account's language when the client sends none", async () => {
+    // A shipped iOS build that predates this field sends no locale. Without the
+    // fallback, someone who registered in Arabic would start getting English the
+    // moment they booked.
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "ar.user@example.com", locale: "ar" }));
+    const created = await agent
+      .post("/api/assessments")
+      .send({ name: "سارة", email: "ar.user@example.com" });
+
+    expect(created.status).toBe(201);
+    expect(created.body.assessment.locale).toBe("ar");
+  });
+
+  it("rejects a language it cannot write, rather than storing it", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "fr@example.com" }));
+    const created = await agent
+      .post("/api/assessments")
+      .send({ name: "Luc", email: "fr@example.com", locale: "fr" });
+
+    // Omitting the field is the compatibility case and is accepted (see above). Sending
+    // a language with no dictionary behind it is a client bug, and storing it would mean
+    // every later message silently resolved back to English with nothing recording why.
+    expect(created.status).toBe(400);
+  });
+
   it("only lists the signed-in user's own bookings", async () => {
     const alice = request.agent(app);
     await alice.post("/api/auth/register").send(newUser({ email: "alice@example.com" }));

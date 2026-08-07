@@ -3,8 +3,11 @@ import type { Assessment } from "@shared/schema";
 import {
   bookingConfirmationMessage,
   customerStatusMessage,
+  customerStatusPush,
   customerStatusTemplateParams,
+  emailVerificationMessage,
   notifyConfigWarnings,
+  passwordResetMessage,
 } from "../server/lib/notify";
 
 /** Minimal assessment fixture; only the fields the message builder reads matter. */
@@ -81,6 +84,71 @@ describe("bookingConfirmationMessage", () => {
     const msg = bookingConfirmationMessage(fixture());
     expect(msg.body).toMatch(/received/i);
     expect(msg.body).not.toMatch(/status/i);
+  });
+});
+
+/* ============================================================
+ * Language
+ * ========================================================== */
+
+describe("Arabic", () => {
+  it("writes the confirmation in Arabic, labels and units included", () => {
+    const msg = bookingConfirmationMessage(
+      fixture({ locale: "ar", name: "سارة", phone: "+966501234567", landSize: "25" }),
+    );
+    expect(msg.subject).toContain("استلمنا");
+    expect(msg.body).toContain("مرحباً سارة");
+    expect(msg.body).toContain("ما زوّدتنا به:");
+    expect(msg.body).toContain("رقم الهاتف: +966501234567");
+    // The unit is translated, not just the label — "25 ha" would be half a translation.
+    expect(msg.body).toContain("مساحة الأرض: 25 هكتار");
+    expect(msg.body).not.toMatch(/Hi |Thanks|Land size/);
+  });
+
+  it("writes status changes and push notifications in Arabic", () => {
+    const a = fixture({ locale: "ar", status: "scheduled", scheduledAt: new Date("2026-09-14T07:00:00Z") });
+    expect(customerStatusMessage(a).subject).toContain("تم تحديد موعد");
+    expect(customerStatusPush(a).title).toContain("تم تحديد موعد");
+    expect(customerStatusMessage(a).body).not.toMatch(/Good news|Hi /);
+  });
+
+  it("keeps dates Gregorian and Latin-digited", () => {
+    // Both are pinned on the locale tag. Without -nu-latn the year renders ٢٠٢٦, which
+    // would sit beside a Latin "#7" in the same sentence; without -u-ca-gregory the
+    // calendar is whatever the runtime picks for region SA, which has varied.
+    const body = customerStatusMessage(
+      fixture({ locale: "ar", status: "scheduled", scheduledAt: new Date("2026-09-14T07:00:00Z") }),
+    ).body;
+    expect(body).toContain("2026");
+    expect(body).toContain("سبتمبر");
+    expect(body).not.toMatch(/[٠-٩]/); // no Arabic-Indic digits
+    expect(body).not.toContain("هـ"); // no Hijri era marker
+  });
+
+  it("localises account mail off the user's own language", () => {
+    expect(passwordResetMessage("سارة", "https://x/y", "ar").subject).toContain("إعادة تعيين");
+    expect(emailVerificationMessage("سارة", "https://x/y", "ar").subject).toContain("تأكيد");
+    // The link is an identifier, not prose — it must survive untouched.
+    expect(passwordResetMessage("سارة", "https://x/y", "ar").body).toContain("https://x/y");
+  });
+
+  it("falls back to English for null, undefined and anything unrecognised", () => {
+    // A row written before the column existed reads as null, and an older client could
+    // send something else entirely. Neither should produce an empty or broken message.
+    for (const locale of [null, undefined, "", "fr", "AR", "en-GB"]) {
+      const msg = bookingConfirmationMessage(fixture({ locale } as Partial<Assessment>));
+      expect(msg.subject).toContain("We've received");
+      expect(msg.body).toContain("Hi Sara");
+    }
+    expect(passwordResetMessage("Sara", "https://x/y").subject).toMatch(/Reset your/);
+  });
+
+  it("leaves the WhatsApp template parameters in English on purpose", () => {
+    // The sentence around these lives in a template registered with Meta under one
+    // language code. Arabic values in English scaffolding is worse than either alone,
+    // so localising this channel waits on a second registered template.
+    const params = customerStatusTemplateParams(fixture({ locale: "ar", status: "completed" }));
+    expect(params[2]).toBe("complete");
   });
 });
 

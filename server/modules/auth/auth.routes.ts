@@ -67,7 +67,7 @@ async function sendEmailVerification(req: Request, user: User): Promise<string> 
     expiresAt: new Date(Date.now() + EMAIL_VERIFY_TTL_MS),
   });
   const link = `${appOrigin(req)}/verify-email?token=${token}`;
-  const { subject, body } = emailVerificationMessage(user.name, link);
+  const { subject, body } = emailVerificationMessage(user.name, link, user.locale);
   await sendUserEmail(user.email, subject, body);
   return token;
 }
@@ -93,7 +93,7 @@ authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
       return res.status(409).json({ message: "An account with that email already exists.", field: "email" });
     }
     const passwordHash = await hashPassword(input.password);
-    const user = await createUser({ name: input.name, email: input.email, passwordHash });
+    const user = await createUser({ name: input.name, email: input.email, passwordHash, locale: input.locale });
 
     // Fire off the verification email (best-effort — never block/fault signup).
     sendEmailVerification(req, user).catch((err) =>
@@ -268,7 +268,7 @@ authRoutes.post(api.auth.forgotPassword.path, authLimiter, async (req, res, next
         expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
       });
       const link = `${appOrigin(req)}/reset-password?token=${token}`;
-      const { subject, body } = passwordResetMessage(user.name, link);
+      const { subject, body } = passwordResetMessage(user.name, link, user.locale);
       await sendUserEmail(user.email, subject, body);
       devToken = token;
     }

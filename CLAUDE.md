@@ -95,7 +95,13 @@ Real, PostgreSQL-backed auth and booking:
 2. **Booking** — `server/modules/assessments/` creates bookings tied to the signed-in
    user; the dashboard lists them from `GET /api/assessments`.
 3. **Delivery** — each booking reaches the business by WhatsApp (`wa.me` link; optional
-   Cloud API) and email (SMTP, or console log in dev). See `server/lib/notify.ts`.
+   Cloud API) and email (SMTP, or console log in dev), and the customer gets a
+   confirmation of their own. See `server/lib/notify.ts`. Customer-facing copy lives in
+   `server/lib/messages.ts` and is **bilingual**: the language comes from
+   `assessments.locale` for booking mail and `users.locale` for account mail, both
+   captured at insert time and defaulting to English. WhatsApp template parameters stay
+   English — the sentence around them is registered with Meta under one language code,
+   so localising that channel needs a second registered template.
 4. `POST /api/contact` builds WhatsApp/email links for guests (no record). The
    legacy `demo_requests` pipeline has been retired — bookings are the one funnel.
 5. **Logging** — pino (`server/lib/log.ts`): JSON in prod, pretty in dev, silent in

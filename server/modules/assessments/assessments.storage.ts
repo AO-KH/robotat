@@ -11,6 +11,8 @@ export async function createAssessment(input: {
   landSize?: string;
   location?: string;
   message?: string;
+  /** Omitted by clients that predate the column; the column default supplies "en". */
+  locale?: string;
 }): Promise<Assessment> {
   const [assessment] = await db.insert(assessments).values(input).returning();
   return assessment;

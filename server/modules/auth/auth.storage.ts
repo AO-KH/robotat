@@ -21,10 +21,19 @@ export async function createUser(input: {
   name: string;
   email: string;
   passwordHash: string;
+  /** Omitted by clients that predate the column; the column default supplies "en". */
+  locale?: string;
 }): Promise<User> {
   const [user] = await db
     .insert(users)
-    .values({ name: input.name, email: input.email.toLowerCase(), passwordHash: input.passwordHash })
+    .values({
+      name: input.name,
+      email: input.email.toLowerCase(),
+      passwordHash: input.passwordHash,
+      // Left out entirely when undefined, so the column default ("en") applies rather
+      // than an explicit null hitting a NOT NULL column.
+      ...(input.locale ? { locale: input.locale } : {}),
+    })
     .returning();
   return user;
 }

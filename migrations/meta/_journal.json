@@ -64,6 +64,13 @@
       "when": 1786000000000,
       "tag": "0008_push_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786100000000,
+      "tag": "0009_locale",
+      "breakpoints": true
     }
   ]
 }

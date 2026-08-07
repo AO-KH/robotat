@@ -33,7 +33,7 @@ export async function makeStaff(email: string): Promise<void> {
 }
 
 /** A valid registration payload with a unique-ish email. */
-export function newUser(overrides: Partial<{ name: string; email: string; password: string }> = {}) {
+export function newUser(overrides: Partial<{ name: string; email: string; password: string; locale: string }> = {}) {
   return {
     name: "Test User",
     email: "test.user@example.com",

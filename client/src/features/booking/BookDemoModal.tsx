@@ -18,7 +18,7 @@ type AccountType = "individual" | "company";
 export function BookDemoModal() {
   const { isOpen, closeModal, restoreTriggerFocus } = useDemoModal();
   const { data: user } = useCurrentUser();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { data: links, isLoading } = useContactLinks(isOpen);
   const { mutateAsync: recordBooking } = useBookAssessment();
   const { mutateAsync: submitContact } = useContactSubmit();
@@ -53,7 +53,7 @@ export function BookDemoModal() {
     track("booking_whatsapp");
     if (user && !recordedRef.current) {
       recordedRef.current = true;
-      recordBooking({ name: user.name, email: user.email }).catch(() => {});
+      recordBooking({ name: user.name, email: user.email, locale: lang }).catch(() => {});
     }
     setTimeout(closeModal, 400);
   };
@@ -63,7 +63,10 @@ export function BookDemoModal() {
       setError("company", { message: t("booking.companyRequired") });
       return;
     }
-    const payload = type === "individual" ? { ...data, company: "" } : data;
+    // The language they are looking at is the language their confirmation and every
+    // later status update arrives in.
+    const withLocale = { ...data, locale: lang };
+    const payload = type === "individual" ? { ...withLocale, company: "" } : withLocale;
     try {
       const res = user ? await recordBooking(payload) : await submitContact(payload);
       track("booking_submitted");

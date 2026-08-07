@@ -20,6 +20,9 @@ export const users = pgTable("users", {
   // Bumping it revokes every token previously issued to this user — the only way
   // to evict a stolen token, since the tokens themselves are stateless.
   tokenVersion: integer("token_version").notNull().default(0),
+  // Language for account mail (password reset, email verification). Those have no
+  // assessment to read a language off, so the user row is the only source.
+  locale: text("locale").notNull().default("en"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -67,10 +70,21 @@ export const verifyEmailSchema = z.object({
 });
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
+/**
+ * The languages ROBOTAT can write to a customer in.
+ *
+ * Optional on every input that carries it, and defaulted server-side rather than here:
+ * an older client — a shipped iOS build that predates this field — must keep working,
+ * and it should get the English it has always got rather than a 400.
+ */
+export const localeSchema = z.enum(["en", "ar"]);
+export type Locale = z.infer<typeof localeSchema>;
+
 export const registerSchema = z.object({
   name: z.string().trim().min(2, "Please enter your full name"),
   email: z.string().trim().email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  locale: localeSchema.optional(),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 
@@ -120,6 +134,11 @@ export const assessments = pgTable("assessments", {
   location: text("location"),
   message: text("message"),
   status: text("status").notNull().default("pending"),
+  // Copied from the booker at insert time, not read back through userId. A booking
+  // made in Arabic stays Arabic even if the account later switches language, and a
+  // detached row (userId null after account deletion) still knows how to address its
+  // remaining status updates.
+  locale: text("locale").notNull().default("en"),
   scheduledAt: timestamp("scheduled_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -142,6 +161,7 @@ export const bookAssessmentSchema = z.object({
   landSize: z.string().trim().optional(),
   location: z.string().trim().optional(),
   message: z.string().trim().optional(),
+  locale: localeSchema.optional(),
 });
 export type BookAssessmentInput = z.infer<typeof bookAssessmentSchema>;
 

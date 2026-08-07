@@ -12,7 +12,18 @@ assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res,
   try {
     const input = api.assessments.create.input.parse(req.body);
     const user = req.user as User;
-    const assessment = await createAssessment({ userId: user.id, ...input });
+    /*
+      Language falls back through the client's current UI language, then the language
+      the account was created in, then the column default. The middle step matters for
+      a shipped iOS build that predates `locale` on this endpoint: it sends nothing, and
+      without the fallback a customer who registered in Arabic would start receiving
+      English the moment they booked.
+    */
+    const assessment = await createAssessment({
+      userId: user.id,
+      ...input,
+      locale: input.locale ?? user.locale,
+    });
 
     // Deliver to the business by email + WhatsApp (never blocks/fails the booking).
     deliverAssessment(assessment).catch(() => {});

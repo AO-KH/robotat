@@ -18,7 +18,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [, setLocation] = useLocation();
   const { data: user } = useCurrentUser();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const login = useLogin();
   const register = useRegister();
   useSeo({ title: "Sign in", noindex: true });
@@ -31,7 +31,10 @@ export default function Auth() {
   const registerForm = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
 
   const onLogin = (data: LoginInput) => login.mutate(data, { onSuccess: () => setLocation("/dashboard") });
-  const onRegister = (data: RegisterInput) => register.mutate(data, { onSuccess: () => setLocation("/dashboard") });
+  // The language they signed up in is the language we write to them in — it is the
+  // only signal available before they have booked anything.
+  const onRegister = (data: RegisterInput) =>
+    register.mutate({ ...data, locale: lang }, { onSuccess: () => setLocation("/dashboard") });
 
   const pending = login.isPending || register.isPending;
 

@@ -1,0 +1,30 @@
+-- Which language ROBOTAT writes to a customer in.
+--
+-- The app is fully bilingual, but every outgoing message was English: someone who
+-- browsed, registered and booked entirely in Arabic got an English receipt, English
+-- status updates and an English password-reset link. Nothing recorded which language
+-- they had been using, so there was nothing for the message builders to branch on.
+--
+-- It lives on BOTH tables on purpose, and they are not redundant:
+--
+--   users.locale       account mail — password reset, email verification. These have
+--                      no assessment to hang off, so the user row is the only source.
+--
+--   assessments.locale booking mail — the confirmation, later status changes, and the
+--                      push notification. Copied from the booker at insert time rather
+--                      than read back through user_id, for two reasons. A booking made
+--                      in Arabic should stay Arabic even if the account later switches
+--                      to English, because the thread of messages about one site visit
+--                      should not change language halfway through. And user_id is
+--                      nullable — account deletion detaches assessments (0007) — so a
+--                      detached row would otherwise lose the language it was made in
+--                      while still receiving status updates at its anonymised address.
+--
+-- NOT NULL DEFAULT 'en' backfills every existing row to what it has been getting all
+-- along, so this changes nothing for anyone until a new booking records otherwise.
+--
+-- Kept as text with a default rather than a Postgres enum: adding a third language
+-- would then need its own migration to extend the type, and the value is validated by
+-- Zod at the edge (localeSchema) before it ever reaches the database.
+ALTER TABLE "users" ADD COLUMN "locale" text DEFAULT 'en' NOT NULL;--> statement-breakpoint
+ALTER TABLE "assessments" ADD COLUMN "locale" text DEFAULT 'en' NOT NULL;
