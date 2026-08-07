@@ -11,7 +11,7 @@ import { riseIn, riseOnMount } from "@/lib/motion";
 
 import maxT100Img from "@assets/max_t100_robot.png";
 import grassCutterImg from "@assets/XMachines_GC02_1771963974422.JPG";
-import cultivatorImg from "@assets/Gemini_Generated_Image_46wxzi46wxzi46wx_1771964517234.png";
+import cultivatorImg from "@assets/Gemini_Generated_Image_46wxzi46wxzi46wx_1771964517234.jpg";
 import sprayerImg from "@assets/Untitled_Project_(8)_1771966958954.jpg";
 
 // Product images stay in the bundle (optimized by Vite), keyed by DB slug.

@@ -6,7 +6,7 @@ import { useSeo } from "@/lib/seo";
 import type { ReactNode } from "react";
 import { riseIn, riseOnMount } from "@/lib/motion";
 
-import marqueeImg from "@assets/06_1772321886237.png";
+import marqueeImg from "@assets/06_1772321886237.jpg";
 import fieldImg from "@assets/05_1771963956072.jpeg";
 import solarImg from "@assets/solar_farm.jpeg";
 
