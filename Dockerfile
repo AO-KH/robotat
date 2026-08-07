@@ -24,8 +24,9 @@ COPY --from=build /app/migrations ./migrations
 
 EXPOSE 5000
 
-# Simple liveness check against the health endpoint.
+# Readiness, not liveness: a container whose Postgres is unreachable should not be
+# reported healthy and handed requests it can only fail. /api/health would say ok.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://localhost:5000/api/health || exit 1
+  CMD wget -qO- http://localhost:5000/api/ready || exit 1
 
 CMD ["node", "dist/index.cjs"]
