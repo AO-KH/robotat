@@ -5,8 +5,7 @@ import { handleZodError } from "../../lib/errors";
 import { requireAuth } from "../auth/auth.service";
 import { deliverAssessment, buildWhatsappLink, buildMailtoLink } from "../../lib/notify";
 import {
-  createAssessment,
-  countRecentAssessments,
+  createAssessmentWithinLimit,
   listAssessmentsByUser,
   getAssessmentForUser,
 } from "./assessments.storage";
@@ -22,7 +21,9 @@ assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res,
     const user = req.user as User;
 
     /*
-      Cap bookings per account per rolling 24 hours.
+      Bookings are capped per account per rolling 24 hours, and the cap is enforced in
+      the same transaction as the insert — see createAssessmentWithinLimit. A null back
+      means the account is already at its limit.
 
       Deliberately not express-rate-limit, which the auth routes use: that counts per
       IP, so one customer on a shared office connection or a carrier NAT would spend
@@ -30,12 +31,18 @@ assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res,
       What is being protected is an agronomist's diary, which belongs to an account, so
       the account is what gets counted.
 
-      Read-then-insert with no transaction, so two simultaneous requests can both see
-      two and both write, landing four. Accepted deliberately: this is a courtesy to
-      the team's calendar rather than a security boundary, and one over is harmless
-      next to taking a lock on every booking to prevent it.
+      Language falls back through the client's current UI language, then the language
+      the account was created in, then the column default. The middle step matters for
+      a shipped iOS build that predates `locale` on this endpoint: it sends nothing, and
+      without the fallback a customer who registered in Arabic would start receiving
+      English the moment they booked.
     */
-    if ((await countRecentAssessments(user.id, WINDOW_HOURS)) >= DAILY_ASSESSMENT_LIMIT) {
+    const assessment = await createAssessmentWithinLimit(
+      { userId: user.id, ...input, locale: input.locale ?? user.locale },
+      { windowHours: WINDOW_HOURS, limit: DAILY_ASSESSMENT_LIMIT },
+    );
+
+    if (!assessment) {
       // English here, like every other server-side message. The client maps the 429 to
       // translated copy of its own (toast.booking.limitReached); this text is the
       // fallback for anything calling the API directly.
@@ -43,19 +50,6 @@ assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res,
         message: `You can book up to ${DAILY_ASSESSMENT_LIMIT} site assessments a day. Please try again tomorrow.`,
       });
     }
-
-    /*
-      Language falls back through the client's current UI language, then the language
-      the account was created in, then the column default. The middle step matters for
-      a shipped iOS build that predates `locale` on this endpoint: it sends nothing, and
-      without the fallback a customer who registered in Arabic would start receiving
-      English the moment they booked.
-    */
-    const assessment = await createAssessment({
-      userId: user.id,
-      ...input,
-      locale: input.locale ?? user.locale,
-    });
 
     // Deliver to the business by email + WhatsApp (never blocks/fails the booking).
     deliverAssessment(assessment).catch(() => {});

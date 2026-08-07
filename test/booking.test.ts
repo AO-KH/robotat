@@ -128,6 +128,29 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     expect(list.body).toHaveLength(DAILY_ASSESSMENT_LIMIT);
   });
 
+  it("holds the limit under simultaneous requests, not just sequential ones", async () => {
+    // The check and the insert share a transaction, serialised on the account. Counting
+    // first and inserting after would let several requests all read "two so far" and all
+    // write — the exact race this fires eight at once to catch.
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "racer@example.com" }));
+
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () =>
+        agent.post("/api/assessments").send({ name: "Racer", email: "racer@example.com" }),
+      ),
+    );
+
+    const created = results.filter((r) => r.status === 201).length;
+    const refused = results.filter((r) => r.status === 429).length;
+    expect(created).toBe(DAILY_ASSESSMENT_LIMIT);
+    expect(refused).toBe(8 - DAILY_ASSESSMENT_LIMIT);
+
+    // And the database agrees — no extra row slipped in behind a 429.
+    const list = await agent.get("/api/assessments");
+    expect(list.body).toHaveLength(DAILY_ASSESSMENT_LIMIT);
+  });
+
   it("counts per account, so one user hitting the limit does not block another", async () => {
     // The reason this is counted in the database rather than by express-rate-limit:
     // that counts per IP, and in this test both accounts share one.
