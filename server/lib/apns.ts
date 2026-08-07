@@ -1,7 +1,7 @@
 import http2 from "node:http2";
 import crypto from "node:crypto";
 import type { Assessment } from "@shared/schema";
-import { customerStatusMessage } from "./notify";
+import { customerStatusPush } from "./messages";
 import { log } from "./log";
 
 /**
@@ -178,9 +178,13 @@ export interface ApnsPayload {
  * the push, the email and the WhatsApp notice cannot drift apart.
  */
 export function buildApnsPayload(a: Assessment): ApnsPayload {
-  const { subject, body } = customerStatusMessage(a);
+  // customerStatusPush, not customerStatusMessage: the email body opens with a
+  // greeting and closes with a signature, which iOS collapsed on the lock screen into
+  // "Hi Sara, Good news — your site assessment (#7) has been…" — a truncated letter
+  // rather than a notification.
+  const { title, body } = customerStatusPush(a);
   return {
-    aps: { alert: { title: subject, body }, sound: "default" },
+    aps: { alert: { title, body }, sound: "default" },
     assessmentId: a.id,
     status: a.status,
   };

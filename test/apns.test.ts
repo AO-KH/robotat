@@ -37,7 +37,7 @@ import {
   type ApnsTransport,
   type ApnsRequest,
 } from "../server/lib/apns";
-import { customerStatusMessage, notifyConfigWarnings, pushCustomer } from "../server/lib/notify";
+import { customerStatusMessage, notifyConfigWarnings, pushCustomer, customerStatusPush } from "../server/lib/notify";
 
 /** A real P-256 key pair — the same shape as the .p8 Apple issues. */
 const { privateKey, publicKey } = crypto.generateKeyPairSync("ec", {
@@ -184,13 +184,28 @@ describe("getProviderJwt", () => {
  * ========================================================== */
 
 describe("buildApnsPayload", () => {
-  it("uses the same wording as the email and WhatsApp notices", () => {
+  it("uses the push wording, not the email body", () => {
     const a = fixture({ status: "scheduled", scheduledAt: new Date("2026-09-01T07:30:00Z") });
-    const expected = customerStatusMessage(a);
     const payload = buildApnsPayload(a);
 
-    expect(payload.aps.alert.title).toBe(expected.subject);
-    expect(payload.aps.alert.body).toBe(expected.body);
+    expect(payload.aps.alert).toEqual(customerStatusPush(a));
+  });
+
+  it("keeps the greeting and signature out of the lock screen", () => {
+    // This is why push has its own builder. Reusing customerStatusMessage put "Hi Sara,"
+    // and "— ROBOTAT by NASL" into the alert, so iOS collapsed it to "Hi Sara, Good
+    // news — your site assessment (#7) has been…" — a truncated letter, not a notice.
+    const a = fixture({ name: "Sara", status: "scheduled", scheduledAt: new Date("2026-09-01T07:30:00Z") });
+    const { title, body } = buildApnsPayload(a).aps.alert;
+
+    expect(body).not.toContain("Hi Sara");
+    expect(body).not.toContain("ROBOTAT by NASL");
+    expect(body).not.toContain("\n");
+    // Roughly what iOS shows before truncating a title.
+    expect(title.length).toBeLessThanOrEqual(40);
+    // The detail still has to survive: which booking, and when.
+    expect(body).toContain("#7");
+    expect(body).toContain("2026");
   });
 
   it("asks for a sound and carries the keys the app deep-links on", () => {

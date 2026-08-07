@@ -1,6 +1,18 @@
 import nodemailer from "nodemailer";
 import type { Assessment } from "@shared/schema";
 import { log } from "./log";
+import { customerStatusMessage, customerStatusTemplateParams } from "./messages";
+
+// Re-exported so the many modules and tests already importing these from notify.ts
+// keep working. They live in ./messages now — see the note there on the import
+// cycle between this module and ./apns that the split removes.
+export {
+  customerStatusMessage,
+  customerStatusPush,
+  customerStatusTemplateParams,
+  passwordResetMessage,
+  emailVerificationMessage,
+} from "./messages";
 import {
   apnsConfigured,
   buildApnsPayload,
@@ -143,95 +155,6 @@ export async function deliverAssessment(a: Assessment): Promise<void> {
 /* ============================================================
  * Customer-facing status notifications
  * ========================================================== */
-
-/** The message a customer receives when their booking's status changes. Pure/testable. */
-export function customerStatusMessage(a: Assessment): { subject: string; body: string } {
-  const ref = `#${a.id}`;
-  const sign = "\n\n— ROBOTAT by NASL";
-  const when = a.scheduledAt
-    ? new Date(a.scheduledAt).toLocaleString("en-US", {
-        dateStyle: "full",
-        timeStyle: "short",
-      })
-    : null;
-
-  switch (a.status) {
-    case "scheduled":
-      return {
-        subject: "Your ROBOTAT site assessment is scheduled",
-        body:
-          `Hi ${a.name},\n\nGood news — your site assessment (${ref}) has been scheduled` +
-          `${when ? ` for ${when}` : ""}. Our agronomy team will be in touch with the details.` +
-          sign,
-      };
-    case "completed":
-      return {
-        subject: "Your ROBOTAT site assessment is complete",
-        body: `Hi ${a.name},\n\nYour site assessment (${ref}) is now complete. We'll follow up with the findings and recommended next steps.${sign}`,
-      };
-    case "cancelled":
-      return {
-        subject: "Your ROBOTAT site assessment was cancelled",
-        body: `Hi ${a.name},\n\nYour site assessment (${ref}) has been cancelled. If this is unexpected, just reply to this message and we'll help.${sign}`,
-      };
-    default:
-      return {
-        subject: "Update on your ROBOTAT site assessment",
-        body: `Hi ${a.name},\n\nThe status of your site assessment (${ref}) is now: ${a.status}.${sign}`,
-      };
-  }
-}
-
-/**
- * Parameters for the approved WhatsApp status template, as exactly three strings.
- *
- * Business-initiated WhatsApp messages have to be templates. A plain `type: "text"`
- * is only delivered inside the 24-hour window opened by the customer's own last
- * message, and outside it Meta rejects the send with error 131047 — which this code
- * logs and swallows, so a scheduled visit silently never reaches the customer. That
- * is the failure this function exists to remove.
- *
- * Three rules come from Meta's API, not from taste:
- *
- *  1. **The count is fixed.** Placeholders are positional and not optional, so a
- *     template with `{{1}} {{2}} {{3}}` must always receive three values. That is why
- *     the scheduled date is folded into the status phrase rather than being a fourth
- *     parameter that would be empty for every other status.
- *  2. **No newlines, tabs, or runs of four or more spaces.** Meta rejects those
- *     outright, which rules out reusing `customerStatusMessage().body` — it is
- *     deliberately multi-line and carries a signature block.
- *  3. **Line breaks live in the template**, registered with Meta, not in the values.
- *
- * The matching template body, which you register in the WhatsApp Manager, is roughly:
- *   "Hi {{1}}, your ROBOTAT site assessment {{2}} is now {{3}}. We'll be in touch."
- */
-export function customerStatusTemplateParams(a: Assessment): [string, string, string] {
-  const when = a.scheduledAt
-    ? new Date(a.scheduledAt).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })
-    : null;
-
-  let phrase: string;
-  switch (a.status) {
-    case "scheduled":
-      phrase = when ? `scheduled for ${when}` : "scheduled";
-      break;
-    case "completed":
-      phrase = "complete";
-      break;
-    case "cancelled":
-      phrase = "cancelled";
-      break;
-    default:
-      phrase = a.status;
-  }
-
-  // Collapse anything Meta would reject. `toLocaleString` can emit a narrow no-break
-  // space (U+202F) before AM/PM, which is not matched by \s in every runtime — hence
-  // the explicit character class rather than a bare \s+.
-  const clean = (s: string) => s.replace(/[\s  ]+/g, " ").trim();
-
-  return [clean(a.name), `#${a.id}`, clean(phrase)];
-}
 
 async function emailCustomer(a: Assessment): Promise<void> {
   const { subject, body } = customerStatusMessage(a);
@@ -437,28 +360,6 @@ export function checkNotifyConfig(): void {
  * ========================================================== */
 
 const SIGN = "\n\n— ROBOTAT by NASL";
-
-/** Password-reset email body. Pure/testable. */
-export function passwordResetMessage(name: string, link: string): { subject: string; body: string } {
-  return {
-    subject: "Reset your ROBOTAT password",
-    body:
-      `Hi ${name},\n\nWe received a request to reset your password. ` +
-      `Open the link below to choose a new one — it expires in 1 hour:\n\n${link}\n\n` +
-      `If you didn't request this, you can safely ignore this email.${SIGN}`,
-  };
-}
-
-/** Email-verification email body. Pure/testable. */
-export function emailVerificationMessage(name: string, link: string): { subject: string; body: string } {
-  return {
-    subject: "Confirm your ROBOTAT email",
-    body:
-      `Hi ${name},\n\nWelcome to ROBOTAT! Please confirm your email address by opening ` +
-      `the link below (valid for 24 hours):\n\n${link}\n\n` +
-      `If you didn't create an account, you can ignore this email.${SIGN}`,
-  };
-}
 
 /** Send a transactional email to a user. Degrades to a console log when SMTP is unset. */
 export async function sendUserEmail(to: string, subject: string, body: string): Promise<void> {
