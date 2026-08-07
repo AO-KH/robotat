@@ -232,6 +232,37 @@ export const en = {
     sendByWhatsapp: "Continue to WhatsApp",
     companyRequired: "Company name is required",
   },
+  privacy: {
+    title: "Privacy Policy",
+    updated: "Last updated 7 August 2026",
+    intro:
+      "ROBOTAT is operated by NASL. This policy describes exactly what we store when you use the website or the app, why, and how to have it removed.",
+    collectHeading: "What we store",
+    collectAccount:
+      "Your account: name, email address, the language you chose, and a one-way hash of your password. We never store the password itself. Alongside it we keep what the account needs to work — whether your email is confirmed, and single-use codes for confirming it or resetting your password, which are themselves stored as hashes.",
+    collectBooking:
+      "Your site assessment requests: name, email, phone number, company, land size, location, and whatever you write in the message field.",
+    collectSession:
+      "A cookie that keeps you signed in, and a record of that session on our server so signing out ends it everywhere.",
+    collectUsage:
+      "Usage events: which pages were opened, and whether a booking was started or finished. These carry a random id kept in your browser rather than your name — it links your own visits to each other and stays until you clear your browser data. They stop being connected to your account when you delete it.",
+    collectPush:
+      "If you use the iOS app and allow notifications, a device token so we can tell you when your assessment is scheduled.",
+    useHeading: "What we do with it",
+    useBody:
+      "We use it to arrange and carry out your site assessment, and to contact you about it by email and WhatsApp. We do not sell it, and we do not use it for advertising.",
+    shareHeading: "Who else sees it",
+    shareBody:
+      "Our email provider, to deliver messages to you. Meta, whenever we send you a WhatsApp message about your booking — that includes your phone number, and it happens whether or not you started the conversation. Apple, to deliver push notifications to your device. Nobody else.",
+    retainHeading: "How long we keep it",
+    retainBody:
+      "Your account for as long as you have one. Records of assessments we actually carried out are kept as a business record, with your name and contact details removed, after you delete your account.",
+    rightsHeading: "Removing your data",
+    rightsBody:
+      "You can delete your account at any time from the Account page in the app. That removes your account and strips your name, email, phone number and notes from past assessments.",
+    contactHeading: "Contact",
+    contactBody: "Questions about this policy: info@nasl-tech.com",
+  },
   status: {
     all: "All",
     pending: "Pending",
@@ -246,6 +277,17 @@ export const en = {
     location: "Location",
     landSize: "Land size",
     message: "Message",
+  },
+  /*
+    Form hints. `email` and `mapsLink` stay Latin in both languages: they are examples of
+    the FORMAT the field accepts, not prose, and an Arabic-script example address would
+    misrepresent what you can actually type in.
+  */
+  placeholder: {
+    email: "you@example.com",
+    fullName: "Your full name",
+    landSize: "e.g. 50",
+    mapsLink: "https://maps.app.goo.gl/…",
   },
   services: {
     endToEnd: "End-to-End",

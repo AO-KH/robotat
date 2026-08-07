@@ -78,7 +78,7 @@ Gmail needs an App Password, not your account password:
       text:
         "If you are reading this, ROBOTAT can send email.\n\n" +
         "While MAIL_REDIRECT_TO is set, every message — booking confirmations, status\n" +
-        "updates, password resets, verification links — comes here instead of to the\n" +
+        "updates, password resets, confirmation codes — comes here instead of to the\n" +
         "customer, with their address shown in the subject like [-> them@example.com].\n\n" +
         "Delete MAIL_REDIRECT_TO from .env when you want customers to receive their own.\n",
     });

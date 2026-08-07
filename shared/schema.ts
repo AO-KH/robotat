@@ -20,7 +20,7 @@ export const users = pgTable("users", {
   emailCanonical: text("email_canonical").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("customer"),
-  // Null until the user confirms their email via a verification link.
+  // Null until the user confirms their email with the 6-digit code they were sent.
   emailVerifiedAt: timestamp("email_verified_at"),
   // Embedded as a claim in bearer tokens and checked on every bearer request.
   // Bumping it revokes every token previously issued to this user — the only way

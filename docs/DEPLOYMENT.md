@@ -97,11 +97,11 @@ them. Compose fails first (`${VAR:?}`), and if the app is started some other way
   the development secret, anything that looks like a placeholder (`change-me`,
   `example`, `placeholder`, …) and anything shorter than 32 characters. A committed
   placeholder booting as production would let anyone forge a token for any account.
-- **`PUBLIC_APP_URL`** is the origin used to build emailed password-reset and
-  verification links. Without it those links would be built from the request's `Host`
-  header, which an attacker controls — they could have a genuine reset token emailed
-  to a victim pointing at their own domain. Outside production it falls back to the
-  request origin for local development only.
+- **`PUBLIC_APP_URL`** is the origin used to build emailed password-reset links.
+  Without it those links would be built from the request's `Host` header, which an
+  attacker controls — they could have a genuine reset token emailed to a victim
+  pointing at their own domain. Outside production it falls back to the request
+  origin for local development only.
 
 ## Enabling automated deploy
 

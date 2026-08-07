@@ -76,8 +76,8 @@ export function validateProduction(env: Env): string[] {
 
   if (!env.PUBLIC_APP_URL) {
     problems.push(
-      "PUBLIC_APP_URL is required in production — without it, password-reset and " +
-        "verification links are built from the attacker-controlled Host header.",
+      "PUBLIC_APP_URL is required in production — without it, password-reset links " +
+        "are built from the attacker-controlled Host header.",
     );
   } else if (!env.PUBLIC_APP_URL.startsWith("https://")) {
     problems.push("PUBLIC_APP_URL must use https:// in production (session cookies are Secure-only).");
@@ -87,7 +87,7 @@ export function validateProduction(env: Env): string[] {
     problems.push(
       `MAIL_REDIRECT_TO is set to "${env.MAIL_REDIRECT_TO}". It diverts every outgoing ` +
         "email to one address, so in production no customer would receive their booking " +
-        "confirmation, status update, password reset or verification link — while the logs " +
+        "confirmation, status update, password reset or verification code — while the logs " +
         "still read as if mail went out. It exists for testing a live SMTP setup and has no " +
         "production use. Unset it.",
     );

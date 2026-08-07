@@ -29,6 +29,9 @@ export function Footer() {
       links: [
         { label: t("footer.aboutNasl"), href: "https://nasl-tech.com/en/about-us/" },
         { label: t("footer.news"), href: "https://nasl-tech.com/en/blog/" },
+        // Apple wants the privacy policy reachable from inside the app, not only from
+        // the App Store listing. The footer is on every route, so this is that link.
+        { label: t("privacy.title"), href: "/privacy" },
       ],
     },
   ];

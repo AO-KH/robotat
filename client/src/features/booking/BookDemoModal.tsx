@@ -281,7 +281,7 @@ export function BookDemoModal() {
                         <label className="text-body font-semibold text-foreground/80">
                           {type === "company" ? t("booking.contactName") : t("booking.fullName")}
                         </label>
-                        <input {...register("name")} className={inputClass} placeholder="John Doe" />
+                        <input {...register("name")} className={inputClass} placeholder={t("placeholder.fullName")} />
                         {errors.name && <p className="text-label text-destructive">{errors.name.message}</p>}
                       </div>
                       <div className="space-y-2">
@@ -292,7 +292,7 @@ export function BookDemoModal() {
 
                     <div className="space-y-2">
                       <label className="text-body font-semibold text-foreground/80">{t("booking.emailLabel")}</label>
-                      <input {...register("email")} type="email" className={inputClass} placeholder="you@example.com" />
+                      <input {...register("email")} type="email" className={inputClass} placeholder={t("placeholder.email")} />
                       {errors.email && <p className="text-label text-destructive">{errors.email.message}</p>}
                     </div>
 
@@ -314,11 +314,11 @@ export function BookDemoModal() {
                     <div className="grid grid-cols-2 gap-4 items-end">
                       <div className="space-y-2">
                         <label className="text-body font-semibold text-foreground/80">{t("booking.landSize")}</label>
-                        <input {...register("landSize")} className={inputClass} placeholder="e.g. 50" />
+                        <input {...register("landSize")} className={inputClass} placeholder={t("placeholder.landSize")} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-body font-semibold text-foreground/80">{t("booking.location")}</label>
-                        <input {...register("location")} className={inputClass} placeholder="https://goo.gl/…" />
+                        <input {...register("location")} className={inputClass} placeholder={t("placeholder.mapsLink")} />
                       </div>
                     </div>
 

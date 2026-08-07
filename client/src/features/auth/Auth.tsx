@@ -55,7 +55,7 @@ export default function Auth() {
               <label className="text-body font-semibold text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
-                <input type="email" placeholder="you@company.com" className={inputClass} {...loginForm.register("email")} />
+                <input type="email" placeholder={t("placeholder.email")} className={inputClass} {...loginForm.register("email")} />
               </div>
               {loginForm.formState.errors.email && (
                 <p className="text-label text-destructive">{loginForm.formState.errors.email.message}</p>
@@ -90,7 +90,7 @@ export default function Auth() {
               <label className="text-body font-semibold text-foreground/80">{t("auth.fullName")}</label>
               <div className="relative">
                 <User className={iconClass} />
-                <input type="text" placeholder="John Doe" className={inputClass} {...registerForm.register("name")} />
+                <input type="text" placeholder={t("placeholder.fullName")} className={inputClass} {...registerForm.register("name")} />
               </div>
               {registerForm.formState.errors.name && (
                 <p className="text-label text-destructive">{registerForm.formState.errors.name.message}</p>
@@ -100,7 +100,7 @@ export default function Auth() {
               <label className="text-body font-semibold text-foreground/80">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className={iconClass} />
-                <input type="email" placeholder="you@company.com" className={inputClass} {...registerForm.register("email")} />
+                <input type="email" placeholder={t("placeholder.email")} className={inputClass} {...registerForm.register("email")} />
               </div>
               {registerForm.formState.errors.email && (
                 <p className="text-label text-destructive">{registerForm.formState.errors.email.message}</p>

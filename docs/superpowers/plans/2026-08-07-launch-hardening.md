@@ -29,7 +29,15 @@ Every item below was verified by reading the repo on 2026-08-07, not recalled.
 
 ## Decisions already made — do not revisit
 
-**Images are recompressed in place, keeping their format.** Converting the photo-PNGs to JPEG would be smaller still, but it changes every `@assets/…` import path and the file extension, for a second-order gain. The originals stay recoverable in git history, which is the only backup that matters here.
+**Images are recompressed in place. Photographs saved as PNG are converted to JPEG; anything with transparency stays PNG.**
+
+*Corrected during execution.* The original rule said "keep every file's format", which contradicts this plan's own 600 KB guard: PNG is lossless, so the generated field shot came out at 2,062 KB at 1920px even with palette quantisation, and 824 KB at 64 colours — where the grass posterises into flat blocks. As JPEG q80 it is 515 KB and indistinguishable.
+
+Two files were converted (`Gemini_Generated_Image_…png`, `06_…png`), both confirmed fully opaque first, so JPEG loses nothing. Three PNGs were kept because they carry real alpha — `max_t100_robot.png` and the logo both report `hasAlpha: true`, and flattening a product cut-out onto a background would be a visible regression.
+
+The claim that converting "changes every `@assets/…` import path" was also wrong: eight is the total number of `@assets` imports in the repo, and only two named these files.
+
+The originals stay recoverable in git history, which is the only backup that matters here.
 
 **The privacy policy is written from the schema, not from a template.** It lists exactly the columns the app stores. A generic policy that claims to cover things ROBOTAT does not collect is worse than none — it is a false statement in a legal document.
 

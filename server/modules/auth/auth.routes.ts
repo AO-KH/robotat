@@ -73,7 +73,17 @@ function appOrigin(req: Request): string {
   return env.PUBLIC_APP_URL ?? `${req.protocol}://${req.get("host")}`;
 }
 
-/** Mint + store a verification token for a user and email them the link. Best-effort. */
+/**
+ * Mint a 6-digit verification code, store only its hash, and email the code itself.
+ *
+ * Any earlier code is invalidated first, so a resend cannot leave two live codes for one
+ * account — that would double the guesses a 6-digit space allows. The raw code is
+ * returned rather than kept, because only the caller (the dev-token path) has any use
+ * for it; the database never sees it.
+ *
+ * Best-effort at the call sites: registration must not fail because SMTP is down, since
+ * the customer can always ask for another code.
+ */
 async function sendEmailVerification(user: User): Promise<string> {
   await invalidateUserTokens(user.id, "email_verification");
   const { code, tokenHash } = generateVerificationCode();
