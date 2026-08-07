@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,25 +7,26 @@ import { X, Loader2, Mail, ArrowLeft, User as UserIcon, Building2 } from "lucide
 import { SiWhatsapp } from "react-icons/si";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
-import { useContactLinks, useContactSubmit, useBookAssessment } from "@/features/booking/use-assessments";
+import { useContactSubmit, useBookAssessment } from "@/features/booking/use-assessments";
 import { useI18n } from "@/i18n";
 import { track } from "@/lib/analytics";
 import { bookAssessmentSchema, type BookAssessmentInput } from "@shared/schema";
 
 type View = "choose" | "form";
 type AccountType = "individual" | "company";
+/** Where the finished booking gets handed off to. */
+type Channel = "whatsapp" | "email";
 
 export function BookDemoModal() {
   const { isOpen, closeModal, restoreTriggerFocus } = useDemoModal();
   const { data: user } = useCurrentUser();
   const { t, lang } = useI18n();
-  const { data: links, isLoading } = useContactLinks(isOpen);
   const { mutateAsync: recordBooking } = useBookAssessment();
   const { mutateAsync: submitContact } = useContactSubmit();
 
   const [view, setView] = useState<View>("choose");
   const [type, setType] = useState<AccountType>("individual");
-  const recordedRef = useRef(false);
+  const [channel, setChannel] = useState<Channel>("email");
 
   const {
     register,
@@ -39,7 +40,7 @@ export function BookDemoModal() {
     if (isOpen) {
       setView("choose");
       setType("individual");
-      recordedRef.current = false;
+      setChannel("email");
       reset({ name: user?.name ?? "", email: user?.email ?? "" });
     }
   }, [isOpen, user, reset]);
@@ -49,13 +50,26 @@ export function BookDemoModal() {
     if (isOpen) track("booking_open");
   }, [isOpen]);
 
-  const handleWhatsapp = () => {
-    track("booking_whatsapp");
-    if (user && !recordedRef.current) {
-      recordedRef.current = true;
-      recordBooking({ name: user.name, email: user.email, locale: lang }).catch(() => {});
-    }
-    setTimeout(closeModal, 400);
+  /** Pick a channel and go to the form. Nothing is sent or recorded until it is submitted. */
+  const chooseChannel = (next: Channel) => {
+    track(next === "whatsapp" ? "booking_whatsapp" : "booking_email");
+    setChannel(next);
+    setView("form");
+  };
+
+  /**
+   * Hand a submitted booking off to WhatsApp.
+   *
+   * A popup blocker treats `window.open` after an `await` as unrequested, because the
+   * click that started this is no longer the current gesture — so `_blank` alone cannot
+   * be relied on. When it is blocked `open` returns null and the same-tab navigation
+   * takes over: on a phone that hands off to the WhatsApp app regardless, and on desktop
+   * it means web.whatsapp.com in this tab rather than a new one. Either beats a booking
+   * that is saved and then appears to do nothing.
+   */
+  const openWhatsapp = (url: string) => {
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win) window.location.href = url;
   };
 
   const onSubmit = async (data: BookAssessmentInput) => {
@@ -70,7 +84,14 @@ export function BookDemoModal() {
     try {
       const res = user ? await recordBooking(payload) : await submitContact(payload);
       track("booking_submitted");
-      window.location.href = res.mailtoUrl;
+      /*
+        Both links come back from the server, built from the row it just wrote, so the
+        WhatsApp draft carries the same farm details as the email rather than the name
+        and address this modal happens to know. Before this, the WhatsApp option skipped
+        the form entirely and sent only those two fields.
+      */
+      if (channel === "whatsapp") openWhatsapp(res.whatsappUrl);
+      else window.location.href = res.mailtoUrl;
       setTimeout(closeModal, 300);
     } catch {
       /* mutation hooks surface the toast */
@@ -196,36 +217,31 @@ export function BookDemoModal() {
                       <p className="text-label text-muted-foreground mt-1">{t("booking.howReachSub")}</p>
                     </div>
 
-                    {isLoading || !links ? (
-                      <div className="py-10 flex justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-3">
-                        <a
-                          href={links.whatsappUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={handleWhatsapp}
-                          className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366]/20 transition-colors"
-                        >
-                          <SiWhatsapp className="w-8 h-8 text-[#25D366]" />
-                          <span className="text-body font-semibold">{t("booking.whatsapp")}</span>
-                          <span className="text-label text-muted-foreground leading-tight">{t("booking.whatsappSub")}</span>
-                        </a>
-                        <button
-                          onClick={() => {
-                            track("booking_email");
-                            setView("form");
-                          }}
-                          className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
-                        >
-                          <Mail className="w-8 h-8 text-[#c084fc]" />
-                          <span className="text-body font-semibold">{t("booking.email")}</span>
-                          <span className="text-label text-muted-foreground leading-tight">{t("booking.emailSub")}</span>
-                        </button>
-                      </div>
-                    )}
+                    {/*
+                      Both are plain buttons that only switch view — neither sends
+                      anything, so there is nothing to fetch here and no loading state.
+                      The links themselves come back from the submit response, built from
+                      the saved row, which is what lets the WhatsApp draft carry the farm
+                      details instead of just a name and email.
+                    */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => chooseChannel("whatsapp")}
+                        className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366]/20 transition-colors"
+                      >
+                        <SiWhatsapp className="w-8 h-8 text-[#25D366]" />
+                        <span className="text-body font-semibold">{t("booking.whatsapp")}</span>
+                        <span className="text-label text-muted-foreground leading-tight">{t("booking.whatsappSub")}</span>
+                      </button>
+                      <button
+                        onClick={() => chooseChannel("email")}
+                        className="flex flex-col items-center gap-2 py-6 px-3 rounded-2xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
+                      >
+                        <Mail className="w-8 h-8 text-[#c084fc]" />
+                        <span className="text-body font-semibold">{t("booking.email")}</span>
+                        <span className="text-label text-muted-foreground leading-tight">{t("booking.emailSub")}</span>
+                      </button>
+                    </div>
 
                     {!user && (
                       <p className="text-center text-label text-muted-foreground mt-5">
@@ -323,9 +339,24 @@ export function BookDemoModal() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                      /*
+                        Green for WhatsApp. The button is the last thing seen before the
+                        handoff, so it names and colours the destination rather than
+                        leaving someone to guess which of the two they picked a screen ago.
+                      */
+                      className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full text-body font-semibold transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${
+                        channel === "whatsapp"
+                          ? "bg-[#25D366] text-black hover:bg-[#1eb85a]"
+                          : "bg-primary text-primary-foreground hover:bg-[#a855f7]"
+                      }`}
                     >
-                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Mail className="w-4 h-4" /> {t("booking.sendByEmail")}</>}
+                      {isSubmitting ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : channel === "whatsapp" ? (
+                        <><SiWhatsapp className="w-4 h-4" /> {t("booking.sendByWhatsapp")}</>
+                      ) : (
+                        <><Mail className="w-4 h-4" /> {t("booking.sendByEmail")}</>
+                      )}
                     </button>
                   </form>
                 )}

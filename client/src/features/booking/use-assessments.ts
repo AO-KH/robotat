@@ -27,20 +27,6 @@ export function useMyAssessments(enabled = true) {
   });
 }
 
-/** Prefilled WhatsApp + email links for a quick assessment inquiry (personalized when signed in). */
-export function useContactLinks(enabled: boolean) {
-  return useQuery({
-    queryKey: ["/api/contact"],
-    enabled,
-    staleTime: 0,
-    queryFn: async () => {
-      const res = await fetch(api.contact.get.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load contact options");
-      return (await res.json()) as { whatsappUrl: string; mailtoUrl: string };
-    },
-  });
-}
-
 /** Submit the booking form as a guest (no account) — returns prefilled channel links, saves nothing. */
 export function useContactSubmit() {
   return useMutation({
