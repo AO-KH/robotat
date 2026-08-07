@@ -30,7 +30,7 @@ export default defineConfig({
       The `server` project is what this suite has always been: node, no DOM. The
       `components` project is jsdom, and only it pays for jsdom and for loading
       @testing-library — both are scoped here rather than switched on globally.
-      Measured on the 28 pre-existing files: hanging the DOM setup file off the shared
+      Measured on the 24 pre-existing files: hanging the DOM setup file off the shared
       `setupFiles` took the suite from 35.8s to 41.1s (per-file setup 183ms -> 6.10s)
       and bought those files nothing, since not one of them renders anything.
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { api } from "@shared/routes";
 import { handleZodError } from "../../lib/errors";
+import { track } from "../../lib/background";
 import { requireStaff } from "../auth/auth.service";
 import { notifyCustomerStatusChange } from "../../lib/notify";
 import {
@@ -50,9 +51,14 @@ adminRoutes.patch(api.admin.updateAssessment.path, requireStaff, async (req, res
 
     const updated = await updateAssessment(id, { status: input.status, scheduledAt });
 
-    // Notify the customer when the status actually changes (best-effort, never blocks).
+    /*
+      Notify the customer when the status actually changes (best-effort, never blocks).
+      Tracked for the same reason the booking's delivery is: it runs past the response,
+      it reads device tokens out of the pool, and a shutdown that does not know about it
+      cuts it off. See server/lib/background.ts.
+    */
     if (updated && updated.status !== existing.status) {
-      notifyCustomerStatusChange(updated).catch(() => {});
+      track(notifyCustomerStatusChange(updated).catch(() => {}));
     }
 
     res.status(200).json(updated);

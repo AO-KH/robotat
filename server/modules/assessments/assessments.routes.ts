@@ -2,6 +2,7 @@ import { Router } from "express";
 import { api } from "@shared/routes";
 import { DAILY_ASSESSMENT_LIMIT, type User } from "@shared/schema";
 import { handleZodError } from "../../lib/errors";
+import { track } from "../../lib/background";
 import { requireAuth } from "../auth/auth.service";
 import { getUserById } from "../auth/auth.storage";
 import { deliverAssessment, buildWhatsappLink, buildMailtoLink } from "../../lib/notify";
@@ -71,8 +72,16 @@ assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res,
       });
     }
 
-    // Deliver to the business by email + WhatsApp (never blocks/fails the booking).
-    deliverAssessment(assessment).catch(() => {});
+    /*
+      Deliver to the business by email + WhatsApp (never blocks/fails the booking).
+
+      Tracked, because this is the seconds of SMTP and HTTPS that happen after the 201
+      has already gone out: a SIGTERM landing here would otherwise leave the customer
+      looking at a success screen for a booking the business never heard about. See
+      server/lib/background.ts. The `.catch` stays — swallowing the error is the
+      deliberate part, and it is separate from knowing the work is still running.
+    */
+    track(deliverAssessment(assessment).catch(() => {}));
 
     res.status(201).json({
       assessment,
