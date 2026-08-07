@@ -50,6 +50,23 @@ export async function deletePushToken(userId: number, token: string): Promise<nu
   return deleted.length;
 }
 
+/**
+ * Forget every device belonging to one user. The sweep behind sign-out.
+ *
+ * The client releases its own token first, but that request can fail — a phone with no
+ * connectivity signs out locally and the row survives. Doing it again server-side, where
+ * connectivity is not in question, is what actually guarantees the row cannot outlive the
+ * session and start delivering this user's booking details to the next person holding
+ * the device.
+ */
+export async function deleteTokensForUser(userId: number): Promise<number> {
+  const deleted = await db
+    .delete(pushTokens)
+    .where(eq(pushTokens.userId, userId))
+    .returning({ id: pushTokens.id });
+  return deleted.length;
+}
+
 /** Every device registered to a user — the fan-out's input. */
 export async function getTokensForUser(userId: number): Promise<PushToken[]> {
   return db.select().from(pushTokens).where(eq(pushTokens.userId, userId));

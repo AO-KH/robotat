@@ -263,9 +263,18 @@ export async function pushCustomer(a: Assessment, transport?: ApnsTransport): Pr
     return;
   }
 
-  const tokens = await getTokensForUser(a.userId);
+  /*
+    APNs, and therefore only the iOS rows.
+
+    `getTokensForUser` is a general accessor and `registerPushTokenSchema` already
+    accepts "android" and "web", so the day a second platform registers, an FCM token
+    posted to Apple would come back `BadDeviceToken` — which `deadTokens` treats as
+    proof the device is gone and silently deletes. The filter belongs here, in the
+    Apple-specific sender, not in the accessor an Android fan-out would want to reuse.
+  */
+  const tokens = (await getTokensForUser(a.userId)).filter((t) => t.platform === "ios");
   if (tokens.length === 0) {
-    log(`[apns] no registered devices for assessment #${a.id}`, "notify");
+    log(`[apns] no registered iOS devices for assessment #${a.id}`, "notify");
     return;
   }
 
@@ -358,8 +367,6 @@ export function checkNotifyConfig(): void {
 /* ============================================================
  * Account emails — password reset & email verification
  * ========================================================== */
-
-const SIGN = "\n\n— ROBOTAT by NASL";
 
 /** Send a transactional email to a user. Degrades to a console log when SMTP is unset. */
 export async function sendUserEmail(to: string, subject: string, body: string): Promise<void> {

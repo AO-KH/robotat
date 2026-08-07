@@ -21,6 +21,8 @@ const cap = vi.hoisted(() => ({
   permission: "granted" as string,
   listeners: {} as Record<string, (arg: unknown) => void>,
   registerCalls: 0,
+  /** When set, `addListener` rejects with it — the binding-fails path. */
+  addListenerError: null as Error | null,
 }));
 
 vi.mock("@capacitor/core", () => ({
@@ -34,6 +36,7 @@ vi.mock("@capacitor/core", () => ({
         cap.registerCalls += 1;
       },
       addListener: async (event: string, fn: (arg: unknown) => void) => {
+        if (cap.addListenerError) throw cap.addListenerError;
         cap.listeners[event] = fn;
       },
     };
@@ -46,6 +49,7 @@ const DEVICE = "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90
 
 let calls: Array<{ url: string; body: unknown }>;
 let respond: () => Response | Promise<Response>;
+let pushState: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   resetPushForTests();
@@ -54,6 +58,13 @@ beforeEach(() => {
   cap.permission = "granted";
   cap.listeners = {};
   cap.registerCalls = 0;
+  cap.addListenerError = null;
+
+  // wouter's `navigate` is History-API only, and this suite runs in `environment: "node"`
+  // where there is no `history` at all. Standing one in is enough: pushState *is* the
+  // navigation, and wouter's own event patch is what turns it into a re-render.
+  pushState = vi.fn();
+  vi.stubGlobal("history", { pushState, replaceState: vi.fn() });
 
   calls = [];
   respond = () => new Response(JSON.stringify({ ok: true }), { status: 200 });
@@ -92,6 +103,16 @@ describe("initPush", () => {
     expect(calls).toEqual([]);
   });
 
+  it("binds to the plugin by its exact registered name", async () => {
+    await registerDevice();
+
+    // The string is the entire native contract. There is no `@capacitor/push-notifications`
+    // import to typo-check it against — `registerPlugin` happily returns a proxy for a
+    // name nothing implements, so a mistake here is a silent no-op that only a device
+    // would ever surface. Also asserts it is asked for once, not once per listener.
+    expect(cap.pluginsRequested).toEqual(["PushNotifications"]);
+  });
+
   it("registers the device token with the backend on a native platform", async () => {
     await registerDevice();
 
@@ -114,6 +135,60 @@ describe("initPush", () => {
     await registerDevice();
 
     expect(() => cap.listeners.registrationError({ error: "no valid aps-environment" })).not.toThrow();
+  });
+
+  it("rebinds after a failed binding instead of registering with nothing listening", async () => {
+    cap.native = true;
+    cap.addListenerError = new Error("plugin not ready");
+
+    await expect(initPush()).resolves.toBeUndefined();
+    expect(cap.listeners.registration).toBeUndefined();
+
+    // The hazard the latch reset exists for: if `listenersBound` survived the failure,
+    // this second attempt would skip binding and call register() anyway, and the
+    // `registration` event would fire into the void — no token, no error, ever.
+    cap.addListenerError = null;
+    await registerDevice();
+
+    expect(cap.listeners.registration).toBeTypeOf("function");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe("/api/push/register");
+  });
+});
+
+describe("tapping a notification", () => {
+  /** Deliver a tap the way Capacitor does — the APNs custom keys arrive in `data`. */
+  const tap = (data: unknown) => cap.listeners.pushNotificationActionPerformed({ notification: { data } });
+
+  it("opens the booking the notification is about", async () => {
+    await registerDevice();
+
+    tap({ assessmentId: 7, status: "scheduled" });
+
+    // The payload has always carried assessmentId; until now nothing listened, so a tap
+    // just opened the app wherever it was left — including for "Tap to get in touch".
+    expect(pushState).toHaveBeenCalledWith(null, "", "/assessments/7");
+  });
+
+  it("accepts an id that arrives as a string", async () => {
+    await registerDevice();
+
+    tap({ assessmentId: "7" });
+
+    expect(pushState).toHaveBeenCalledWith(null, "", "/assessments/7");
+  });
+
+  it("stays put rather than building a broken URL", async () => {
+    await registerDevice();
+
+    tap({ assessmentId: "not-a-number" });
+    tap({ status: "cancelled" });
+    tap(undefined);
+    cap.listeners.pushNotificationActionPerformed({});
+
+    // `/assessments/undefined` matches the route and renders its not-found state, which
+    // is a worse answer than leaving the user where they already were.
+    expect(pushState).not.toHaveBeenCalled();
   });
 });
 
@@ -151,6 +226,65 @@ describe("teardownPush", () => {
     respond = () => new Response(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
 
     await expect(teardownPush()).resolves.toBeUndefined();
+  });
+
+  it("keeps the token when the release fails, so a later sign-out can retry", async () => {
+    await registerDevice();
+    calls = [];
+    respond = () => {
+      throw new Error("network down");
+    };
+
+    await teardownPush();
+    expect(calls).toHaveLength(1);
+
+    // Sign out on a train and the row survives on the server. Forgetting the token here
+    // would mean this device — the only thing that knows the row is stale — can never
+    // release it, which is the exact hazard teardownPush exists to close.
+    calls = [];
+    respond = () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    await teardownPush();
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].body).toEqual({ token: DEVICE });
+  });
+
+  it("keeps the token when the server rejects the release", async () => {
+    await registerDevice();
+    calls = [];
+    respond = () => new Response(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+
+    await teardownPush();
+    calls = [];
+    respond = () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    await teardownPush();
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].body).toEqual({ token: DEVICE });
+  });
+
+  it("does not clobber a newly registered token with a stale failed one", async () => {
+    await registerDevice();
+    calls = [];
+
+    // A release still in flight while the user signs back in: the new token is the one
+    // this device is now responsible for, and the retry must not overwrite it.
+    let releaseNewToken: (() => void) | undefined;
+    respond = () =>
+      new Promise<Response>((_, reject) => {
+        releaseNewToken = () => reject(new Error("network down"));
+      });
+    const pending = teardownPush();
+
+    respond = () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    await registerDevice("fresh-token");
+
+    releaseNewToken!();
+    await pending;
+
+    calls = [];
+    await teardownPush();
+    expect(calls[0].body).toEqual({ token: "fresh-token" });
   });
 
   it("forgets the token, so a second sign-out sends nothing", async () => {

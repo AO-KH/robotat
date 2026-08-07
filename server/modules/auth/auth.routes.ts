@@ -36,6 +36,7 @@ import {
   emailVerificationMessage,
   sendUserEmail,
 } from "../../lib/notify";
+import { deleteTokensForUser } from "../push/push.storage";
 import { log } from "../../lib/log";
 
 // Outside production we return the raw token in the JSON response so integration
@@ -142,7 +143,29 @@ authRoutes.post(api.auth.token.path, authLimiter, async (req, res, next) => {
   }
 });
 
-authRoutes.post(api.auth.logout.path, (req, res, next) => {
+authRoutes.post(api.auth.logout.path, async (req, res, next) => {
+  /*
+    Drop this account's push tokens BEFORE the session goes away — after `req.logout()`
+    there is no `req.user` left to scope the delete to.
+
+    The app already releases its own token via POST /api/push/unregister on the way here,
+    but that call can simply not arrive: sign out on a train and the row survives, still
+    naming this user, and the next status change delivers their site address and notes to
+    whoever is holding the phone. Connectivity is not in question on this side of the
+    wire, so this is the sweep that actually closes it.
+
+    Best-effort, like every other notification concern: a database hiccup must not leave
+    someone unable to sign out.
+  */
+  const user = req.user as User | undefined;
+  if (user) {
+    try {
+      await deleteTokensForUser(user.id);
+    } catch (err) {
+      log(`push token cleanup failed for user ${user.id}: ${String(err)}`, "auth");
+    }
+  }
+
   req.logout((err) => {
     if (err) return next(err);
     res.status(200).json({ ok: true });

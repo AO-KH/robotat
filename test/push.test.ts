@@ -172,6 +172,58 @@ describe("push token removal (POST /api/push/unregister)", () => {
   });
 });
 
+describe("push tokens and sign-out", () => {
+  it("releases the caller's devices when they log out", async () => {
+    const { agent } = await signUp("leaver@example.com");
+    await agent.post("/api/push/register").send({ token: DEVICE });
+    await agent.post("/api/push/register").send({ token: `${DEVICE}-ipad` });
+    expect(await tokenRows()).toHaveLength(2);
+
+    // The app releases its own token first, but that request can simply not arrive —
+    // sign out with no connectivity and the row survives, still naming this user, so
+    // the next status change pushes their site address to whoever holds the phone next.
+    // This is the sweep that does not depend on the client reaching us.
+    expect((await agent.post("/api/auth/logout").send({})).status).toBe(200);
+
+    expect(await tokenRows()).toHaveLength(0);
+  });
+
+  it("leaves other accounts' devices alone", async () => {
+    const { agent: stayer, userId: stayerId } = await signUp("stayer@example.com");
+    await stayer.post("/api/push/register").send({ token: `${DEVICE}-other` });
+
+    const { agent: leaver } = await signUp("leaver@example.com");
+    await leaver.post("/api/push/register").send({ token: DEVICE });
+
+    expect((await leaver.post("/api/auth/logout").send({})).status).toBe(200);
+
+    const rows = await tokenRows();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].user_id).toBe(stayerId);
+  });
+
+  it("still signs a caller out when they never registered a device", async () => {
+    const { agent } = await signUp("a@example.com");
+    expect((await agent.post("/api/auth/logout").send({})).status).toBe(200);
+    expect((await agent.get("/api/auth/me")).status).toBe(401);
+  });
+
+  it("sweeps for a bearer-token caller too (the native app has no session cookie)", async () => {
+    const creds = newUser();
+    await request(app).post("/api/auth/register").send(creds);
+    const issued = await request(app)
+      .post("/api/auth/token")
+      .send({ email: creds.email, password: creds.password });
+    const bearer = `Bearer ${issued.body.token}`;
+
+    await request(app).post("/api/push/register").set("Authorization", bearer).send({ token: DEVICE });
+    expect(await tokenRows()).toHaveLength(1);
+
+    expect((await request(app).post("/api/auth/logout").set("Authorization", bearer).send({})).status).toBe(200);
+    expect(await tokenRows()).toHaveLength(0);
+  });
+});
+
 describe("push tokens and account deletion", () => {
   it("cascades a deleted account's devices away", async () => {
     const { agent, creds } = await signUp("leaver@example.com");

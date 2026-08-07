@@ -25,6 +25,7 @@ vi.mock("../server/modules/push/push.storage", () => ({
   deleteTokensByValue: storage.deleteTokensByValue,
   upsertPushToken: vi.fn(),
   deletePushToken: vi.fn(),
+  deleteTokensForUser: vi.fn(),
 }));
 
 import {
@@ -327,7 +328,10 @@ describe("deadTokens", () => {
 describe("pushCustomer", () => {
   it("sends to every registered device and prunes exactly the dead ones", async () => {
     configureApns();
-    storage.getTokensForUser.mockResolvedValue([{ token: "live-device" }, { token: "dead-device" }]);
+    storage.getTokensForUser.mockResolvedValue([
+      { token: "live-device", platform: "ios" },
+      { token: "dead-device", platform: "ios" },
+    ]);
 
     const { transport, calls } = fakeTransport({
       "live-device": [{ status: 200 }],
@@ -347,10 +351,39 @@ describe("pushCustomer", () => {
 
   it("does not touch the database when every device is healthy", async () => {
     configureApns();
-    storage.getTokensForUser.mockResolvedValue([{ token: "live-device" }]);
+    storage.getTokensForUser.mockResolvedValue([{ token: "live-device", platform: "ios" }]);
     const { transport } = fakeTransport({ "live-device": [{ status: 200 }] });
 
     await pushCustomer(fixture(), transport);
+    expect(storage.deleteTokensByValue).not.toHaveBeenCalled();
+  });
+
+  it("sends only to iOS devices", async () => {
+    configureApns();
+    storage.getTokensForUser.mockResolvedValue([
+      { token: "iphone", platform: "ios" },
+      { token: "pixel", platform: "android" },
+      { token: "chrome", platform: "web" },
+    ]);
+    const { transport, calls } = fakeTransport({ iphone: [{ status: 200 }] });
+
+    await pushCustomer(fixture(), transport);
+
+    // An FCM token POSTed to Apple comes back BadDeviceToken, which `deadTokens` reads
+    // as "this device is gone" — so without the filter the first Android registration
+    // would be silently deleted by the iOS sender.
+    expect(calls.map((c) => c.deviceToken)).toEqual(["iphone"]);
+    expect(storage.deleteTokensByValue).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op when the customer has no iOS device at all", async () => {
+    configureApns();
+    storage.getTokensForUser.mockResolvedValue([{ token: "pixel", platform: "android" }]);
+    const { transport, calls } = fakeTransport({});
+
+    await pushCustomer(fixture(), transport);
+
+    expect(calls).toHaveLength(0);
     expect(storage.deleteTokensByValue).not.toHaveBeenCalled();
   });
 

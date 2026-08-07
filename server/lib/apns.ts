@@ -16,11 +16,8 @@ import { log } from "./log";
  * returns rather than throwing, because a push that cannot be sent must never fail the
  * status change that triggered it.
  *
- * NOTE ON THE IMPORT CYCLE: this module imports `customerStatusMessage` from notify.ts
- * and notify.ts imports the senders from here. That is a real ESM cycle, and it is safe
- * only because everything crossing it is a hoisted function declaration called at
- * request time — nothing runs at module scope. Do not add top-level work that calls
- * across the boundary.
+ * The notification wording comes from `./messages`, which is pure and imports nothing
+ * from here — see the note at the top of that file for why it is a module of its own.
  */
 
 /** Bundle identifier of the Capacitor iOS app; the APNs topic. */
@@ -174,8 +171,8 @@ export interface ApnsPayload {
 /**
  * The notification for a booking status change. Pure/testable.
  *
- * The wording comes from `customerStatusMessage` rather than a second copy of it, so
- * the push, the email and the WhatsApp notice cannot drift apart.
+ * The wording comes from `./messages` rather than a second copy of it, so the push, the
+ * email and the WhatsApp notice cannot drift apart.
  */
 export function buildApnsPayload(a: Assessment): ApnsPayload {
   // customerStatusPush, not customerStatusMessage: the email body opens with a
