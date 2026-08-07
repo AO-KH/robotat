@@ -57,21 +57,6 @@ export function BookDemoModal() {
     setView("form");
   };
 
-  /**
-   * Hand a submitted booking off to WhatsApp.
-   *
-   * A popup blocker treats `window.open` after an `await` as unrequested, because the
-   * click that started this is no longer the current gesture — so `_blank` alone cannot
-   * be relied on. When it is blocked `open` returns null and the same-tab navigation
-   * takes over: on a phone that hands off to the WhatsApp app regardless, and on desktop
-   * it means web.whatsapp.com in this tab rather than a new one. Either beats a booking
-   * that is saved and then appears to do nothing.
-   */
-  const openWhatsapp = (url: string) => {
-    const win = window.open(url, "_blank", "noopener,noreferrer");
-    if (!win) window.location.href = url;
-  };
-
   const onSubmit = async (data: BookAssessmentInput) => {
     if (type === "company" && !data.company?.trim()) {
       setError("company", { message: t("booking.companyRequired") });
@@ -89,9 +74,20 @@ export function BookDemoModal() {
         WhatsApp draft carries the same farm details as the email rather than the name
         and address this modal happens to know. Before this, the WhatsApp option skipped
         the form entirely and sent only those two fields.
+
+        Same-tab navigation for both, and for WhatsApp that is a correction rather than a
+        preference. This first used window.open(_blank) with a `null` check falling back
+        to a navigation — but a browser that refuses the popup does not reliably return
+        null. Measured here: open() handed back a live-looking object, no tab appeared,
+        the page never moved, so the fallback never ran and the booking silently saved
+        and went nowhere. There is no dependable way to ask whether a popup actually
+        opened, and location.href cannot be popup-blocked at all.
+
+        On a phone — the case that matters, since this ships as an iOS app — the OS
+        catches the wa.me link and hands off to WhatsApp, leaving this page loaded
+        behind it. On desktop it means web.whatsapp.com in this tab.
       */
-      if (channel === "whatsapp") openWhatsapp(res.whatsappUrl);
-      else window.location.href = res.mailtoUrl;
+      window.location.href = channel === "whatsapp" ? res.whatsappUrl : res.mailtoUrl;
       setTimeout(closeModal, 300);
     } catch {
       /* mutation hooks surface the toast */
