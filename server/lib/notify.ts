@@ -23,6 +23,14 @@ import {
 import { deleteTokensByValue, getTokensForUser } from "../modules/push/push.storage";
 
 /**
+ * Where booking notices go when ASSESSMENT_INBOX is unset.
+ *
+ * A guess at a plausible company address, not a mailbox known to exist — which is why
+ * notifyConfigWarnings() flags relying on it in production.
+ */
+const FALLBACK_ASSESSMENT_INBOX = "assessments@nasl-tech.com";
+
+/**
  * Delivery of new assessment bookings to the business, two ways:
  *   1. Email  — via SMTP when SMTP_* env vars are set, otherwise logged to console.
  *   2. WhatsApp — a wa.me click-to-chat link is always returned for the user to
@@ -85,14 +93,14 @@ export function buildWhatsappLink(lead: Lead): string {
 
 /** Build a mailto: link that opens the user's email client, pre-addressed to the team. */
 export function buildMailtoLink(lead: Lead): string {
-  const to = process.env.ASSESSMENT_INBOX || "assessments@nasl-tech.com";
+  const to = process.env.ASSESSMENT_INBOX || FALLBACK_ASSESSMENT_INBOX;
   const subject = lead.name ? `Site assessment request — ${lead.name}` : "Site assessment request";
   return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(userMessage(lead))}`;
 }
 
 async function sendEmail(a: Assessment): Promise<void> {
   const { ASSESSMENT_INBOX } = process.env;
-  const to = ASSESSMENT_INBOX || "assessments@nasl-tech.com";
+  const to = ASSESSMENT_INBOX || FALLBACK_ASSESSMENT_INBOX;
   const body = summaryLines(a).join("\n");
 
   await deliverEmail({
@@ -383,6 +391,20 @@ export function notifyConfigWarnings(env: NodeJS.ProcessEnv = process.env): stri
   }
   if (env.NODE_ENV === "production" && !env.SMTP_HOST) {
     warnings.push("SMTP_HOST is not set in production — customer emails will only be logged.");
+  }
+  /*
+    Unset, new bookings are mailed to a hardcoded fallback address. If nobody owns that
+    mailbox the notice bounces somewhere nobody reads, while the send itself succeeds and
+    logs "sent" — so the business stops hearing about bookings and has no signal that it
+    has. The customer's own confirmation is unaffected, which is what makes it easy to
+    miss: the funnel looks healthy from the outside.
+  */
+  if (env.NODE_ENV === "production" && !env.ASSESSMENT_INBOX) {
+    warnings.push(
+      `ASSESSMENT_INBOX is not set, so new bookings are being mailed to ${FALLBACK_ASSESSMENT_INBOX}. ` +
+        "Unless someone actually reads that mailbox, nobody is being told a booking came in — " +
+        "and because the send succeeds, the logs will still say the notice went out.",
+    );
   }
 
   /*

@@ -434,3 +434,26 @@ describe("notifyConfigWarnings — APNs", () => {
     expect(notifyConfigWarnings({})).toEqual([]);
   });
 });
+
+describe("notifyConfigWarnings — assessment inbox", () => {
+  it("flags relying on the fallback address in production", () => {
+    const warnings = notifyConfigWarnings({ NODE_ENV: "production", SMTP_HOST: "smtp.example.com" });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("ASSESSMENT_INBOX");
+    // Naming the fallback matters: the warning has to say where mail is actually going,
+    // or whoever reads it cannot tell whether that mailbox is monitored.
+    expect(warnings[0]).toContain("assessments@nasl-tech.com");
+  });
+
+  it("stays quiet once an inbox is set, and outside production", () => {
+    expect(
+      notifyConfigWarnings({
+        NODE_ENV: "production",
+        SMTP_HOST: "smtp.example.com",
+        ASSESSMENT_INBOX: "ops@example.com",
+      }),
+    ).toEqual([]);
+    // Dev and test intentionally run without one — the console-log path is the point.
+    expect(notifyConfigWarnings({ NODE_ENV: "development" })).toEqual([]);
+  });
+});
