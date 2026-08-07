@@ -56,8 +56,11 @@ Each server module owns `*.storage.ts` (Drizzle queries) + `*.routes.ts` (an Exp
 - `npm start` — run production build
 - `npm run check` — TypeScript typecheck (tsc)
 - `npm test` — run the Vitest/Supertest integration tests (needs a `robotat_test` DB; see `.env.test`)
-- `npm run db:generate` — generate a Drizzle migration from schema changes
 - `npm run db:migrate` — apply pending migrations (migrations are committed under `migrations/`)
+- `npm run mail:test` — send one real email with the `.env` SMTP settings and report
+  what failed if it did. Email sends are best-effort everywhere else, so a wrong
+  password looks identical to a working system until a customer never gets their
+  confirmation; this is the only place that failure is loud.
 - `npm run dev:staff` — mint a disposable **staff** account so `/admin` and
   `/admin/analytics` can actually be opened and looked at. Prints a generated password
   once; refuses to run when `NODE_ENV=production`. Delete it when done with
@@ -109,8 +112,15 @@ push, and App Store submission still need a Mac + Apple Developer account.
 - **API contract first.** Add an endpoint to `shared/routes.ts` (method, path, Zod
   input, typed responses), then implement it in the matching `server/modules/<feature>/`
   (storage + routes), and consume it from a `client/src/features/<feature>/` hook.
-- **Schema + Zod** live together in `shared/schema.ts`; after changing tables run
-  `npm run db:generate` then `npm run db:migrate` (migrations are committed).
+- **Schema + Zod** live together in `shared/schema.ts`.
+- **Migrations are hand-authored. Do NOT run `db:generate` or `db:push`** — this is a
+  standing instruction from the repo owner. After changing a table, write the `.sql`
+  under `migrations/` yourself, append its entry to `meta/_journal.json`, and produce
+  `meta/NNNN_snapshot.json` with a script (they are large and drift silently if edited
+  by hand). Then `npm run db:migrate`, and `npx drizzle-kit check` to verify the chain.
+  Snapshot tables are keyed schema-qualified (`public.assessments`), which is easy to
+  get wrong. `db:push` applies changes without recording them, desynchronising every
+  other environment from yours.
 - **Data fetching** goes through TanStack Query hooks under each feature.
 
 ## When starting work

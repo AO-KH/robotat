@@ -79,8 +79,8 @@ npm install
 # 2. Configure environment
 cp .env.example .env        # then edit DATABASE_URL etc.
 
-# 3. Create the schema
-npm run db:push
+# 3. Create the schema (migrations are committed; never db:push)
+npm run db:migrate
 
 # 4. Run the dev server (API + client on http://localhost:5000)
 npm run dev
@@ -104,6 +104,7 @@ API push when Meta credentials are provided.
 | `npm run build`      | Production build |
 | `npm start`          | Run the production build |
 | `npm run db:migrate` | Apply pending migrations |
+| `npm run mail:test`  | Send one real email using the SMTP settings in `.env`, to prove they work. Reads the password, never prints it |
 | `npm run dev:staff`  | Mint a disposable **staff** account so `/admin` can be opened. Prints a generated password once; refuses to run in production. Remove it with `npm run dev:staff -- --delete <email>` |
 | `npm run cap:sync:ios` | Copy the web build into the native iOS project |
 

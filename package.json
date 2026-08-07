@@ -17,7 +17,8 @@
     "cap:copy": "cap copy",
     "cap:sync": "cap sync",
     "cap:sync:ios": "cap sync ios",
-    "dev:staff": "tsx script/dev-staff.ts"
+    "dev:staff": "tsx script/dev-staff.ts",
+    "mail:test": "tsx script/mail-test.ts"
   },
   "dependencies": {
     "@capacitor/core": "^7.6.7",
