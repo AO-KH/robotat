@@ -1,6 +1,34 @@
 import { pgTable, text, serial, integer, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
+/**
+ * A timestamp filled by the database's own clock.
+ *
+ * Read this before adding a `timestamp` column, because the two kinds in this schema are
+ * not interchangeable and the wrong one fails silently.
+ *
+ * `now()` returns a `timestamptz`. Storing it into a plain `timestamp` converts it using
+ * the DATABASE SESSION's TimeZone and discards the zone, leaving a local wall clock.
+ * Drizzle reads a plain `timestamp` back as `new Date(value + "+0000")` — it has no zone
+ * to work from, so it assumes UTC. The halves disagree by exactly the database's UTC
+ * offset, and nothing anywhere complains: the value is a valid Date of the right shape,
+ * simply naming the wrong moment. On a Riyadh-configured server every such value came
+ * out three hours in the future, and the same mismatch had already turned a 24-hour
+ * booking window into a 27-hour one. Migration 0013 has the full account.
+ *
+ * `timestamptz` removes the choice: the value on the wire carries its offset in both
+ * directions, so there is no zone left to assume.
+ *
+ * The columns NOT using this — `assessments.scheduled_at`, `auth_tokens.expires_at`,
+ * `users.email_verified_at`, `auth_tokens.used_at` — are written by this application as
+ * JavaScript Dates, which Drizzle serialises with `toISOString()` and reads back as UTC.
+ * Both ends agree, so those round-trip exactly and have nothing to fix. That is the whole
+ * distinction, and it is a rule about the WRITER: the moment a plain `timestamp` column
+ * is written by `now()` or `DEFAULT now()`, it acquires the bug. If you need that, use
+ * this helper instead.
+ */
+const dbClockTimestamp = (name: string) => timestamp(name, { withTimezone: true });
+
 /** User roles. `customer` is the default; `staff` can access the admin module. */
 export const USER_ROLES = ["customer", "staff"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
@@ -31,7 +59,7 @@ export const users = pgTable(
     // Language for account mail (password reset, email verification). Those have no
     // assessment to read a language off, so the user row is the only source.
     locale: text("locale").notNull().default("en"),
-    createdAt: timestamp("created_at").defaultNow(),
+    createdAt: dbClockTimestamp("created_at").defaultNow(),
   },
   /*
     The one-inbox-one-account rule, and it has to be declared here rather than only in
@@ -91,7 +119,7 @@ export const authTokens = pgTable("auth_tokens", {
   // Wrong guesses so far. A 6-digit verification code needs this; a 32-byte reset
   // token does not, but sharing one table is simpler than splitting it for one column.
   attempts: integer("attempts").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: dbClockTimestamp("created_at").defaultNow(),
 });
 
 export type AuthToken = typeof authTokens.$inferSelect;
@@ -191,7 +219,7 @@ export const assessments = pgTable("assessments", {
   // remaining status updates.
   locale: text("locale").notNull().default("en"),
   scheduledAt: timestamp("scheduled_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: dbClockTimestamp("created_at").defaultNow(),
 });
 
 export type Assessment = typeof assessments.$inferSelect;
@@ -264,10 +292,10 @@ export const pushTokens = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     token: text("token").notNull().unique(),
     platform: text("platform").notNull().default("ios"), // PushPlatform
-    createdAt: timestamp("created_at").defaultNow(),
+    createdAt: dbClockTimestamp("created_at").defaultNow(),
     // Bumped on every re-registration; the app re-registers on each launch, so a
     // stale last_seen_at is how dead devices will be spotted later.
-    lastSeenAt: timestamp("last_seen_at").defaultNow(),
+    lastSeenAt: dbClockTimestamp("last_seen_at").defaultNow(),
   },
   (table) => [index("push_tokens_user_id_idx").on(table.userId)],
 );
@@ -302,7 +330,7 @@ export const analyticsEvents = pgTable("analytics_events", {
   path: text("path"),
   visitorId: text("visitor_id"), // anonymous, client-generated (no PII, no IP stored)
   userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: dbClockTimestamp("created_at").defaultNow(),
 });
 
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
@@ -336,7 +364,7 @@ export const products = pgTable("products", {
   descriptionEn: text("description_en").notNull(),
   descriptionAr: text("description_ar").notNull(),
   specs: jsonb("specs").$type<ProductSpec[]>().notNull().default([]),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: dbClockTimestamp("created_at").defaultNow(),
 });
 
 export type Product = typeof products.$inferSelect;

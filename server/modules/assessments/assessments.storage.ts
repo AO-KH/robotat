@@ -47,13 +47,23 @@ const BOOKING_LOCK_NAMESPACE = 1;
  *
  * ## Why the cutoff is computed in SQL
  *
- * `created_at` is `timestamp without time zone` filled by `now()`, so it holds the
- * database's local wall clock — 15:00 on a server set to Asia/Riyadh, not the 12:00 UTC
- * instant. Drizzle serialises a JavaScript Date as UTC, so passing `Date.now() - 24h`
- * compared a UTC instant against local wall-clock values and the boundary landed one UTC
- * offset out. Measured on this machine: a booking aged 25 hours still counted and only
- * fell out of the window at 30 — a 27-hour limit wearing a 24-hour label, and 21 hours
- * on a server west of UTC. `now()` on both sides keeps one clock, whatever it is.
+ * This originally passed `Date.now() - 24h` from JavaScript, and the boundary landed one
+ * UTC offset out: `created_at` was `timestamp without time zone` filled by `now()`, so it
+ * held the database's local wall clock, while Drizzle serialised the JavaScript Date as
+ * UTC. Measured on this machine, a booking aged 25 hours still counted and only fell out
+ * of the window at 30 — a 27-hour limit wearing a 24-hour label, and 21 hours on a server
+ * west of UTC.
+ *
+ * Migration 0013 made `created_at` a `timestamptz`, which removes the storage side of
+ * that mismatch, and the `::timestamp` cast this comparison used to carry went with it —
+ * it existed only to meet the column in its wall-clock frame. Both sides are now instants
+ * and the comparison means what it reads as.
+ *
+ * The cutoff still comes from `now()` rather than from JavaScript, and that is worth
+ * keeping for its own reason: one clock decides the window. A Date from this process
+ * would make the boundary depend on how far the app server's clock had drifted from the
+ * database's, which is a much smaller error than an hour but a far stranger one to
+ * diagnose when a customer is refused their third booking a minute early.
  */
 export async function createAssessmentWithinLimit(
   input: NewAssessment,
@@ -71,7 +81,7 @@ export async function createAssessmentWithinLimit(
       .where(
         and(
           eq(assessments.userId, input.userId),
-          gte(assessments.createdAt, sql`(now() - make_interval(hours => ${opts.windowHours}))::timestamp`),
+          gte(assessments.createdAt, sql`now() - make_interval(hours => ${opts.windowHours})`),
         ),
       );
 
