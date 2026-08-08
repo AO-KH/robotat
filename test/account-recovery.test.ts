@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
 import { getApp, resetDb, closeDb, newUser } from "./helpers";
+import { pool } from "../server/lib/db";
+import { MAX_VERIFY_ATTEMPTS } from "../server/modules/auth/auth.service";
 
 let app: Express;
 
@@ -136,6 +138,40 @@ describe("email verification", () => {
     // Fifth wrong guess exhausts it...
     expect((await agent.post("/api/auth/verify-email").send({ code: wrong })).status).toBe(429);
     // ...and the real code is dead too, so guessing cannot be resumed by getting lucky.
+    expect((await agent.post("/api/auth/verify-email").send({ code })).status).toBe(400);
+  });
+
+  it("holds the five-attempt limit against a concurrent burst", async () => {
+    /*
+      The limit has to survive requests that arrive together, not just requests that
+      arrive in a line.
+
+      Reading `attempts`, comparing it, and only then incrementing is three statements,
+      and everything that arrives before the first increment commits reads the same
+      pre-increment value. A burst therefore buys far more than five guesses against one
+      code — 84 recorded attempts out of 200 concurrent requests here before the fix, with
+      the connection pool the only thing throttling it. Counting the guesses the database
+      actually recorded is the assertion, because the HTTP statuses cannot distinguish
+      "refused" from "counted and refused". Sixty rather than two hundred only because it
+      already reproduced at 52 there and the suite runs serially.
+    */
+    const { agent, code } = await registerAndGetCode();
+    const wrong = String((Number(code) + 1) % 1_000_000).padStart(6, "0");
+
+    const BURST = 60;
+    await Promise.all(
+      Array.from({ length: BURST }, () => agent.post("/api/auth/verify-email").send({ code: wrong })),
+    );
+
+    const { rows } = await pool.query<{ attempts: number }>(
+      "SELECT attempts FROM auth_tokens WHERE kind = 'email_verification'",
+    );
+    const recorded = rows.reduce((sum, r) => sum + Number(r.attempts), 0);
+    expect(recorded).toBeLessThanOrEqual(MAX_VERIFY_ATTEMPTS);
+
+    // And the budget being spent has to actually kill the code, not merely start
+    // refusing: a burst that ends with the real code still redeemable would mean the
+    // attacker keeps guessing for as long as the fifteen-minute window lasts.
     expect((await agent.post("/api/auth/verify-email").send({ code })).status).toBe(400);
   });
 

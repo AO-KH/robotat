@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import type { Request } from "express";
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import passport from "passport";
 import { api } from "@shared/routes";
 import type { User } from "@shared/schema";
@@ -34,7 +34,7 @@ import {
   createAuthToken,
   getValidAuthToken,
   getLiveVerificationToken,
-  recordFailedAttempt,
+  spendVerificationAttempt,
   markAuthTokenUsed,
   invalidateUserTokens,
 } from "./auth.storage";
@@ -108,6 +108,39 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Too many attempts. Please try again in a few minutes." },
   // Don't throttle the integration tests (many login/register calls per IP).
+  skip: () => process.env.NODE_ENV === "test",
+});
+
+/*
+  Its own bucket, deliberately not authLimiter's.
+
+  authLimiter is one shared 10-per-15-minutes allowance across register, login, /token
+  and the two password-reset endpoints. Hanging verification off it would mean a customer
+  who mistypes their code a few times can no longer sign in, and an attacker who wants a
+  victim locked out of password reset only has to spend the budget on verify calls.
+
+  Keyed on the account rather than the IP, which is the opposite of the other endpoints
+  and is the point: a code is only ever checked against the signed-in user's own token
+  (see the route note below), so the thing being attacked is one account, and an attacker
+  rotating IPs against it should gain nothing. It also spares everyone behind one office
+  NAT from each other's typos. requireAuth runs first, so req.user is always set; the IP
+  fallback exists only so a future reordering degrades to the house behaviour instead of
+  putting the whole internet in one bucket.
+
+  Twenty is four full code lifetimes in the window — a real customer never gets near it,
+  since a code dies after five wrong guesses and asking for a new one costs a resend from
+  authLimiter's own allowance.
+*/
+const verifyEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const user = req.user as User | undefined;
+    return user ? `user:${user.id}` : ipKeyGenerator(req.ip ?? "");
+  },
+  message: { message: "Too many incorrect codes. Please try again in a few minutes." },
   skip: () => process.env.NODE_ENV === "test",
 });
 
@@ -362,7 +395,7 @@ authRoutes.post(api.auth.resetPassword.path, authLimiter, async (req, res, next)
   live token, which also means an attacker must hold a session for the account they are
   guessing at before guessing is even possible.
 */
-authRoutes.post(api.auth.verifyEmail.path, requireAuth, async (req, res, next) => {
+authRoutes.post(api.auth.verifyEmail.path, requireAuth, verifyEmailLimiter, async (req, res, next) => {
   try {
     const input = api.auth.verifyEmail.input.parse(req.body);
     const sessionUser = req.user as User;
@@ -377,7 +410,23 @@ authRoutes.post(api.auth.verifyEmail.path, requireAuth, async (req, res, next) =
       return res.status(400).json({ message: "That code has expired. Ask for a new one.", field: "code" });
     }
 
-    if (token.attempts >= MAX_VERIFY_ATTEMPTS) {
+    /*
+      Pay for the guess before making it — and let the payment, not the count read a
+      moment ago on `token`, decide whether the guess is allowed at all.
+
+      `token.attempts` is a snapshot, and gating on it is what let a burst of concurrent
+      requests each read the same zero and each get a free guess. spendVerificationAttempt
+      folds the check and the increment into one UPDATE, so exactly MAX_VERIFY_ATTEMPTS
+      callers can ever be served no matter how they arrive; undefined means the budget was
+      already gone.
+
+      A correct code pays too. Charging only for wrong guesses would put the check after
+      the comparison, which is exactly the ordering that lets a lucky guess arriving in a
+      burst ride in on a stale count — and it costs a legitimate customer nothing, because
+      the token is burned by the success on the very next line.
+    */
+    const attempts = await spendVerificationAttempt(token.id, MAX_VERIFY_ATTEMPTS);
+    if (attempts === undefined) {
       await markAuthTokenUsed(token.id);
       return res.status(429).json({ message: "Too many incorrect codes. Ask for a new one." });
     }
@@ -395,9 +444,7 @@ authRoutes.post(api.auth.verifyEmail.path, requireAuth, async (req, res, next) =
     const ok = supplied.length === expected.length && timingSafeEqual(supplied, expected);
 
     if (!ok) {
-      const attempts = await recordFailedAttempt(token.id);
-      const remaining = Math.max(MAX_VERIFY_ATTEMPTS - attempts, 0);
-      if (remaining === 0) {
+      if (attempts >= MAX_VERIFY_ATTEMPTS) {
         await markAuthTokenUsed(token.id);
         return res.status(429).json({ message: "Too many incorrect codes. Ask for a new one." });
       }

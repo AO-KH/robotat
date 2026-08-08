@@ -206,20 +206,26 @@ export async function getLiveVerificationToken(userId: number): Promise<AuthToke
 }
 
 /**
- * Count one wrong guess, and report how many have been made.
+ * Take one guess out of a code's budget, or report that there is none left.
  *
- * Incremented in SQL and read back from the same statement rather than fetched, added to
- * and written: two requests guessing at once would otherwise both read four, both write
- * five, and between them get an extra attempt for free. Small, but the whole point of the
- * counter is that it cannot be worn down.
+ * Returns the new attempt count, or `undefined` when the budget was already spent — the
+ * caller must treat that as "no guess happened" and refuse.
+ *
+ * The `attempts < max` predicate lives in the same statement as the increment because
+ * anything else is a race the attacker wins. Reading the count, comparing it, and then
+ * incrementing means every request that arrives before the first increment commits sees
+ * the same pre-increment value and gets a free guess: a 60-request burst against one
+ * five-guess code recorded 52 attempts. Postgres takes a row lock for the duration of an
+ * UPDATE and re-evaluates the predicate against the committed row, so concurrent callers
+ * queue behind each other here and exactly `max` of them can ever succeed.
  */
-export async function recordFailedAttempt(id: number): Promise<number> {
+export async function spendVerificationAttempt(id: number, max: number): Promise<number | undefined> {
   const [row] = await db
     .update(authTokens)
     .set({ attempts: sql`${authTokens.attempts} + 1` })
-    .where(eq(authTokens.id, id))
+    .where(and(eq(authTokens.id, id), sql`${authTokens.attempts} < ${max}`))
     .returning({ attempts: authTokens.attempts });
-  return row?.attempts ?? 0;
+  return row?.attempts;
 }
 
 export async function markAuthTokenUsed(id: number): Promise<void> {
