@@ -1,14 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Assessment } from "@shared/schema";
+import { logger } from "../server/lib/log";
 import {
   bookingConfirmationMessage,
   businessBookingTemplateParams,
   customerStatusMessage,
   customerStatusPush,
   customerStatusTemplateParams,
+  deliverAssessment,
   emailVerificationMessage,
   mailFrom,
   notifyConfigWarnings,
+  notifyCustomerStatusChange,
   passwordResetMessage,
 } from "../server/lib/notify";
 
@@ -324,5 +327,71 @@ describe("MAIL_REDIRECT_TO", () => {
 
   it("stays quiet when it is not set", () => {
     expect(notifyConfigWarnings({}).some((w) => w.includes("MAIL_REDIRECT_TO"))).toBe(false);
+  });
+});
+
+/**
+ * A delivery that fails has to leave a trace, or the funnel can stop without anyone
+ * noticing.
+ *
+ * `deliverAssessment` awaited `Promise.allSettled` and discarded the results, and
+ * `deliverEmail` only logs after a *successful* sendMail — so a send that threw produced
+ * no output whatsoever. Both callers add `.catch(() => {})`, which suppresses even Node's
+ * unhandled-rejection warning. Pointing SMTP_HOST at a closed port made both email sends
+ * fail with ECONNREFUSED and the logger emit nothing.
+ *
+ * These tests drive the real senders against a closed port rather than mocking nodemailer,
+ * because the thing being asserted is that a genuine transport error survives all the way
+ * out to a log line.
+ */
+describe("delivery failures are logged", () => {
+  const saved = { ...process.env };
+
+  beforeEach(() => {
+    // Port 1 is reserved and nothing listens there: an immediate ECONNREFUSED.
+    process.env.SMTP_HOST = "127.0.0.1";
+    process.env.SMTP_PORT = "1";
+    delete process.env.MAIL_REDIRECT_TO;
+  });
+
+  afterEach(() => {
+    process.env = { ...saved };
+    vi.restoreAllMocks();
+  });
+
+  /** Every line `log()` emitted during the callback. */
+  async function captureLog(run: () => Promise<void>): Promise<string[]> {
+    const spy = vi.spyOn(logger, "info").mockImplementation(() => {});
+    await run();
+    return spy.mock.calls.map((call) => String(call[1]));
+  }
+
+  it("names the channel, the booking and the error for each failed booking send", async () => {
+    const a = fixture({ id: 42, email: "sara@example.com" });
+    const lines = (await captureLog(() => deliverAssessment(a))).filter((l) => l.includes("FAILED"));
+
+    // WhatsApp has no Cloud API credentials here, so it skips rather than fails; the two
+    // email sends are the ones that actually attempt a connection.
+    expect(lines).toHaveLength(2);
+    expect(lines.some((l) => l.includes("business email"))).toBe(true);
+    expect(lines.some((l) => l.includes("customer confirmation email"))).toBe(true);
+    for (const line of lines) {
+      expect(line).toContain("#42"); // which booking never arrived
+      expect(line).toContain("ECONNREFUSED"); // and why
+    }
+  });
+
+  it("does the same for a status change", async () => {
+    const a = fixture({ id: 43, status: "scheduled" });
+    const lines = (await captureLog(() => notifyCustomerStatusChange(a))).filter((l) => l.includes("FAILED"));
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain("customer email");
+    expect(lines[0]).toContain("#43");
+    expect(lines[0]).toContain("ECONNREFUSED");
+  });
+
+  it("still resolves rather than throwing — a failed notice must not fail the request", async () => {
+    await expect(deliverAssessment(fixture())).resolves.toBeUndefined();
   });
 });
