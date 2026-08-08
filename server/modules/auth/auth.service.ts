@@ -28,6 +28,37 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return hashBuf.length === derived.length && timingSafeEqual(hashBuf, derived);
 }
 
+/**
+ * A hash of a password nobody knows, for accounts that do not exist.
+ *
+ * Built at module load through the app's own hashPassword so it tracks the real scrypt
+ * parameters. Pinning a literal here would silently stop matching the day those change,
+ * and the defence would decay without any test noticing.
+ */
+const decoyHash = hashPassword(randomBytes(32).toString("hex"));
+
+/**
+ * Check a password against an account that may not exist, in the same time either way.
+ *
+ * Both credential endpoints used to answer an unknown address by returning before scrypt
+ * ran. Scrypt is deliberately expensive — measured here, a miss came back in 3ms against
+ * 40ms for a registered address — so "is this email registered?" was a question anyone
+ * could ask from the outside, twelve times faster than the honest answer, without
+ * tripping a 409 or sending the owner a single email. Paired with the duplicate-address
+ * 409 on register, that turns the customer list into something enumerable.
+ *
+ * So the miss path pays the same cost: the supplied password is verified against a decoy
+ * that cannot match. The outcome is unchanged — an unknown address still fails.
+ */
+export async function verifyCredentials(
+  password: string,
+  user: Pick<User, "passwordHash"> | null | undefined,
+): Promise<boolean> {
+  if (user) return verifyPassword(password, user.passwordHash);
+  await verifyPassword(password, await decoyHash);
+  return false;
+}
+
 /** SHA-256 of a raw token — only the hash is ever stored, the raw token is emailed. */
 export function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
@@ -225,9 +256,10 @@ export function setupAuth(app: Express): void {
     new LocalStrategy({ usernameField: "email", passwordField: "password" }, async (email, password, done) => {
       try {
         const user = await getUserByEmail(email);
-        if (!user) return done(null, false, { message: "Invalid email or password" });
-        const ok = await verifyPassword(password, user.passwordHash);
-        if (!ok) return done(null, false, { message: "Invalid email or password" });
+        // verifyCredentials, not verifyPassword: an unknown address must cost the same
+        // as a known one. See the note on it above.
+        const ok = await verifyCredentials(password, user);
+        if (!ok || !user) return done(null, false, { message: "Invalid email or password" });
         return done(null, user);
       } catch (err) {
         return done(err);

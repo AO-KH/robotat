@@ -11,6 +11,7 @@ import {
   requireAuth,
   hashPassword,
   verifyPassword,
+  verifyCredentials,
   toPublicUser,
   issueToken,
   canonicalEmail,
@@ -213,7 +214,10 @@ authRoutes.post(api.auth.token.path, authLimiter, async (req, res, next) => {
   try {
     const input = api.auth.token.input.parse(req.body);
     const user = await getUserByEmail(input.email);
-    if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
+    // verifyCredentials, not verifyPassword: `!user ||` would short-circuit past scrypt
+    // and time the answer for an attacker. See the note on it in auth.service.ts.
+    const ok = await verifyCredentials(input.password, user);
+    if (!ok || !user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
     res.status(200).json({ token: issueToken(user.id, user.tokenVersion), user: toPublicUser(user) });
