@@ -54,23 +54,55 @@ const SIGN: Record<Locale, string> = {
  * gives Gregorian. A date that silently becomes Hijri on a different Node image is not
  * something to discover from a customer who turned up on the wrong day, so it is
  * stated here instead of assumed.
+ *
+ * Three things decide what a `timestamp` reads as — numbering system, calendar and
+ * timezone — and for a long time this pinned the first two and left the third floating.
+ * See TIME_ZONE below. All three are host-dependent, and all three fail the same way.
  */
 const DATE_LOCALE: Record<Locale, string> = {
   en: "en-US",
   ar: "ar-SA-u-ca-gregory-nu-latn",
 };
 
+/**
+ * The zone every scheduled visit is quoted in.
+ *
+ * Without it `toLocaleString` uses the host's zone, which is a property of the container
+ * rather than of the booking. The same row rendered "10:00 AM" on a machine set to
+ * Asia/Riyadh and "7:00 AM" on one defaulting to UTC — and UTC is what a container gets
+ * unless someone remembers otherwise. The wrong one of those goes in the status email,
+ * the booking confirmation, the WhatsApp template parameter and the lock-screen push, so
+ * a customer is told 07:00 for a 10:00 visit by four channels agreeing with each other.
+ *
+ * A constant rather than an env var, deliberately. A configurable timezone is only worth
+ * the knob if there is a second value someone would set it to, and there is not: ROBOTAT
+ * sells to Saudi farms, the agronomists drive to those farms, and the visit happens in
+ * this zone. An env var would add a way to get it wrong (unset in one environment, typo'd
+ * in another) to buy an option nobody exercises. The generalisation that would actually
+ * matter — operating across zones — is a per-assessment column holding the site's zone,
+ * not one process-wide setting, and this constant is what that column would default to.
+ */
+const TIME_ZONE = "Asia/Riyadh";
+
 /** Short form, for push and WhatsApp where space is tight. */
 function scheduledFor(a: Assessment, locale: Locale): string | null {
   return a.scheduledAt
-    ? new Date(a.scheduledAt).toLocaleString(DATE_LOCALE[locale], { dateStyle: "long", timeStyle: "short" })
+    ? new Date(a.scheduledAt).toLocaleString(DATE_LOCALE[locale], {
+        dateStyle: "long",
+        timeStyle: "short",
+        timeZone: TIME_ZONE,
+      })
     : null;
 }
 
 /** Long form, for email, which has room for the weekday. */
 function scheduledForLong(a: Assessment, locale: Locale): string | null {
   return a.scheduledAt
-    ? new Date(a.scheduledAt).toLocaleString(DATE_LOCALE[locale], { dateStyle: "full", timeStyle: "short" })
+    ? new Date(a.scheduledAt).toLocaleString(DATE_LOCALE[locale], {
+        dateStyle: "full",
+        timeStyle: "short",
+        timeZone: TIME_ZONE,
+      })
     : null;
 }
 

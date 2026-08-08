@@ -395,3 +395,50 @@ describe("delivery failures are logged", () => {
     await expect(deliverAssessment(fixture())).resolves.toBeUndefined();
   });
 });
+
+/**
+ * The visit time must not depend on which machine rendered it.
+ *
+ * `toLocaleString` was called with no `timeZone`, so it used the host's. The same row
+ * read "10:00 AM" on a workstation set to Asia/Riyadh and "7:00 AM" in a container that
+ * defaulted to UTC, and that value goes out on four channels at once — status email,
+ * booking confirmation, WhatsApp template parameter, lock-screen push. A customer told
+ * 07:00 for a 10:00 visit has four sources agreeing with each other.
+ *
+ * The comment above DATE_LOCALE had already pinned the calendar and the numbering system
+ * against exactly this "different image, different answer" failure and left the timezone
+ * floating, so this asserts all three axes rather than just the new one.
+ */
+describe("scheduled times are rendered in Asia/Riyadh, not the host's zone", () => {
+  const hostTz = process.env.TZ;
+
+  afterEach(() => {
+    if (hostTz === undefined) delete process.env.TZ;
+    else process.env.TZ = hostTz;
+  });
+
+  // 07:00Z is 10:00 in Riyadh (UTC+3, no DST). Each of these host zones would render it
+  // as a different hour, and two of them as a different calendar day.
+  const elsewhere = ["UTC", "America/Los_Angeles", "Pacific/Auckland"];
+  const a = fixture({ id: 9, status: "scheduled", scheduledAt: new Date("2026-09-01T07:00:00Z") });
+
+  it.each(elsewhere)("email reads the same with TZ=%s", (tz) => {
+    process.env.TZ = tz;
+    const body = customerStatusMessage(a).body;
+    expect(body).toContain("Tuesday, September 1, 2026 at 10:00 AM");
+  });
+
+  it.each(elsewhere)("push and the WhatsApp parameter read the same with TZ=%s", (tz) => {
+    process.env.TZ = tz;
+    expect(customerStatusPush(a).body).toContain("September 1, 2026 at 10:00 AM");
+    expect(customerStatusTemplateParams(a)[2]).toContain("September 1, 2026 at 10:00 AM");
+  });
+
+  it("keeps Latin digits and the Gregorian calendar in Arabic, in that same zone", () => {
+    process.env.TZ = "UTC";
+    const body = customerStatusMessage({ ...a, locale: "ar" } as Assessment).body;
+    expect(body).toContain("2026");
+    expect(body).toContain("10:00");
+    expect(body).not.toMatch(/[٠-٩]/); // Arabic-Indic digits
+  });
+});
