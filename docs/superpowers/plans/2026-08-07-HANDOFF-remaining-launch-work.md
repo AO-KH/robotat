@@ -14,13 +14,14 @@ Read `CLAUDE.md` first — it carries the standing rules, and two of them will b
 
 - **Migrations are hand-authored.** Never run `npm run db:generate` or `db:push`. Write the
   `.sql` under `migrations/`, append to `meta/_journal.json`, derive `meta/NNNN_snapshot.json`
-  with a script, then `npm run db:migrate` and `npx drizzle-kit check`. Latest is `0011`.
+  with a script, then `npm run db:migrate` and `npx drizzle-kit check`. Latest is `0012`.
 - **Never run `npm run dev` in a shell** — it does not exit. Use the preview tool if you have
   one; otherwise ask.
 
 Baseline as of the merge: `npm test` = **256 tests / 31 files**, `npm run check` clean,
-`npm run build` clean. If those numbers do not reproduce, find out why before changing
-anything.
+`npm run build` clean. Two later passes have moved that number — a security review and a
+data-correctness review — so take the count from `main` rather than from here; what should
+still hold is that the suite is green and typecheck and build are clean.
 
 Also worth knowing: `npm run check` typechecks **neither `script/` nor `test/`** —
 `tsconfig.json` includes only `client/src`, `shared`, `server`, `capacitor.config.ts`. Type
@@ -106,22 +107,16 @@ exist, so `pod install` has never run.
 
 ---
 
-## 3. `/api/ready` is publicly reachable and unrated
+## 3. `/api/ready` is publicly reachable and unrated — **DONE**
 
-`server/routes.ts` gained `/api/ready`, which runs `SELECT 1` and 503s when the database is
-down. Good — but `deploy/Caddyfile` is a bare `reverse_proxy app:5000` with **no path matcher**,
-so `https://<domain>/api/ready` is reachable from the internet. There is no global rate limiter;
-`express-rate-limit` is applied only in `auth.routes.ts` and `analytics.routes.ts`. The pg pool
-defaults to `max: 10`.
+`/api/ready` runs `SELECT 1` against a pool of ten, and `deploy/Caddyfile` used to be a bare
+`reverse_proxy app:5000` with no path matcher, so ten unauthenticated requests could hold every
+connection and starve real traffic. The Caddyfile now answers `/api/ready` with a 404 from a
+`handle` block ahead of the catch-all; the container healthcheck reaches it on localhost inside
+the container and never crosses the proxy. It is deliberately not rate-limited — a 429 reads as
+unhealthy and causes the restart loop the probe exists to prevent.
 
-An attacker holds one database connection per request at no cost and can starve real traffic
-without authenticating.
-
-**Preferred fix:** match `/api/ready` to the internal network in the Caddyfile. Do **not**
-rate-limit it — a limiter that 429s the orchestrator's own health check reads as unhealthy and
-causes the restart loop the probe exists to prevent.
-
-**Related, and worth knowing:** the Dockerfile healthcheck now points at `/api/ready`, but
+**Still true, and worth knowing:** the Dockerfile healthcheck now points at `/api/ready`, but
 nothing in the deployment acts on health status. Caddy does no passive health checking, and
 compose uses `restart: unless-stopped`, which ignores it. The change makes `docker ps` honest;
 it does not gate traffic. That is arguably correct — the marketing pages need no database, so a
@@ -210,11 +205,10 @@ address before launch.
 ## Suggested order
 
 1. **Ask for the app icon asset.** It is the only hard submission blocker and needs a human.
-2. **`/api/ready` in the Caddyfile** — five minutes, closes a real lever.
-3. **Email deliverability** — decide the provider; it gates the booking funnel.
-4. **Bundle analysis** — measure before optimising.
-5. **The native iOS subsystem** — its own plan, when a Mac is available.
-6. Error monitoring, asset-guard holes, doc drift — as capacity allows.
+2. **Email deliverability** — decide the provider; it gates the booking funnel.
+3. **Bundle analysis** — measure before optimising.
+4. **The native iOS subsystem** — its own plan, when a Mac is available.
+5. Error monitoring, asset-guard holes, doc drift — as capacity allows.
 
 ## Two things the last session got wrong, so you do not repeat them
 
