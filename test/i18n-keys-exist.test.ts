@@ -90,6 +90,36 @@ function stripComments(src: string): string {
  */
 const T_CALL = /(?<![A-Za-z0-9_$.])t\(\s*/g;
 
+/**
+ * The source text of `t()`'s first argument, whitespace flattened.
+ *
+ * This is what identifies a dynamic call in the allowlist below. The obvious alternative,
+ * a line number, is wrong for a guard: it is correct only until someone adds an import,
+ * and then this file fails a diff that has nothing to do with i18n, with a message about
+ * missing dictionary keys. The expression is what a reviewer is actually being asked to
+ * approve, and it survives the file moving underneath it.
+ */
+function firstArg(src: string, at: number): string {
+  let depth = 0;
+  let quote: string | null = null;
+  let i = at;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    if (quote) {
+      if (c === "\\") i++;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") quote = c;
+    else if (c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ")" || c === "]" || c === "}") {
+      if (depth === 0) break;
+      depth--;
+    } else if (c === "," && depth === 0) break;
+  }
+  return src.slice(at, i).trim().replace(/\s+/g, " ");
+}
+
 interface StaticKey {
   key: string;
   where: string;
@@ -103,6 +133,8 @@ function collect() {
     const src = stripComments(readFileSync(file, "utf8"));
     const lineOf = (index: number) => src.slice(0, index).split("\n").length;
     const where = (index: number) => `${file.replace(/\\/g, "/")}:${lineOf(index)}`;
+    // Dynamic calls are named by what they compute, not by where they sit — see firstArg.
+    const dynamicId = (at: number) => `${file.replace(/\\/g, "/")} — t(${firstArg(src, at)})`;
 
     T_CALL.lastIndex = 0;
     let m: RegExpExecArray | null;
@@ -127,13 +159,13 @@ function collect() {
         if (end !== -1 && !body.includes("${")) {
           staticKeys.push({ key: body, where: where(m.index) });
         } else {
-          dynamic.push(where(m.index));
+          dynamic.push(dynamicId(at));
         }
         continue;
       }
 
       // t(someVariable) — the key is not knowable from the source.
-      dynamic.push(where(m.index));
+      dynamic.push(dynamicId(at));
     }
   }
   return { staticKeys, dynamic };
@@ -178,18 +210,24 @@ describe("every t() key exists in the dictionary", () => {
       passes a variable, t(step.labelKey). The dictionary blocks they index into are
       covered by i18n-parity instead.
 
-      Listed by location rather than counted, because a bare number would let one dynamic
+      Listed individually rather than counted, because a bare number would let one dynamic
       call be deleted and another added without notice. Adding a seventh is then a
       deliberate act that shows up in a diff rather than a silent widening of the blind
       spot — this list is where you argue the new one is worth its lost coverage.
+
+      Named by file and expression, deliberately not by line. Line numbers were right the
+      day they were written and wrong the first time anyone added an import above one:
+      this file would then fail, in a diff about something else entirely, with a message
+      about i18n keys. The expression is the thing a reviewer is being asked to sign off,
+      and Dashboard's t(`status.${a.status}`) is worth the same scrutiny wherever it moves.
     */
     expect(dynamic.sort()).toEqual([
-      "client/src/components/layout/Navigation.tsx:24",
-      "client/src/features/admin/Admin.tsx:286",
-      "client/src/features/admin/Admin.tsx:71",
-      "client/src/features/admin/Admin.tsx:97",
-      "client/src/features/dashboard/AssessmentDetail.tsx:61",
-      "client/src/features/dashboard/Dashboard.tsx:188",
+      "client/src/components/layout/Navigation.tsx — t(`lang.${l}`)",
+      "client/src/features/admin/Admin.tsx — t(`status.${a.status}`)",
+      "client/src/features/admin/Admin.tsx — t(`status.${f}`)",
+      "client/src/features/admin/Admin.tsx — t(`status.${s}`)",
+      "client/src/features/dashboard/AssessmentDetail.tsx — t(step.labelKey)",
+      "client/src/features/dashboard/Dashboard.tsx — t(`status.${a.status}`)",
     ]);
   });
 });
