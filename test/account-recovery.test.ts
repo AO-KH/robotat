@@ -80,6 +80,58 @@ describe("password reset", () => {
     expect(relogin.body.emailVerified).toBe(true);
   });
 
+  it("lets the mailbox owner recover an account squatted under an alias", async () => {
+    /*
+      Registration rejects any address whose canonical form is taken, so one request from
+      an unauthenticated stranger occupies a whole Gmail alias family permanently. If reset
+      matched literally too, the real owner had no door left: registration 409s, sign-in
+      looks up the literal address and finds nothing, and reset answered with the same
+      silent 200 it gives a typo. Resolving by canonical form is what makes the squat
+      recoverable — and it is safe here precisely because the link is emailed to the stored
+      address, which is the owner's own mailbox.
+    */
+    const squatted = "a.bdullah@gmail.com";
+    const owner = "abdullah@gmail.com";
+    await request(app).post("/api/auth/register").send(newUser({ email: squatted }));
+
+    const forgot = await request(app).post("/api/auth/forgot-password").send({ email: owner });
+    expect(forgot.status).toBe(200);
+    expect(typeof forgot.body.devToken).toBe("string");
+
+    // The token has to belong to the squatted account, not merely exist.
+    const { rows } = await pool.query<{ email: string }>(
+      `SELECT u.email FROM auth_tokens t JOIN users u ON u.id = t.user_id
+       WHERE t.kind = 'password_reset' AND t.used_at IS NULL`,
+    );
+    expect(rows.map((r) => r.email)).toEqual([squatted]);
+
+    const reset = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: forgot.body.devToken, newPassword: "reclaimed-pass" });
+    expect(reset.status).toBe(200);
+
+    // Sign-in still matches the literal address the account was registered under — which
+    // the owner can read off the To: line of the reset email they just received.
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: squatted, password: "reclaimed-pass" });
+    expect(login.status).toBe(200);
+  });
+
+  it("does not resolve a reset to a different person's account", async () => {
+    // Widening the lookup must not merge people the canonicaliser was never meant to
+    // fold: dots are significant outside Google, so these are two separate mailboxes.
+    await request(app).post("/api/auth/register").send(newUser({ email: "first.last@outlook.com" }));
+
+    const other = await request(app).post("/api/auth/forgot-password").send({ email: "firstlast@outlook.com" });
+    expect(other.status).toBe(200);
+    expect(other.body.devToken).toBeUndefined(); // no user matched → nothing minted
+
+    // The +suffix form of the same Outlook address is the same mailbox, so that one does.
+    const alias = await request(app).post("/api/auth/forgot-password").send({ email: "first.last+farm@outlook.com" });
+    expect(typeof alias.body.devToken).toBe("string");
+  });
+
   it("rejects an invalid or expired reset token", async () => {
     const res = await request(app)
       .post("/api/auth/reset-password")

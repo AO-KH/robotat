@@ -334,7 +334,30 @@ authRoutes.delete(api.auth.deleteAccount.path, requireAuth, async (req, res, nex
 authRoutes.post(api.auth.forgotPassword.path, authLimiter, async (req, res, next) => {
   try {
     const input = api.auth.forgotPassword.input.parse(req.body);
-    const user = await getUserByEmail(input.email);
+
+    /*
+      Resolved by canonical form, unlike sign-in — because this is the only way back for
+      someone whose address was squatted.
+
+      Registration rejects any address whose canonical form is taken, so one unauthenticated
+      request registering a.bdullah@gmail.com occupies the whole alias family of
+      abdullah@gmail.com. The real owner of that mailbox is then shut out of every door:
+      registration 409s forever, sign-in matches the literal column so their address simply
+      does not exist, and matching literally here returned the same silent 200 as a typo,
+      with no mail. Nothing expires an account that was never verified.
+
+      Widening this cannot hand the wrong account to anyone. `canonicalEmail` only folds
+      forms the provider documents as one mailbox, so a match means the two addresses
+      deliver to the same place; `email_canonical` is uniquely indexed (migration 0011), so
+      at most one row can match and there is no first-row-wins ambiguity; and the mail goes
+      to the account's stored `email`, never to what was typed here, so a request cannot
+      redirect a reset link anywhere. Whoever receives it is the person holding the mailbox,
+      which is exactly who should own the account.
+
+      It also cannot find less than before: canonicalEmail depends only on the lowercased
+      address, so every literal match is still a canonical match. Strictly a superset.
+    */
+    const user = await getUserByCanonicalEmail(canonicalEmail(input.email));
 
     let devToken: string | undefined;
     if (user) {

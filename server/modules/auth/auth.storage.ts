@@ -53,10 +53,15 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 /**
  * The account that owns this mailbox, whatever alias form was typed.
  *
- * Used by registration to reject a second account on an inbox that already has one.
- * Sign-in deliberately still matches on `email` exactly: someone who registered as
- * first.last@gmail.com expects to sign in with that, and letting any alias through
- * would quietly widen what counts as their username.
+ * Used by registration to reject a second account on an inbox that already has one, and
+ * by forgot-password so the person who holds the mailbox can recover whatever account
+ * was registered against it — including one someone else registered under an alias.
+ *
+ * Sign-in deliberately still matches on `email` exactly. Recovery can afford to be
+ * generous because it proves control of the inbox before anything happens: the link goes
+ * to the stored address and only whoever reads it can use it. Sign-in proves nothing
+ * before it grants access, so widening it would just quietly turn every alias of an
+ * address into a valid username for it.
  */
 export async function getUserByCanonicalEmail(canonical: string): Promise<User | undefined> {
   const [user] = await db.select().from(users).where(eq(users.emailCanonical, canonical));
