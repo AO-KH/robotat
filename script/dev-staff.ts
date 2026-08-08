@@ -46,13 +46,13 @@ function generatePassword(): string {
 
 /** Loaded only after the production check has passed. */
 async function loadDeps() {
-  const [{ eq }, { db }, { users }, { hashPassword }] = await Promise.all([
+  const [{ eq }, { db }, { users }, { hashPassword, canonicalEmail }] = await Promise.all([
     import("drizzle-orm"),
     import("../server/lib/db"),
     import("../shared/schema"),
     import("../server/modules/auth/auth.service"),
   ]);
-  return { eq, db, users, hashPassword };
+  return { eq, db, users, hashPassword, canonicalEmail };
 }
 
 async function main(): Promise<void> {
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { eq, db, users, hashPassword } = await loadDeps();
+  const { eq, db, users, hashPassword, canonicalEmail } = await loadDeps();
 
   const deleteAccount = async (email: string): Promise<void> => {
     const [gone] = await db.delete(users).where(eq(users.email, email.toLowerCase())).returning();
@@ -97,6 +97,14 @@ async function main(): Promise<void> {
   } else {
     await db.insert(users).values({
       email,
+      // Through the app's own canonicalEmail, not a copy of the rule. The column is
+      // NOT NULL and uniquely indexed as of migration 0011, so omitting it made this
+      // script fail outright — the sanctioned way into /admin stopped working, which
+      // is exactly the "no supported way in" this script was written to end. Deriving
+      // it the same way registration does also means a disposable account collides
+      // with a real one under the same one-inbox-one-account rule rather than
+      // sneaking past it.
+      emailCanonical: canonicalEmail(email),
       name: "Dev Staff",
       passwordHash: await hashPassword(password),
       role: "staff",
