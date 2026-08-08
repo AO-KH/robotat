@@ -3,7 +3,7 @@ import request from "supertest";
 import type { Express } from "express";
 import { getApp, resetDb, closeDb, newUser } from "./helpers";
 import { pool } from "../server/lib/db";
-import { MAX_VERIFY_ATTEMPTS } from "../server/modules/auth/auth.service";
+import { MAX_VERIFY_ATTEMPTS, hashToken } from "../server/modules/auth/auth.service";
 
 let app: Express;
 
@@ -234,6 +234,46 @@ describe("email verification", () => {
     expect(second).not.toBe(first);
     expect((await agent.post("/api/auth/verify-email").send({ code: first })).status).toBe(400);
     expect((await agent.post("/api/auth/verify-email").send({ code: second })).status).toBe(200);
+  });
+
+  it("leaves exactly one live code, the newest, when resends race", async () => {
+    /*
+      Retiring the old code and inserting the new one used to be two statements with a gap
+      between them, and concurrent resends both invalidate before either inserts. That left
+      more than one live code for the account, and the unordered lookup then picked the
+      oldest — so the customer who double-tapped "resend" was holding a code the server had
+      decided to reject, while the one it would accept was in an earlier email.
+    */
+    const { agent } = await registerAndGetCode();
+
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () => agent.post("/api/auth/resend-verification").send({})),
+    );
+    const codes = responses.map((r) => r.body.devToken as string);
+
+    const { rows } = await pool.query<{ id: number; token_hash: string }>(
+      `SELECT id, token_hash FROM auth_tokens
+       WHERE kind = 'email_verification' AND used_at IS NULL ORDER BY id DESC`,
+    );
+    expect(rows).toHaveLength(1);
+
+    // And it is the last row written, not an earlier one that happened to survive.
+    const { rows: all } = await pool.query<{ max: number }>(
+      "SELECT max(id)::int AS max FROM auth_tokens WHERE kind = 'email_verification'",
+    );
+    expect(rows[0].id).toBe(all[0].max);
+
+    // The survivor belongs to one of the resends the customer actually heard back from —
+    // not to some row they were never told about.
+    const winners = codes.filter((c) => hashToken(c) === rows[0].token_hash);
+    expect(winners).toHaveLength(1);
+
+    // Order matters: a losing code has to be refused while the account is still
+    // unverified, because after a success the route short-circuits and returns 200 to
+    // anything.
+    const loser = codes.find((c) => c !== winners[0]);
+    expect((await agent.post("/api/auth/verify-email").send({ code: loser })).status).toBe(400);
+    expect((await agent.post("/api/auth/verify-email").send({ code: winners[0] })).status).toBe(200);
   });
 
   it("rejects anything that is not six digits", async () => {

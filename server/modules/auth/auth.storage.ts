@@ -9,7 +9,7 @@ import {
 } from "@shared/schema";
 import { db } from "../../lib/db";
 import { canonicalEmail } from "./auth.service";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 
 /**
  * What replaces a deleted customer's name and email on the bookings they leave behind.
@@ -194,6 +194,12 @@ export async function getValidAuthToken(kind: AuthTokenKind, tokenHash: string):
  * one of a million, so several users hold the same one at any moment and finding "the
  * row whose hash is 000042" would redeem a stranger's. The caller compares the typed
  * code against this row, so a code is only ever valid for the account that asked for it.
+ *
+ * Newest first, one row. Unordered, this took whatever the scan happened to yield — in
+ * practice the oldest — so if a second live row ever existed the customer's newest code
+ * was rejected while a code they no longer have was the one being accepted. Ordering also
+ * means the older row is unreachable rather than merely unlucky, so a stray one cannot
+ * quietly add a second five-guess budget to the account.
  */
 export async function getLiveVerificationToken(userId: number): Promise<AuthToken | undefined> {
   const [token] = await db
@@ -206,8 +212,54 @@ export async function getLiveVerificationToken(userId: number): Promise<AuthToke
         isNull(authTokens.usedAt),
         gt(authTokens.expiresAt, new Date()),
       ),
-    );
+    )
+    // created_at is the intent; id breaks the tie, since two rows inserted in the same
+    // millisecond would otherwise put us back to relying on scan order.
+    .orderBy(desc(authTokens.createdAt), desc(authTokens.id))
+    .limit(1);
   return token;
+}
+
+/**
+ * Retire every live verification code for a user and mint the replacement, as one unit.
+ *
+ * Separately, these are an UPDATE and an INSERT with a gap between them, and resends
+ * racing through that gap all invalidate before any of them inserts — five at once left
+ * three live codes for one account, which is exactly what the "one live code at a time"
+ * rule exists to prevent. A transaction alone does not close it: at READ COMMITTED the
+ * second UPDATE takes its snapshot before the first INSERT commits, so it cannot see the
+ * row it would need to retire. Locking the user row first is what serialises the pair —
+ * the second caller waits, then runs its UPDATE against a snapshot that includes the
+ * first caller's token.
+ *
+ * The lock is per-user and held for two statements, so the only thing that ever waits on
+ * it is the same account double-tapping "resend".
+ */
+export async function replaceVerificationToken(input: {
+  userId: number;
+  tokenHash: string;
+  expiresAt: Date;
+}): Promise<AuthToken> {
+  return db.transaction(async (tx) => {
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, input.userId)).for("update");
+
+    await tx
+      .update(authTokens)
+      .set({ usedAt: sql`now()` })
+      .where(
+        and(
+          eq(authTokens.userId, input.userId),
+          eq(authTokens.kind, "email_verification"),
+          isNull(authTokens.usedAt),
+        ),
+      );
+
+    const [token] = await tx
+      .insert(authTokens)
+      .values({ ...input, kind: "email_verification" })
+      .returning();
+    return token;
+  });
 }
 
 /**

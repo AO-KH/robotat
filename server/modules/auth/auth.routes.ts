@@ -34,6 +34,7 @@ import {
   createAuthToken,
   getValidAuthToken,
   getLiveVerificationToken,
+  replaceVerificationToken,
   spendVerificationAttempt,
   markAuthTokenUsed,
   invalidateUserTokens,
@@ -76,20 +77,20 @@ function appOrigin(req: Request): string {
 /**
  * Mint a 6-digit verification code, store only its hash, and email the code itself.
  *
- * Any earlier code is invalidated first, so a resend cannot leave two live codes for one
- * account — that would double the guesses a 6-digit space allows. The raw code is
- * returned rather than kept, because only the caller (the dev-token path) has any use
- * for it; the database never sees it.
+ * Retiring the old code and storing the new one is one atomic step (see
+ * replaceVerificationToken) rather than two calls. Done separately, a double-tapped
+ * "resend" left several live codes for one account, which both multiplies the guesses a
+ * 6-digit space allows and hands the customer a code the reader might not pick. The raw
+ * code is returned rather than kept, because only the caller (the dev-token path) has any
+ * use for it; the database never sees it.
  *
  * Best-effort at the call sites: registration must not fail because SMTP is down, since
  * the customer can always ask for another code.
  */
 async function sendEmailVerification(user: User): Promise<string> {
-  await invalidateUserTokens(user.id, "email_verification");
   const { code, tokenHash } = generateVerificationCode();
-  await createAuthToken({
+  await replaceVerificationToken({
     userId: user.id,
-    kind: "email_verification",
     tokenHash,
     expiresAt: new Date(Date.now() + EMAIL_VERIFY_TTL_MS),
   });
