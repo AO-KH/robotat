@@ -368,7 +368,9 @@ describe("delivery failures are logged", () => {
 
   it("names the channel, the booking and the error for each failed booking send", async () => {
     const a = fixture({ id: 42, email: "sara@example.com" });
-    const lines = (await captureLog(() => deliverAssessment(a))).filter((l) => l.includes("FAILED"));
+    const lines = (await captureLog(() => deliverAssessment(a, { confirmTo: "sara@example.com" }))).filter((l) =>
+      l.includes("FAILED"),
+    );
 
     // WhatsApp has no Cloud API credentials here, so it skips rather than fails; the two
     // email sends are the ones that actually attempt a connection.
@@ -392,7 +394,21 @@ describe("delivery failures are logged", () => {
   });
 
   it("still resolves rather than throwing — a failed notice must not fail the request", async () => {
-    await expect(deliverAssessment(fixture())).resolves.toBeUndefined();
+    await expect(deliverAssessment(fixture(), { confirmTo: "sara@example.com" })).resolves.toBeUndefined();
+  });
+
+  it("skips the confirmation, rather than falling back to the form, when there is no account", async () => {
+    // A booking whose owner deleted their account has no address to confirm to. The
+    // tempting fallback is a.email — which is exactly the value this must not use.
+    const lines = await captureLog(() =>
+      deliverAssessment(fixture({ id: 44, userId: null, email: "sara@example.com" }), { confirmTo: null }),
+    );
+
+    expect(lines.some((l) => l.includes("#44") && l.includes("no confirmation sent"))).toBe(true);
+    // The business notice still tried; only the customer-facing one stood down.
+    const failures = lines.filter((l) => l.includes("FAILED"));
+    expect(failures.some((l) => l.includes("business email"))).toBe(true);
+    expect(failures.some((l) => l.includes("customer confirmation email"))).toBe(false);
   });
 });
 

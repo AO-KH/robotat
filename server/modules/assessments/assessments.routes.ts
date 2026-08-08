@@ -80,8 +80,14 @@ assessmentRoutes.post(api.assessments.create.path, requireAuth, async (req, res,
       looking at a success screen for a booking the business never heard about. See
       server/lib/background.ts. The `.catch` stays — swallowing the error is the
       deliberate part, and it is separate from knowing the work is still running.
+
+      `confirmTo` is `user.email` and not `assessment.email`: the row's address is the
+      free-text one from the form, which is the site contact the business should call,
+      while the confirmation is a message ROBOTAT sends outward and must only ever go to
+      the mailbox this account proved it owns — the same row whose emailVerifiedAt was
+      checked above. See sendCustomerConfirmation in server/lib/notify.ts.
     */
-    track(deliverAssessment(assessment).catch(() => {}));
+    track(deliverAssessment(assessment, { confirmTo: user.email }).catch(() => {}));
 
     res.status(201).json({
       assessment,
