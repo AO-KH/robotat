@@ -14,7 +14,7 @@ Read `CLAUDE.md` first — it carries the standing rules, and two of them will b
 
 - **Migrations are hand-authored.** Never run `npm run db:generate` or `db:push`. Write the
   `.sql` under `migrations/`, append to `meta/_journal.json`, derive `meta/NNNN_snapshot.json`
-  with a script, then `npm run db:migrate` and `npx drizzle-kit check`. Latest is `0012`.
+  with a script, then `npm run db:migrate` and `npx drizzle-kit check`. Latest is `0013`.
 - **Never run `npm run dev` in a shell** — it does not exit. Use the preview tool if you have
   one; otherwise ask.
 
