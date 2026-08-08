@@ -8,6 +8,7 @@ export const en = {
     signIn: "Sign in",
     myDashboard: "My dashboard",
     contact: "Contact",
+    menu: "Menu",
   },
   footer: {
     tagline: "Automating the essential for human growth — robotics and AI services.",
@@ -208,6 +209,7 @@ export const en = {
     title: "Book a site assessment",
     subtitle: "A ROBOTAT agronomist visits your farm.",
     close: "Close",
+    back: "Back",
     howReach: "How would you like to reach us?",
     howReachSub: "Either way we ask for the same details — pick where we reply.",
     whatsapp: "WhatsApp",

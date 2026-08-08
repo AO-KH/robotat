@@ -175,7 +175,7 @@ export function BookDemoModal() {
                   {view === "form" && (
                     <button
                       onClick={() => setView("choose")}
-                      aria-label="Back"
+                      aria-label={t("booking.back")}
                       className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <ArrowLeft className="w-5 h-5 rtl:rotate-180" />

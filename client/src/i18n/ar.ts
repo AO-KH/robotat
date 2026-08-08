@@ -10,6 +10,7 @@ export const ar: Dictionary = {
     signIn: "تسجيل الدخول",
     myDashboard: "لوحتي",
     contact: "تواصل",
+    menu: "القائمة",
   },
   footer: {
     tagline: "أتمتة الأساسي لنموّ الإنسان — روبوتات وخدمات ذكاء اصطناعي.",
@@ -204,6 +205,7 @@ export const ar: Dictionary = {
     title: "احجز تقييماً للموقع",
     subtitle: "يزور مهندس زراعي من ROBOTAT مزرعتك.",
     close: "إغلاق",
+    back: "رجوع",
     howReach: "كيف تودّ التواصل معنا؟",
     howReachSub: "نطلب التفاصيل نفسها في الحالتين — اختر أين نردّ عليك.",
     whatsapp: "واتساب",

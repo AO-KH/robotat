@@ -14,6 +14,32 @@ import path from "node:path";
  */
 const LITERAL_PLACEHOLDER = /placeholder="[A-Za-z]/;
 
+/**
+ * `aria-label` is copy too, and it was the half nobody was looking at.
+ *
+ * A placeholder at least renders where a sighted reviewer can see it is English. An
+ * aria-label renders nowhere — it is read aloud, and only to the people least able to
+ * work around it. Both offenders this caught sat next to a correctly translated sibling:
+ * the booking modal's back button beside `t("booking.close")`, and the mobile menu button
+ * in a navigation bar where every visible word was already translated. Two icon buttons
+ * that announced themselves in English on an otherwise Arabic screen, through three
+ * branches of i18n work and two guards that both passed.
+ *
+ * Only `aria-label`. `alt` is deliberately not scanned: the only literals are
+ * `alt="ROBOTAT by NASL"`, and the brand name stays Latin in both languages for the same
+ * reason it does in the mail — it is an identifier, not a word.
+ */
+const LITERAL_ARIA_LABEL = /aria-label="[A-Za-z]/;
+
+/*
+  shadcn primitives ROBOTAT does not render. breadcrumb, pagination and sidebar arrived
+  with the component library, are imported by nothing, and carry upstream's English
+  aria-labels. Translating dead code would be noise; the exclusion is listed by name
+  rather than by directory so that a primitive the app actually starts using has to be
+  removed from this list deliberately.
+*/
+const UNRENDERED_PRIMITIVES = ["breadcrumb.tsx", "pagination.tsx", "sidebar.tsx"];
+
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
     const full = path.join(dir, entry);
@@ -45,14 +71,22 @@ describe("user-facing copy", () => {
     expect(files.some((f) => !f.includes(`${path.sep}features${path.sep}`))).toBe(true);
   });
 
+  const scan = (pattern: RegExp, skip: string[] = []) =>
+    files
+      .filter((file) => !skip.some((name) => file.endsWith(name)))
+      .flatMap((file) =>
+        readFileSync(file, "utf8")
+          .split("\n")
+          .map((line, i) => ({ line, n: i + 1 }))
+          .filter(({ line }) => pattern.test(line))
+          .map(({ n, line }) => `${path.relative(root, file)}:${n} ${line.trim()}`),
+      );
+
   it("has no hardcoded placeholder text outside the dictionaries", () => {
-    const offenders = files.flatMap((file) =>
-      readFileSync(file, "utf8")
-        .split("\n")
-        .map((line, i) => ({ line, n: i + 1 }))
-        .filter(({ line }) => LITERAL_PLACEHOLDER.test(line))
-        .map(({ n, line }) => `${path.relative(root, file)}:${n} ${line.trim()}`),
-    );
-    expect(offenders).toEqual([]);
+    expect(scan(LITERAL_PLACEHOLDER)).toEqual([]);
+  });
+
+  it("has no hardcoded aria-label text outside the dictionaries", () => {
+    expect(scan(LITERAL_ARIA_LABEL, UNRENDERED_PRIMITIVES)).toEqual([]);
   });
 });

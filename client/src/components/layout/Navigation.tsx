@@ -70,7 +70,7 @@ export function Navigation() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMenuOpen((open) => !open)}
-              aria-label="Menu"
+              aria-label={t("nav.menu")}
               aria-expanded={menuOpen}
               className="md:hidden p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
             >
