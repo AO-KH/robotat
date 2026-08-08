@@ -1,14 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Assessment } from "@shared/schema";
+import { logger } from "../server/lib/log";
 import {
   bookingConfirmationMessage,
   businessBookingTemplateParams,
   customerStatusMessage,
   customerStatusPush,
   customerStatusTemplateParams,
+  deliverAssessment,
   emailVerificationMessage,
   mailFrom,
   notifyConfigWarnings,
+  notifyCustomerStatusChange,
   passwordResetMessage,
 } from "../server/lib/notify";
 
@@ -324,5 +327,118 @@ describe("MAIL_REDIRECT_TO", () => {
 
   it("stays quiet when it is not set", () => {
     expect(notifyConfigWarnings({}).some((w) => w.includes("MAIL_REDIRECT_TO"))).toBe(false);
+  });
+});
+
+/**
+ * A delivery that fails has to leave a trace, or the funnel can stop without anyone
+ * noticing.
+ *
+ * `deliverAssessment` awaited `Promise.allSettled` and discarded the results, and
+ * `deliverEmail` only logs after a *successful* sendMail — so a send that threw produced
+ * no output whatsoever. Both callers add `.catch(() => {})`, which suppresses even Node's
+ * unhandled-rejection warning. Pointing SMTP_HOST at a closed port made both email sends
+ * fail with ECONNREFUSED and the logger emit nothing.
+ *
+ * These tests drive the real senders against a closed port rather than mocking nodemailer,
+ * because the thing being asserted is that a genuine transport error survives all the way
+ * out to a log line.
+ */
+describe("delivery failures are logged", () => {
+  const saved = { ...process.env };
+
+  beforeEach(() => {
+    // Port 1 is reserved and nothing listens there: an immediate ECONNREFUSED.
+    process.env.SMTP_HOST = "127.0.0.1";
+    process.env.SMTP_PORT = "1";
+    delete process.env.MAIL_REDIRECT_TO;
+  });
+
+  afterEach(() => {
+    process.env = { ...saved };
+    vi.restoreAllMocks();
+  });
+
+  /** Every line `log()` emitted during the callback. */
+  async function captureLog(run: () => Promise<void>): Promise<string[]> {
+    const spy = vi.spyOn(logger, "info").mockImplementation(() => {});
+    await run();
+    return spy.mock.calls.map((call) => String(call[1]));
+  }
+
+  it("names the channel, the booking and the error for each failed booking send", async () => {
+    const a = fixture({ id: 42, email: "sara@example.com" });
+    const lines = (await captureLog(() => deliverAssessment(a))).filter((l) => l.includes("FAILED"));
+
+    // WhatsApp has no Cloud API credentials here, so it skips rather than fails; the two
+    // email sends are the ones that actually attempt a connection.
+    expect(lines).toHaveLength(2);
+    expect(lines.some((l) => l.includes("business email"))).toBe(true);
+    expect(lines.some((l) => l.includes("customer confirmation email"))).toBe(true);
+    for (const line of lines) {
+      expect(line).toContain("#42"); // which booking never arrived
+      expect(line).toContain("ECONNREFUSED"); // and why
+    }
+  });
+
+  it("does the same for a status change", async () => {
+    const a = fixture({ id: 43, status: "scheduled" });
+    const lines = (await captureLog(() => notifyCustomerStatusChange(a))).filter((l) => l.includes("FAILED"));
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain("customer email");
+    expect(lines[0]).toContain("#43");
+    expect(lines[0]).toContain("ECONNREFUSED");
+  });
+
+  it("still resolves rather than throwing — a failed notice must not fail the request", async () => {
+    await expect(deliverAssessment(fixture())).resolves.toBeUndefined();
+  });
+});
+
+/**
+ * The visit time must not depend on which machine rendered it.
+ *
+ * `toLocaleString` was called with no `timeZone`, so it used the host's. The same row
+ * read "10:00 AM" on a workstation set to Asia/Riyadh and "7:00 AM" in a container that
+ * defaulted to UTC, and that value goes out on four channels at once — status email,
+ * booking confirmation, WhatsApp template parameter, lock-screen push. A customer told
+ * 07:00 for a 10:00 visit has four sources agreeing with each other.
+ *
+ * The comment above DATE_LOCALE had already pinned the calendar and the numbering system
+ * against exactly this "different image, different answer" failure and left the timezone
+ * floating, so this asserts all three axes rather than just the new one.
+ */
+describe("scheduled times are rendered in Asia/Riyadh, not the host's zone", () => {
+  const hostTz = process.env.TZ;
+
+  afterEach(() => {
+    if (hostTz === undefined) delete process.env.TZ;
+    else process.env.TZ = hostTz;
+  });
+
+  // 07:00Z is 10:00 in Riyadh (UTC+3, no DST). Each of these host zones would render it
+  // as a different hour, and two of them as a different calendar day.
+  const elsewhere = ["UTC", "America/Los_Angeles", "Pacific/Auckland"];
+  const a = fixture({ id: 9, status: "scheduled", scheduledAt: new Date("2026-09-01T07:00:00Z") });
+
+  it.each(elsewhere)("email reads the same with TZ=%s", (tz) => {
+    process.env.TZ = tz;
+    const body = customerStatusMessage(a).body;
+    expect(body).toContain("Tuesday, September 1, 2026 at 10:00 AM");
+  });
+
+  it.each(elsewhere)("push and the WhatsApp parameter read the same with TZ=%s", (tz) => {
+    process.env.TZ = tz;
+    expect(customerStatusPush(a).body).toContain("September 1, 2026 at 10:00 AM");
+    expect(customerStatusTemplateParams(a)[2]).toContain("September 1, 2026 at 10:00 AM");
+  });
+
+  it("keeps Latin digits and the Gregorian calendar in Arabic, in that same zone", () => {
+    process.env.TZ = "UTC";
+    const body = customerStatusMessage({ ...a, locale: "ar" } as Assessment).body;
+    expect(body).toContain("2026");
+    expect(body).toContain("10:00");
+    expect(body).not.toMatch(/[٠-٩]/); // Arabic-Indic digits
   });
 });

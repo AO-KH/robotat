@@ -288,11 +288,63 @@ async function sendWhatsappCloudApi(a: Assessment): Promise<void> {
   }
 }
 
+/**
+ * Turn a rejection into something someone can act on without a debugger.
+ *
+ * Node's transport errors carry the interesting part in `code` — ECONNREFUSED,
+ * EAUTH, ETIMEDOUT — and the message alone often reads as generic prose that could
+ * mean a dozen different misconfigurations.
+ */
+function describeError(reason: unknown): string {
+  if (reason instanceof Error) {
+    const { code } = reason as NodeJS.ErrnoException;
+    return code ? `${reason.message} [${code}]` : reason.message;
+  }
+  return typeof reason === "string" ? reason : JSON.stringify(reason);
+}
+
+/**
+ * Run every channel independently and say so, loudly, when one of them does not arrive.
+ *
+ * The isolation is the point and it is not negotiable: one channel failing must not stop
+ * the others, so this is `allSettled` rather than `all`. What was missing was any trace
+ * of the failures. The results were awaited and dropped on the floor, `deliverEmail` only
+ * logged *after* a successful `sendMail`, and both callers add `.catch(() => {})` — which
+ * also suppresses the unhandled-rejection warning Node would otherwise print. Point
+ * SMTP_HOST at a closed port and both sends failed with ECONNREFUSED while the log
+ * emitted nothing at all.
+ *
+ * That is the worst shape a failure can take for this business. A wrong SMTP password, an
+ * expired WhatsApp token or an exhausted provider quota looks exactly like a healthy
+ * system from every side that is visible: the customer gets their 201, the booking is in
+ * the dashboard, the status page is green. The only symptom is that the company stops
+ * hearing about bookings — and for a funnel whose entire premise is "every booking reaches
+ * us by email and WhatsApp", nobody finds out until a customer asks why no one called.
+ *
+ * Each channel is named, so the log line says which one to go and fix, and carries the
+ * assessment reference, so it can be tied to the booking that did not arrive.
+ *
+ * Still best-effort: nothing here rethrows, so a delivery failure cannot become a request
+ * failure by way of being reported.
+ */
+async function deliverAll(context: string, channels: Record<string, Promise<void>>): Promise<void> {
+  const names = Object.keys(channels);
+  const results = await Promise.allSettled(Object.values(channels));
+
+  results.forEach((result, i) => {
+    if (result.status === "rejected") {
+      log(`[delivery] ${names[i]} FAILED for ${context}: ${describeError(result.reason)}`, "notify");
+    }
+  });
+}
+
 /** Fire both delivery channels; never throws (a delivery failure must not fail the booking). */
 export async function deliverAssessment(a: Assessment): Promise<void> {
-  // allSettled, so the customer's confirmation still goes out when the business notice
-  // fails and vice versa. Losing one is bad; losing both because the first threw is worse.
-  await Promise.allSettled([sendEmail(a), sendCustomerConfirmation(a), sendWhatsappCloudApi(a)]);
+  await deliverAll(`assessment #${a.id}`, {
+    "business email": sendEmail(a),
+    "customer confirmation email": sendCustomerConfirmation(a),
+    "business whatsapp": sendWhatsappCloudApi(a),
+  });
 }
 
 /* ============================================================
@@ -433,7 +485,11 @@ export async function pushCustomer(a: Assessment, transport?: ApnsTransport): Pr
 
 /** Notify the customer their booking changed status. Best-effort; never throws. */
 export async function notifyCustomerStatusChange(a: Assessment): Promise<void> {
-  await Promise.allSettled([emailCustomer(a), whatsappCustomer(a), pushCustomer(a)]);
+  await deliverAll(`status "${a.status}" on #${a.id}`, {
+    "customer email": emailCustomer(a),
+    "customer whatsapp": whatsappCustomer(a),
+    "customer push": pushCustomer(a),
+  });
 }
 
 /**

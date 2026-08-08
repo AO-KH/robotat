@@ -24,7 +24,19 @@ const PLACEHOLDER_PATTERNS = [
   "todo",
 ];
 
-const schema = z.object({
+/**
+ * Pull the address out of a `From:` value, which may carry a display name.
+ *
+ * `ROBOTAT <hello@nasl-tech.com>` is a legitimate and recommended setting — it is what
+ * puts a name rather than a bare address at the top of a customer's inbox — so a plain
+ * .email() check would reject the better of the two supported shapes.
+ */
+function mailboxAddress(value: string): string {
+  const angled = value.match(/<([^<>]*)>\s*$/);
+  return (angled ? angled[1] : value).trim();
+}
+
+export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().positive().default(5000),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required — the app cannot start without a database."),
@@ -52,9 +64,38 @@ const schema = z.object({
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
     z.string().email("MAIL_REDIRECT_TO must be a valid email address").optional(),
   ),
+
+  /**
+   * The address customers see in `From:`.
+   *
+   * It was the one mail variable nobody checked — MAIL_REDIRECT_TO, added in the same
+   * commit, got an .email() and a production refusal while this was read raw out of
+   * process.env. A typo does not fail at boot; it fails per-message, deep inside
+   * nodemailer's sendMail, and until delivery failures started being logged that failure
+   * produced no output at all.
+   *
+   * Likely rather than exotic, too. The whole reason this is separate from SMTP_USER is
+   * that SMTP_USER is a login credential and often not an address — Resend authenticates
+   * as `resend`, Brevo and Postmark issue a username or an API key — so this is a field
+   * people fill in by hand, from memory, once.
+   *
+   * Both shapes nodemailer accepts are allowed: a bare address, or an address with a
+   * display name in the `Name <addr>` form.
+   */
+  MAIL_FROM: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z
+      .string()
+      .refine((v) => z.string().email().safeParse(mailboxAddress(v)).success, {
+        message:
+          'MAIL_FROM must be an email address, either bare ("hello@nasl-tech.com") or with a ' +
+          'display name ("ROBOTAT <hello@nasl-tech.com>")',
+      })
+      .optional(),
+  ),
 });
 
-export type Env = z.infer<typeof schema>;
+export type Env = z.infer<typeof envSchema>;
 
 /**
  * Production-only invariants, as a pure function so they can be tested.
@@ -101,7 +142,7 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-const parsed = schema.safeParse(process.env);
+const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
   const issues = parsed.error.issues.map((i) => `  - ${i.path.join(".") || "(env)"}: ${i.message}`).join("\n");
   fail(`Invalid environment configuration:\n${issues}`);
