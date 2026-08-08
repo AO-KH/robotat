@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 /** User roles. `customer` is the default; `staff` can access the admin module. */
@@ -8,29 +8,48 @@ export type UserRole = (typeof USER_ROLES)[number];
 /* ============================================================
  * Users
  * ========================================================== */
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  /**
-   * The address with provider-specific aliasing stripped — see canonicalEmail().
-   * Uniquely indexed, so one mailbox cannot hold several accounts. `email` keeps
-   * whatever the customer typed, because that is what they recognise.
-   */
-  emailCanonical: text("email_canonical").notNull(),
-  passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull().default("customer"),
-  // Null until the user confirms their email with the 6-digit code they were sent.
-  emailVerifiedAt: timestamp("email_verified_at"),
-  // Embedded as a claim in bearer tokens and checked on every bearer request.
-  // Bumping it revokes every token previously issued to this user — the only way
-  // to evict a stolen token, since the tokens themselves are stateless.
-  tokenVersion: integer("token_version").notNull().default(0),
-  // Language for account mail (password reset, email verification). Those have no
-  // assessment to read a language off, so the user row is the only source.
-  locale: text("locale").notNull().default("en"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    /**
+     * The address with provider-specific aliasing stripped — see canonicalEmail().
+     * Uniquely indexed below, so one mailbox cannot hold several accounts. `email` keeps
+     * whatever the customer typed, because that is what they recognise.
+     */
+    emailCanonical: text("email_canonical").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    role: text("role").notNull().default("customer"),
+    // Null until the user confirms their email with the 6-digit code they were sent.
+    emailVerifiedAt: timestamp("email_verified_at"),
+    // Embedded as a claim in bearer tokens and checked on every bearer request.
+    // Bumping it revokes every token previously issued to this user — the only way
+    // to evict a stolen token, since the tokens themselves are stateless.
+    tokenVersion: integer("token_version").notNull().default(0),
+    // Language for account mail (password reset, email verification). Those have no
+    // assessment to read a language off, so the user row is the only source.
+    locale: text("locale").notNull().default("en"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  /*
+    The one-inbox-one-account rule, and it has to be declared here rather than only in
+    the migration that created it.
+
+    0011 creates this index and meta/0011_snapshot.json records it, so it exists in every
+    migrated database and `drizzle-kit check` is happy — check only compares snapshots
+    against each other and never looks at the TypeScript. But the next snapshot is
+    generated FROM this file, and a schema that does not mention the index produces a
+    snapshot without it; the diff after that would read as "index dropped" and emit a
+    migration that removes the guarantee. Nothing would fail loudly at any point.
+
+    The registration route checks for a duplicate first and returns a readable 409. This
+    is what makes the rule true: a check-then-insert is a race, and the database is the
+    only place it cannot be got round.
+  */
+  (table) => [uniqueIndex("users_email_canonical_idx").on(table.emailCanonical)],
+);
 
 export type User = typeof users.$inferSelect;
 
