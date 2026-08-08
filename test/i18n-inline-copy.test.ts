@@ -23,11 +23,26 @@ function walk(dir: string): string[] {
 }
 
 describe("user-facing copy", () => {
-  const root = path.resolve(__dirname, "..", "client", "src", "features");
+  /*
+    All of client/src, not just features/.
+
+    The convention is codebase-wide and the scan was not: components/layout holds
+    Navigation and Footer — as customer-facing as any page — and components/ui holds the
+    input primitives that a hardcoded hint is most likely to be pasted into. Neither was
+    ever looked at, so the guard's docstring and its coverage disagreed, which is the
+    worst state for a guard to be in: it reads as settled.
+  */
+  const root = path.resolve(__dirname, "..", "client", "src");
   const files = walk(root);
 
   it("finds files to scan", () => {
     expect(files.length).toBeGreaterThan(5);
+  });
+
+  it("reaches outside features/", () => {
+    // The widening is the point, and a future refactor that moves the scan root back
+    // would otherwise leave this file green while checking half of what it claims to.
+    expect(files.some((f) => !f.includes(`${path.sep}features${path.sep}`))).toBe(true);
   });
 
   it("has no hardcoded placeholder text outside the dictionaries", () => {

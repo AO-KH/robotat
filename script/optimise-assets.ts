@@ -1,18 +1,20 @@
-import { readdirSync, statSync, renameSync, writeFileSync, rmSync } from "node:fs";
-import path from "node:path";
+import { statSync, renameSync, writeFileSync, rmSync } from "node:fs";
 import sharp from "sharp";
-import { MAX_BYTES, RE_ENCODABLE, SHIPPED_IMAGE } from "./asset-budget";
+import { ASSET_DIRS, MAX_BYTES, RE_ENCODABLE, overBudgetAdvice, shippedImages } from "./asset-budget";
 
 /**
- * Resize and recompress the images in attached_assets, in place.
+ * Resize and recompress the shipped images, in place.
  *
  *   npm run assets:optimise
  *
- * An image here that some module imports through `@assets/…` is bundled by Vite and so is
- * also baked into the iOS binary. Not all of them are: Vite's root is `client`, so
- * `publicDir` is client/public and nothing in attached_assets ships unless it is imported
- * — the PDF, the three .txt files and image_…391.png are along for the ride. Two of the
- * ones that do ship arrived straight from a camera and a generator, at 13 MB and 8.6 MB.
+ * An image in attached_assets that some module imports through `@assets/…` is bundled by
+ * Vite and so is also baked into the iOS binary. Not all of them are — the PDF, the three
+ * .txt files and image_…391.png are along for the ride. Two of the ones that do ship
+ * arrived straight from a camera and a generator, at 13 MB and 8.6 MB.
+ *
+ * client/public is walked too. Vite's root is `client`, so that directory is publicDir and
+ * is copied into the build verbatim: an image there ships without any import naming it,
+ * which is the reason it was invisible to both this script and its test for so long.
  *
  * In place and keeping each file's format, so no import path has to move; the originals
  * stay in git history, which is the backup that counts. Keeping the format has one limit
@@ -39,15 +41,13 @@ const MAX_WIDTH = 1920;
 const MIN_GAIN = 0.1;
 
 async function main(): Promise<void> {
-  const dir = path.resolve(process.cwd(), "attached_assets");
-  const files = readdirSync(dir).filter((f) => SHIPPED_IMAGE.test(f));
+  const images = shippedImages(process.cwd());
 
   let saved = 0;
   const stillHeavy: string[] = [];
   const unhandled: string[] = [];
 
-  for (const file of files) {
-    const full = path.join(dir, file);
+  for (const { name: file, full } of images) {
     const before = statSync(full).size;
 
     if (before <= MAX_BYTES) {
@@ -102,11 +102,10 @@ async function main(): Promise<void> {
     console.log(
       [
         "",
-        "Over budget and in a format this script does not open:",
-        ...unhandled.map((f) => `  ${f}`),
-        "",
-        "See script/asset-budget.ts for why. Convert it to JPEG or PNG — or, if it is animated,",
-        "to a video — and change the import that names it.",
+        "Over budget and in a format this script does not open (see script/asset-budget.ts):",
+        // The same line the failing test prints, from the same function, so nobody is told
+        // to run this script by a guard about a file this script just declined to touch.
+        ...unhandled.map((f) => `  ${f} — ${overBudgetAdvice(f)}`),
       ].join("\n"),
     );
   }
@@ -127,6 +126,10 @@ async function encode(full: string, file: string): Promise<Buffer> {
 
   if (/\.png$/i.test(file)) return pipeline.png({ compressionLevel: 9, palette: true }).toBuffer();
   if (/\.webp$/i.test(file)) return pipeline.webp({ quality: 80 }).toBuffer();
+  // Named rather than left to the JPEG fallback: without this branch an .avif would be
+  // written back full of JPEG bytes under its old extension, which browsers sniff their
+  // way around and every other tool does not.
+  if (/\.avif$/i.test(file)) return pipeline.avif({ quality: 60 }).toBuffer();
   return pipeline.jpeg({ quality: 80, mozjpeg: true }).toBuffer();
 }
 

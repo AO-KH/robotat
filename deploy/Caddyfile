@@ -16,7 +16,30 @@
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	}
 
+	# /api/ready runs SELECT 1, and the pool it borrows a connection from holds ten.
+	# Reachable from the internet that is a denial of service anyone can mount for the
+	# price of ten unauthenticated requests: hold the connections, and real traffic waits
+	# on a pool that has nothing left to hand out.
+	#
+	# Nothing legitimate loses the endpoint. Its only caller is the container healthcheck
+	# in the Dockerfile, which wgets http://localhost:5000 from inside the app container
+	# and never crosses this proxy; no compose service, CI job or deploy step probes it
+	# through the domain.
+	#
+	# Not rate-limited, deliberately. A limiter cannot tell the orchestrator's probe from
+	# an attacker, and a 429 reads as unhealthy — which would cause exactly the restart
+	# loop the probe exists to prevent.
+	#
+	# `handle` rather than a bare `respond`: handle blocks are mutually exclusive and
+	# ordered by path specificity, so this shadows the catch-all below without depending
+	# on where `respond` happens to sit in Caddy's directive-order table.
+	handle /api/ready {
+		respond 404
+	}
+
 	# `app` is the compose service name, reachable on the internal network. The app
 	# itself should not publish a public port — set APP_PORT=127.0.0.1:5000.
-	reverse_proxy app:5000
+	handle {
+		reverse_proxy app:5000
+	}
 }
