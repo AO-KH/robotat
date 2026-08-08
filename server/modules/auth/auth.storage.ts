@@ -9,7 +9,7 @@ import {
 } from "@shared/schema";
 import { db } from "../../lib/db";
 import { canonicalEmail } from "./auth.service";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 
 /**
  * What replaces a deleted customer's name and email on the bookings they leave behind.
@@ -53,10 +53,15 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 /**
  * The account that owns this mailbox, whatever alias form was typed.
  *
- * Used by registration to reject a second account on an inbox that already has one.
- * Sign-in deliberately still matches on `email` exactly: someone who registered as
- * first.last@gmail.com expects to sign in with that, and letting any alias through
- * would quietly widen what counts as their username.
+ * Used by registration to reject a second account on an inbox that already has one, and
+ * by forgot-password so the person who holds the mailbox can recover whatever account
+ * was registered against it — including one someone else registered under an alias.
+ *
+ * Sign-in deliberately still matches on `email` exactly. Recovery can afford to be
+ * generous because it proves control of the inbox before anything happens: the link goes
+ * to the stored address and only whoever reads it can use it. Sign-in proves nothing
+ * before it grants access, so widening it would just quietly turn every alias of an
+ * address into a valid username for it.
  */
 export async function getUserByCanonicalEmail(canonical: string): Promise<User | undefined> {
   const [user] = await db.select().from(users).where(eq(users.emailCanonical, canonical));
@@ -189,6 +194,12 @@ export async function getValidAuthToken(kind: AuthTokenKind, tokenHash: string):
  * one of a million, so several users hold the same one at any moment and finding "the
  * row whose hash is 000042" would redeem a stranger's. The caller compares the typed
  * code against this row, so a code is only ever valid for the account that asked for it.
+ *
+ * Newest first, one row. Unordered, this took whatever the scan happened to yield — in
+ * practice the oldest — so if a second live row ever existed the customer's newest code
+ * was rejected while a code they no longer have was the one being accepted. Ordering also
+ * means the older row is unreachable rather than merely unlucky, so a stray one cannot
+ * quietly add a second five-guess budget to the account.
  */
 export async function getLiveVerificationToken(userId: number): Promise<AuthToken | undefined> {
   const [token] = await db
@@ -201,25 +212,77 @@ export async function getLiveVerificationToken(userId: number): Promise<AuthToke
         isNull(authTokens.usedAt),
         gt(authTokens.expiresAt, new Date()),
       ),
-    );
+    )
+    // created_at is the intent; id breaks the tie, since two rows inserted in the same
+    // millisecond would otherwise put us back to relying on scan order.
+    .orderBy(desc(authTokens.createdAt), desc(authTokens.id))
+    .limit(1);
   return token;
 }
 
 /**
- * Count one wrong guess, and report how many have been made.
+ * Retire every live verification code for a user and mint the replacement, as one unit.
  *
- * Incremented in SQL and read back from the same statement rather than fetched, added to
- * and written: two requests guessing at once would otherwise both read four, both write
- * five, and between them get an extra attempt for free. Small, but the whole point of the
- * counter is that it cannot be worn down.
+ * Separately, these are an UPDATE and an INSERT with a gap between them, and resends
+ * racing through that gap all invalidate before any of them inserts — five at once left
+ * three live codes for one account, which is exactly what the "one live code at a time"
+ * rule exists to prevent. A transaction alone does not close it: at READ COMMITTED the
+ * second UPDATE takes its snapshot before the first INSERT commits, so it cannot see the
+ * row it would need to retire. Locking the user row first is what serialises the pair —
+ * the second caller waits, then runs its UPDATE against a snapshot that includes the
+ * first caller's token.
+ *
+ * The lock is per-user and held for two statements, so the only thing that ever waits on
+ * it is the same account double-tapping "resend".
  */
-export async function recordFailedAttempt(id: number): Promise<number> {
+export async function replaceVerificationToken(input: {
+  userId: number;
+  tokenHash: string;
+  expiresAt: Date;
+}): Promise<AuthToken> {
+  return db.transaction(async (tx) => {
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, input.userId)).for("update");
+
+    await tx
+      .update(authTokens)
+      .set({ usedAt: sql`now()` })
+      .where(
+        and(
+          eq(authTokens.userId, input.userId),
+          eq(authTokens.kind, "email_verification"),
+          isNull(authTokens.usedAt),
+        ),
+      );
+
+    const [token] = await tx
+      .insert(authTokens)
+      .values({ ...input, kind: "email_verification" })
+      .returning();
+    return token;
+  });
+}
+
+/**
+ * Take one guess out of a code's budget, or report that there is none left.
+ *
+ * Returns the new attempt count, or `undefined` when the budget was already spent — the
+ * caller must treat that as "no guess happened" and refuse.
+ *
+ * The `attempts < max` predicate lives in the same statement as the increment because
+ * anything else is a race the attacker wins. Reading the count, comparing it, and then
+ * incrementing means every request that arrives before the first increment commits sees
+ * the same pre-increment value and gets a free guess: a 60-request burst against one
+ * five-guess code recorded 52 attempts. Postgres takes a row lock for the duration of an
+ * UPDATE and re-evaluates the predicate against the committed row, so concurrent callers
+ * queue behind each other here and exactly `max` of them can ever succeed.
+ */
+export async function spendVerificationAttempt(id: number, max: number): Promise<number | undefined> {
   const [row] = await db
     .update(authTokens)
     .set({ attempts: sql`${authTokens.attempts} + 1` })
-    .where(eq(authTokens.id, id))
+    .where(and(eq(authTokens.id, id), sql`${authTokens.attempts} < ${max}`))
     .returning({ attempts: authTokens.attempts });
-  return row?.attempts ?? 0;
+  return row?.attempts;
 }
 
 export async function markAuthTokenUsed(id: number): Promise<void> {
