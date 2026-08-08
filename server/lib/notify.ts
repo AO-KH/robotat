@@ -130,19 +130,54 @@ async function sendEmail(a: Assessment): Promise<void> {
 /**
  * Confirm to the customer that their booking arrived.
  *
- * `replyTo` is the business inbox, not `a.email`. The business notice sets reply-to to
- * the customer so staff can answer them; copying that pattern here would point the
+ * ## Why `to` is a parameter and not `a.email`
+ *
+ * `assessments.email` is whatever was typed into the booking form. The form prefills it
+ * with the account's address, but it is free text and the row stores whatever arrived.
+ * A different address there is a legitimate thing to enter — a farm manager booking for
+ * a site can reasonably give the foreman's — and the business notice above keeps using
+ * it, because that one lands in ROBOTAT's own inbox and is contact information staff
+ * asked for.
+ *
+ * This message is the other kind. It is addressed outward, and its body echoes back the
+ * name, phone, company, land size and location the submitter typed. Sent to the form's
+ * address, the endpoint is a small mailer: any signed-in account can put text of its own
+ * choosing in front of a stranger, over ROBOTAT's SMTP reputation and above ROBOTAT's
+ * signature. The verification gate on the booking route reads as though it closed that
+ * and does not — it proves the *account* owns *its* mailbox, not that it owns the one in
+ * the form — and the three-a-day cap only bounds how often it can be done.
+ *
+ * So the caller passes the address the account was verified at, and the form's value
+ * stays what it is: contact information for the business.
+ *
+ * ## A null recipient
+ *
+ * `assessments.user_id` is nullable — deleting an account detaches its bookings rather
+ * than destroying them — so an assessment can have no owner and therefore no account
+ * address. Nobody is waiting on a confirmation for one of those, so it is skipped and
+ * logged. `a.email` is deliberately not a fallback: falling back to it is the bug.
+ *
+ * ## Two things that did NOT change
+ *
+ * `replyTo` is still the business inbox. The business notice sets reply-to to the
+ * customer so staff can answer them; copying that pattern here would point the
  * customer's reply back at themselves, and the message explicitly invites a reply to
  * correct a wrong phone number.
+ *
+ * The language still comes from `assessments.locale` rather than from the account's
+ * `locale`, because this message describes a booking and the booking's language is the
+ * one it was made in — an account that later switches language should not retroactively
+ * change the confirmation for a booking it already made. Only the envelope moved.
  */
-async function sendCustomerConfirmation(a: Assessment): Promise<void> {
-  // The column is NOT NULL, but this also runs for rows built by callers rather than by
-  // the insert, and a confirmation to nobody would throw inside the SMTP client.
-  if (!a.email) return;
+async function sendCustomerConfirmation(a: Assessment, to: string | null): Promise<void> {
+  if (!to) {
+    log(`[email] assessment #${a.id} has no account address — no confirmation sent`, "notify");
+    return;
+  }
 
   const { subject, body } = bookingConfirmationMessage(a);
   await deliverEmail({
-    to: a.email,
+    to,
     replyTo: process.env.ASSESSMENT_INBOX || FALLBACK_ASSESSMENT_INBOX,
     subject,
     text: body,
@@ -338,11 +373,21 @@ async function deliverAll(context: string, channels: Record<string, Promise<void
   });
 }
 
-/** Fire both delivery channels; never throws (a delivery failure must not fail the booking). */
-export async function deliverAssessment(a: Assessment): Promise<void> {
+/**
+ * Fire both delivery channels; never throws (a delivery failure must not fail the booking).
+ *
+ * `confirmTo` is the address the customer's own confirmation goes to — the account's,
+ * not the form's. It is a required argument rather than something derived in here so
+ * that a future caller has to decide who is being written to instead of inheriting an
+ * answer; see sendCustomerConfirmation for why the two addresses are not the same thing.
+ */
+export async function deliverAssessment(
+  a: Assessment,
+  opts: { confirmTo: string | null },
+): Promise<void> {
   await deliverAll(`assessment #${a.id}`, {
     "business email": sendEmail(a),
-    "customer confirmation email": sendCustomerConfirmation(a),
+    "customer confirmation email": sendCustomerConfirmation(a, opts.confirmTo),
     "business whatsapp": sendWhatsappCloudApi(a),
   });
 }

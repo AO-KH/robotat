@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
 import { DAILY_ASSESSMENT_LIMIT } from "@shared/schema";
+import { logger } from "../server/lib/log";
+import { drainBackgroundWork, resetBackgroundWork } from "../server/lib/background";
 import { getApp, resetDb, closeDb, newUser, ageAllAssessments, verifyUser } from "./helpers";
 
 let app: Express;
@@ -234,5 +236,103 @@ describe("booking — signed-in assessment path (POST /api/assessments)", () => 
     const bobList = await bob.get("/api/assessments");
     expect(bobList.status).toBe(200);
     expect(bobList.body).toHaveLength(0); // Bob sees none of Alice's
+  });
+});
+
+/**
+ * Who the booking confirmation is addressed to.
+ *
+ * The form's email field is free text. It is prefilled with the account's address but
+ * anything can be typed over it, and the row stores whatever arrived. Addressing the
+ * confirmation to that value turns the endpoint into a small mailer: the message body
+ * echoes back the name, phone, company, land size and location the submitter typed, so
+ * a signed-in account could put arbitrary text in front of an arbitrary stranger, over
+ * ROBOTAT's own SMTP reputation.
+ *
+ * The verification gate on this route reads as though it closed that and does not — it
+ * proves the *account* owns *its* mailbox, and says nothing about the address in the
+ * form. The three-a-day cap only bounds how often it can be done.
+ *
+ * These drive the real sender and read the recipient off the log line it emits, because
+ * the property under test is about the envelope, not about the message builder: the
+ * body is allowed to contain the form's address (it is contact information the customer
+ * asked us to use), and only the `To:` header is constrained.
+ */
+describe("booking confirmation goes to the account, not to the form", () => {
+  /** Addresses each `[email:dev] would send to …` line was aimed at, with its subject. */
+  async function capturedMail(run: () => Promise<void>): Promise<{ to: string; subject: string }[]> {
+    // Accumulated here rather than read off spy.mock.calls afterwards: mockRestore()
+    // clears the recorded calls along with the stub, so the list has to be kept.
+    const lines: string[] = [];
+    const spy = vi.spyOn(logger, "info").mockImplementation((_obj, msg) => {
+      lines.push(String(msg));
+      return logger;
+    });
+    try {
+      await run();
+      // Delivery is fired after the 201 and deliberately not awaited by the route.
+      await drainBackgroundWork(5000);
+    } finally {
+      spy.mockRestore();
+    }
+    return lines
+      .map((line) => /^\[email:dev\] would send to (\S+) — ([^\n]*)/.exec(line))
+      .filter((m): m is RegExpExecArray => m !== null)
+      .map((m) => ({ to: m[1], subject: m[2] }));
+  }
+
+  afterEach(() => {
+    resetBackgroundWork();
+  });
+
+  it("mails the confirmation to the verified account address, never to the typed one", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "owner@example.com" }));
+    await verifyUser("owner@example.com");
+
+    const mail = await capturedMail(async () => {
+      const created = await agent.post("/api/assessments").send({
+        name: "Owner",
+        email: "stranger@example.com", // typed over the prefilled account address
+        phone: "+966500000000",
+        location: "Read this, stranger",
+      });
+      expect(created.status).toBe(201);
+    });
+
+    const confirmation = mail.find((m) => /received your site assessment/i.test(m.subject));
+    expect(confirmation, `no confirmation in ${JSON.stringify(mail)}`).toBeDefined();
+    expect(confirmation!.to).toBe("owner@example.com");
+
+    // And nothing at all was addressed to the typed address — not the confirmation
+    // under another subject, and not some future second message either.
+    expect(mail.map((m) => m.to)).not.toContain("stranger@example.com");
+  });
+
+  it("still tells the business what the customer typed", async () => {
+    // The other half of the same decision: a different site contact is a legitimate
+    // thing to enter — a farm manager booking for a site gives the foreman's address —
+    // so the notice that reaches ROBOTAT's own inbox must keep carrying it.
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send(newUser({ email: "manager@example.com" }));
+    await verifyUser("manager@example.com");
+
+    const lines: string[] = [];
+    const spy = vi.spyOn(logger, "info").mockImplementation((_obj, msg) => {
+      lines.push(String(msg));
+      return logger;
+    });
+    try {
+      await agent
+        .post("/api/assessments")
+        .send({ name: "Manager", email: "foreman@example.com", phone: "+966511111111" });
+      await drainBackgroundWork(5000);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const business = lines.find((l) => l.includes("New site assessment request"));
+    expect(business).toBeDefined();
+    expect(business).toContain("foreman@example.com");
   });
 });
