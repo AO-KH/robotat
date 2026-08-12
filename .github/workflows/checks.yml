@@ -47,9 +47,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Security audit (fail on high or critical)
-        run: npm audit --audit-level=high
-
       - name: Typecheck
         run: npm run check
 
@@ -61,3 +58,25 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      # Last, and `!cancelled()` so it runs even when something above it failed.
+      #
+      # This used to sit directly after `npm ci`, where it was the first thing that could
+      # fail — and a step that fails takes the rest of the job with it. So a single
+      # advisory in a transitive dependency switched off typecheck, migrations, tests and
+      # build, all at once, and the job's red said "vulnerability" while saying nothing
+      # about the code.
+      #
+      # That is not hypothetical. `nanoid` tripped this on 2026-08-07 and every run for
+      # the next four days died here. Behind it, a security test added in that same window
+      # (the concurrent-burst case in test/account-recovery.test.ts) was failing and could
+      # not be seen, because the suite never ran. The cheap problem hid the expensive one.
+      #
+      # Reordering alone would only invert that — a failing test would then hide an
+      # advisory. `!cancelled()` is what makes it neither: both checks report on every run,
+      # and neither can mask the other. The audit still fails the job, so cd.yml still
+      # refuses to publish an image with a high or critical advisory in it. Only the
+      # ordering changed, not the gate.
+      - name: Security audit (fail on high or critical)
+        if: ${{ !cancelled() }}
+        run: npm audit --audit-level=high
