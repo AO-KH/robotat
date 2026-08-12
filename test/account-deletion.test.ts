@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
-import type { Express } from "express";
+import type { Server } from "http";
 import { getApp, resetDb, closeDb, newUser, verifyUser } from "./helpers";
 import { pool } from "../server/lib/db";
 
@@ -12,7 +12,7 @@ import { pool } from "../server/lib/db";
  * deletion — stripped of everything that identifies the customer.
  */
 
-let app: Express;
+let app: Server;
 
 beforeAll(async () => {
   app = await getApp();
