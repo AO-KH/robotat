@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
-import type { Express } from "express";
+import type { Server } from "http";
 import { getApp, resetDb, closeDb, newUser, makeStaff, verifyUser } from "./helpers";
 
-let app: Express;
+let app: Server;
 
 beforeAll(async () => {
   app = await getApp();

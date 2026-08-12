@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
-import type { Express } from "express";
+import type { Server } from "http";
 import { getApp, resetDb, closeDb, newUser } from "./helpers";
 import { pool } from "../server/lib/db";
 
@@ -11,7 +11,7 @@ import { pool } from "../server/lib/db";
  * push_tokens rows directly: the point of this endpoint is what it leaves in the table.
  */
 
-let app: Express;
+let app: Server;
 
 beforeAll(async () => {
   app = await getApp();

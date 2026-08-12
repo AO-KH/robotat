@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import request from "supertest";
-import type { Express } from "express";
+import type { Server } from "http";
 import { DAILY_ASSESSMENT_LIMIT } from "@shared/schema";
 import { logger } from "../server/lib/log";
 import { drainBackgroundWork, resetBackgroundWork } from "../server/lib/background";
 import { getApp, resetDb, closeDb, newUser, ageAllAssessments, verifyUser } from "./helpers";
 
-let app: Express;
+let app: Server;
 
 beforeAll(async () => {
   app = await getApp();
