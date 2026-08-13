@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { logger } from "./lib/log";
 import { env } from "./lib/env";
 import { allowedOrigins, createCors } from "./lib/cors";
+import { clientError } from "./lib/errors";
 
 declare module "http" {
   interface IncomingMessage {
@@ -82,8 +83,9 @@ export async function buildApp(): Promise<{ app: Express; httpServer: Server }> 
   await registerRoutes(httpServer, app);
 
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // `err` in full goes to the log; `message` is the redacted half that is safe to
+    // return. See clientError() for why a 5xx must not repeat what it was given.
+    const { status, message } = clientError(err, isProd);
 
     logger.error({ err, status, method: req.method, path: req.path }, "unhandled request error");
 
