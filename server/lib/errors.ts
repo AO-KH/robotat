@@ -13,6 +13,40 @@ export function handleZodError(err: unknown, res: Response): boolean {
   return false;
 }
 
+/** Postgres SQLSTATE for unique_violation. */
+export const PG_UNIQUE_VIOLATION = "23505";
+
+/**
+ * The Postgres error code behind `err`, wherever Drizzle happens to have put it.
+ *
+ * Reading `err.code` directly does not work and silently does not work, which is worse.
+ * Every query goes through `queryWithCache`, which catches and rethrows as
+ * `DrizzleQueryError` (drizzle-orm/errors.cjs) — and that constructor copies the driver
+ * error onto `.cause` while copying no properties off it. So `err.code` is `undefined`
+ * for every database error this application can raise, and a `=== "23505"` test against
+ * it is not a check that rarely matches; it is a check that cannot match.
+ *
+ * The registration handler had exactly that. Its comment describes catching the unique
+ * violation when two people claim one mailbox in the same instant, but the condition
+ * never fired, so the loser of that race got a 500 instead of the intended 409 — and,
+ * before the redaction in clientError() below, a 500 whose body was the INSERT statement
+ * and its bound parameters.
+ *
+ * Walks the chain rather than reading `.cause` once, so another wrapping layer does not
+ * quietly reintroduce the same bug. The depth cap is only there to make a cyclic `cause`
+ * impossible to hang on.
+ */
+export function pgErrorCode(err: unknown): string | undefined {
+  let current: unknown = err;
+  for (let depth = 0; depth < 5; depth++) {
+    if (!current || typeof current !== "object") return undefined;
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === "string") return code;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
+}
+
 /**
  * What a failed request is allowed to tell the client. A pure function so it can be
  * tested without standing up a server.

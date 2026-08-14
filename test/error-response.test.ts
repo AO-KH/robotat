@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { clientError } from "../server/lib/errors";
+import { clientError, pgErrorCode, PG_UNIQUE_VIOLATION } from "../server/lib/errors";
 
 /*
   The message this fixture carries is not invented. It is what a browser was actually
@@ -71,5 +71,57 @@ describe("clientError", () => {
     expect(clientError(undefined, true)).toEqual({ status: 500, message: "Internal Server Error" });
     expect(clientError(null, true)).toEqual({ status: 500, message: "Internal Server Error" });
     expect(clientError("boom", true)).toEqual({ status: 500, message: "Internal Server Error" });
+  });
+});
+
+/*
+  How Drizzle actually hands a driver error up. queryWithCache catches whatever pg threw
+  and rethrows this, putting the original on `.cause` and copying nothing off it — which
+  is why reading `err.code` finds undefined for every database error in this app.
+*/
+function drizzleWrapped(pgError: unknown) {
+  const wrapped = new Error("Failed query: insert into \"users\" ...\nparams: Ada,ada@example.com,...");
+  (wrapped as { cause?: unknown }).cause = pgError;
+  return wrapped;
+}
+
+describe("pgErrorCode", () => {
+  it("finds the code on a bare driver error", () => {
+    expect(pgErrorCode(Object.assign(new Error("dup"), { code: "23505" }))).toBe("23505");
+  });
+
+  it("finds the code through Drizzle's wrapper — the case that was silently failing", () => {
+    const err = drizzleWrapped(Object.assign(new Error("duplicate key value"), { code: "23505" }));
+
+    // The old check. It reads undefined, so registration's unique-violation branch
+    // never ran and the race fell through to a 500.
+    expect((err as { code?: string }).code).toBeUndefined();
+
+    expect(pgErrorCode(err)).toBe(PG_UNIQUE_VIOLATION);
+  });
+
+  it("keeps working if something wraps the wrapper", () => {
+    const err = drizzleWrapped(drizzleWrapped(Object.assign(new Error("dup"), { code: "23505" })));
+    expect(pgErrorCode(err)).toBe("23505");
+  });
+
+  it("returns undefined when there is no code anywhere", () => {
+    expect(pgErrorCode(drizzleWrapped(new Error("connection terminated")))).toBeUndefined();
+    expect(pgErrorCode(new Error("plain"))).toBeUndefined();
+    expect(pgErrorCode(undefined)).toBeUndefined();
+    expect(pgErrorCode(null)).toBeUndefined();
+    expect(pgErrorCode("string")).toBeUndefined();
+  });
+
+  it("ignores a non-string code rather than reporting it", () => {
+    expect(pgErrorCode(Object.assign(new Error("x"), { code: 23505 }))).toBeUndefined();
+  });
+
+  it("terminates on a cyclic cause chain", () => {
+    const a = new Error("a");
+    const b = new Error("b");
+    (a as { cause?: unknown }).cause = b;
+    (b as { cause?: unknown }).cause = a;
+    expect(pgErrorCode(a)).toBeUndefined();
   });
 });
