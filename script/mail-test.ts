@@ -18,6 +18,17 @@ import nodemailer from "nodemailer";
 
 const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_REDIRECT_TO } = process.env;
 
+/**
+ * The bare address out of a From-style value, which may carry a display name.
+ *
+ * MAIL_FROM is legitimately `ROBOTAT <hello@nasl-tech.com>`, and that whole string is not
+ * something to hand to a `to` field.
+ */
+function mailboxOf(value: string): string {
+  const angled = value.match(/<([^<>]*)>\s*$/);
+  return (angled ? angled[1] : value).trim();
+}
+
 /** Show enough of an address to recognise it, not enough to harvest it. */
 function mask(address: string | undefined): string {
   if (!address) return "(unset)";
@@ -27,6 +38,46 @@ function mask(address: string | undefined): string {
 }
 
 async function main(): Promise<void> {
+  /*
+    Exercise whichever transport the server would actually use, in the same order it
+    picks. Testing SMTP while production sends over HTTPS would report on a connection
+    nobody opens.
+  */
+  const { RESEND_API_KEY, MAIL_FROM } = process.env;
+  if (RESEND_API_KEY) {
+    const target = MAIL_REDIRECT_TO || MAIL_FROM;
+    if (!target) {
+      console.error("Set MAIL_REDIRECT_TO (or MAIL_FROM) so there is somewhere to send the test.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const { sendViaResend, mailFrom } = await import("../server/lib/notify");
+    console.log(`transport https (Resend)`);
+    console.log(`key       set, ${RESEND_API_KEY.length} characters`);
+    console.log(`from      ${mailFrom()}`);
+    console.log(`sending   ${mask(mailboxOf(target))}\n`);
+
+    try {
+      await sendViaResend({
+        apiKey: RESEND_API_KEY,
+        from: mailFrom(),
+        to: mailboxOf(target),
+        subject: "ROBOTAT mail test",
+        text: "If you are reading this, the HTTPS mail transport works.",
+      });
+      console.log("accepted by the provider — check the inbox, and the provider's log for delivery");
+    } catch (err) {
+      console.error(`\nfailed: ${err instanceof Error ? err.message : String(err)}\n`);
+      console.error(
+        "A 401 is the API key. A 422 is almost always a sending domain that has not been\n" +
+          "verified with the provider yet, or a MAIL_FROM at a domain you do not own.",
+      );
+      process.exitCode = 1;
+    }
+    return;
+  }
+
   if (!SMTP_HOST) {
     console.error(`
 SMTP_HOST is not set, so nothing would be sent — emails are only written to the
