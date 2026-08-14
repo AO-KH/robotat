@@ -159,8 +159,81 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export const localeSchema = z.enum(["en", "ar"]);
 export type Locale = z.infer<typeof localeSchema>;
 
+/* ============================================================
+ * Free text that leaves the building
+ *
+ * Several of the fields below are copied verbatim into an email or a WhatsApp message,
+ * and one of them is sent to an address nobody has proved they own.
+ *
+ * Registering with someone else's address mails them a confirmation code — that is the
+ * whole point of the flow, and it cannot be avoided by checking first, because checking
+ * IS the mail. What can be controlled is what that message is able to say. The body opens
+ * `Hi ${name},`, and `name` had a minimum length and no maximum and no restriction on
+ * content, so it could carry several lines of anything:
+ *
+ *     name = "Ada,\n\nURGENT: your account is suspended. Confirm at http://…\n\n\n"
+ *
+ * which arrives at a stranger's inbox signed by ROBOTAT, over ROBOTAT's sending
+ * reputation. That is not a mail-delivery bug, it is a content-injection one, and the
+ * repair is to make the field hold a name.
+ *
+ * A cap alone is not enough: a hundred characters of newlines is still a fake message
+ * header. Line breaks and control characters go too — a name has no use for either, and
+ * dropping them also closes header injection at every layer that builds a message from
+ * these values.
+ * ========================================================== */
+
+const LINE_FEED = 10;
+const CARRIAGE_RETURN = 13;
+const DELETE_CHAR = 127;
+const LAST_CONTROL_CHAR = 31;
+
+/**
+ * Whether the value carries a C0 control character or DEL.
+ *
+ * Compared by code point rather than matched by a regular expression, deliberately. A
+ * character class covering this range has to contain either the raw bytes — which makes
+ * the file binary to grep and the rule invisible in review — or escapes, which tooling
+ * along the way keeps converting back into raw bytes. A numeric comparison states the
+ * same rule and survives being edited.
+ */
+function hasControlChar(value: string, allowLineBreaks: boolean): boolean {
+  for (const character of value) {
+    const code = character.codePointAt(0) ?? 0;
+    if (code > LAST_CONTROL_CHAR && code !== DELETE_CHAR) continue;
+    if (allowLineBreaks && (code === LINE_FEED || code === CARRIAGE_RETURN)) continue;
+    return true;
+  }
+  return false;
+}
+
+/** One line of free text destined for a message someone else will read. */
+function singleLine(max: number, label: string) {
+  return z
+    .string()
+    .trim()
+    .max(max, `${label} must be ${max} characters or fewer`)
+    .refine((v) => !hasControlChar(v, false), {
+      message: `${label} cannot contain line breaks`,
+    });
+}
+
+/** Free text that may genuinely run to several lines, still bounded. */
+function multiLine(max: number, label: string) {
+  return z
+    .string()
+    .trim()
+    .max(max, `${label} must be ${max} characters or fewer`)
+    .refine((v) => !hasControlChar(v, true), {
+      message: `${label} contains characters that are not allowed`,
+    });
+}
+
+/** A person's name, as it will appear in mail addressed to them. */
+const personName = singleLine(80, "Name").pipe(z.string().min(2, "Please enter your full name"));
+
 export const registerSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your full name"),
+  name: personName,
   email: z.string().trim().email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   locale: localeSchema.optional(),
@@ -174,7 +247,8 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const updateProfileSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your full name"),
+  // Same rules as registration: this name reaches the same messages.
+  name: personName,
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
@@ -232,14 +306,24 @@ export const updateAssessmentSchema = z.object({
 export type UpdateAssessmentInput = z.infer<typeof updateAssessmentSchema>;
 
 /** Fields the client sends when booking (userId + status are set server-side). */
+/*
+  Every one of these is copied into a message someone else reads — the business alert, the
+  customer's confirmation, and the status notice that goes to whatever address and phone
+  number the form carried. So they are bounded and stripped of control characters for the
+  same reason `name` is, and the limits are set well above any honest entry: a booking that
+  is refused for a 300-character company name is a bug, and a 40,000-character one arriving
+  in someone's inbox over ROBOTAT's signature is a different bug.
+
+  `message` is the exception on line breaks — it is prose and people write paragraphs.
+*/
 export const bookAssessmentSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your full name"),
+  name: personName,
   email: z.string().trim().email("Enter a valid email address"),
-  phone: z.string().trim().optional(),
-  company: z.string().trim().optional(),
-  landSize: z.string().trim().optional(),
-  location: z.string().trim().optional(),
-  message: z.string().trim().optional(),
+  phone: singleLine(40, "Phone number").optional(),
+  company: singleLine(120, "Company").optional(),
+  landSize: singleLine(80, "Land size").optional(),
+  location: singleLine(200, "Location").optional(),
+  message: multiLine(2000, "Message").optional(),
   locale: localeSchema.optional(),
 });
 export type BookAssessmentInput = z.infer<typeof bookAssessmentSchema>;
