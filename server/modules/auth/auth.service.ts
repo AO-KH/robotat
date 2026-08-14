@@ -3,29 +3,166 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { scrypt, randomBytes, randomInt, timingSafeEqual, createHash, createHmac } from "crypto";
+import {
+  scrypt,
+  randomBytes,
+  randomInt,
+  timingSafeEqual,
+  createHash,
+  createHmac,
+  type ScryptOptions,
+} from "crypto";
 import { promisify } from "util";
 import { pool } from "../../lib/db";
 import { env } from "../../lib/env";
-import { getUserByEmail, getUserById } from "./auth.storage";
+import { log } from "../../lib/log";
+import { getUserByEmail, getUserById, updateUserPassword } from "./auth.storage";
 import type { User, PublicUser } from "@shared/schema";
 
-const scryptAsync = promisify(scrypt);
+/*
+  Typed by hand because promisify's inferred signature drops the options argument: node's
+  scrypt has several overloads and TypeScript resolves the promisified form to the
+  three-parameter one, so passing { N, r, p, maxmem } fails to compile even though it is
+  forwarded correctly at runtime (promisify appends the callback after whatever it is
+  given). Without the options argument the parameters could not be varied at all, which
+  is the entire point of the format below.
+*/
+const scryptAsync = promisify(scrypt) as (
+  password: string,
+  salt: string,
+  keylen: number,
+  options?: ScryptOptions,
+) => Promise<Buffer>;
 
-/** Hash a password with a per-user random salt: "<hexhash>.<hexsalt>". */
+/* ============================================================
+ * Password hashing
+ *
+ * Stored as `scrypt$<N>$<r>$<p>$<salthex>$<hashhex>` — the parameters travel with the
+ * hash, which is the whole point of the format.
+ *
+ * The original format was `<hashhex>.<salthex>` with the parameters merely implied:
+ * verification re-derived using whatever the defaults happened to be at the time. That
+ * makes the cost unraisable rather than merely low. Adding `{ N: 32768 }` to the hashing
+ * call would have changed what verification computed too, so every hash in the table
+ * would have stopped matching at once and every existing customer would have been locked
+ * out — with no error, no failed deploy, and no way back except a password reset each.
+ *
+ * Reading the parameters out of the record being checked removes that: old hashes keep
+ * verifying under the parameters they were made with, new ones use the current values,
+ * and the two coexist for as long as it takes everyone to sign in once.
+ * ========================================================== */
+
+/**
+ * Parameters for NEW hashes. Safe to raise now — see maxmemFor on the memory ceiling,
+ * and upgradePasswordHash on how existing rows catch up.
+ *
+ * Left at node's defaults in the commit that introduced this format, deliberately: memory
+ * use is 128 * N * r bytes PER CONCURRENT HASH, so N = 32768 is 33 MB a login and
+ * N = 131072 is 134 MB a login. On a small container that is an out-of-memory risk under
+ * a burst, and it is a decision that wants a look at the deployment rather than a default
+ * chosen here. The format is what was blocking it; this constant is now a one-line change.
+ */
+const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 } as const;
+
+const SCRYPT_PREFIX = "scrypt";
+
+/** Parameters the original `<hash>.<salt>` format was produced under: node's defaults. */
+const LEGACY_SCRYPT = { N: 16384, r: 8, p: 1 } as const;
+
+/**
+ * Memory ceiling to allow scrypt, derived from the parameters rather than fixed.
+ *
+ * scrypt needs about 128 * N * r bytes and node refuses above `maxmem`, which defaults to
+ * 32 MiB — so raising N past 32768 without also raising this fails with "Invalid scrypt
+ * params", an error that names neither the parameter at fault nor the ceiling it hit.
+ * Computing it here means the cap can never be the thing that stops an upgrade.
+ */
+function maxmemFor(N: number, r: number): number {
+  return 256 * N * r; // twice what the algorithm asks for
+}
+
+function derive(password: string, salt: string, N: number, r: number, p: number, keylen: number): Promise<Buffer> {
+  return scryptAsync(password, salt, keylen, { N, r, p, maxmem: maxmemFor(N, r) }) as Promise<Buffer>;
+}
+
+interface StoredHash {
+  N: number;
+  r: number;
+  p: number;
+  keylen: number;
+  salt: string;
+  hash: Buffer;
+  tagged: boolean;
+}
+
+/**
+ * Read a stored hash in either format, or null if it is not one.
+ *
+ * `keylen` comes from the length of the stored hash rather than from a constant: deriving
+ * at a different length produces a value that cannot match, so the record has to be the
+ * authority on that too.
+ */
+function parseStoredHash(stored: string): StoredHash | null {
+  if (stored.startsWith(`${SCRYPT_PREFIX}$`)) {
+    const [, nRaw, rRaw, pRaw, salt, hashHex] = stored.split("$");
+    const N = Number(nRaw);
+    const r = Number(rRaw);
+    const p = Number(pRaw);
+    if (!Number.isInteger(N) || !Number.isInteger(r) || !Number.isInteger(p)) return null;
+    if (N < 2 || r < 1 || p < 1 || !salt || !hashHex) return null;
+    const hash = Buffer.from(hashHex, "hex");
+    if (hash.length === 0) return null;
+    return { N, r, p, keylen: hash.length, salt, hash, tagged: true };
+  }
+
+  const [hashHex, salt] = stored.split(".");
+  if (!hashHex || !salt) return null;
+  const hash = Buffer.from(hashHex, "hex");
+  if (hash.length === 0) return null;
+  return { ...LEGACY_SCRYPT, keylen: hash.length, salt, hash, tagged: false };
+}
+
+/** Hash a password with a per-user random salt, tagged with the parameters used. */
 export async function hashPassword(password: string): Promise<string> {
+  const { N, r, p, keylen } = SCRYPT;
   const salt = randomBytes(16).toString("hex");
-  const derived = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${derived.toString("hex")}.${salt}`;
+  const derived = await derive(password, salt, N, r, p, keylen);
+  return `${SCRYPT_PREFIX}$${N}$${r}$${p}$${salt}$${derived.toString("hex")}`;
 }
 
 /** Constant-time compare of a plaintext password against a stored hash. */
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [hashHex, salt] = stored.split(".");
-  if (!hashHex || !salt) return false;
-  const hashBuf = Buffer.from(hashHex, "hex");
-  const derived = (await scryptAsync(password, salt, 64)) as Buffer;
-  return hashBuf.length === derived.length && timingSafeEqual(hashBuf, derived);
+  const parsed = parseStoredHash(stored);
+  if (!parsed) return false;
+
+  try {
+    const derived = await derive(password, parsed.salt, parsed.N, parsed.r, parsed.p, parsed.keylen);
+    return parsed.hash.length === derived.length && timingSafeEqual(parsed.hash, derived);
+  } catch {
+    // Parameters that scrypt rejects — a corrupted row, or one written by something that
+    // is not this code. It cannot be verified, and a throw here would surface as a 500 on
+    // sign-in rather than as the failed attempt it actually is.
+    return false;
+  }
+}
+
+/**
+ * Whether a stored hash was made under weaker parameters than the current ones, or in
+ * the untagged legacy format.
+ *
+ * Untagged rows are rewritten even when their parameters already match, so the table
+ * converges on one format and the legacy branch above eventually has nothing to serve.
+ */
+export function needsRehash(stored: string): boolean {
+  const parsed = parseStoredHash(stored);
+  if (!parsed) return false; // unreadable; verification already fails, rewriting it would lose the row
+  return (
+    !parsed.tagged ||
+    parsed.N < SCRYPT.N ||
+    parsed.r < SCRYPT.r ||
+    parsed.p < SCRYPT.p ||
+    parsed.keylen !== SCRYPT.keylen
+  );
 }
 
 /**
@@ -57,6 +194,33 @@ export async function verifyCredentials(
   if (user) return verifyPassword(password, user.passwordHash);
   await verifyPassword(password, await decoyHash);
   return false;
+}
+
+/**
+ * Rewrite a password hash at the current parameters, on a sign-in that just proved the
+ * password. Best effort — this is an upgrade, not part of authenticating.
+ *
+ * A hash cannot be strengthened without the plaintext, and the only moment the server
+ * legitimately holds it is the instant a correct one arrives. So the fleet converges by
+ * people signing in, and an account that never signs in again keeps verifying under the
+ * parameters it was made with, which is the point of storing them.
+ *
+ * Failures are swallowed: a database hiccup during the rewrite must not turn a correct
+ * password into a failed login. The next sign-in tries again.
+ *
+ * Worth knowing when the cost is eventually raised: until a given row is rewritten, it
+ * verifies more cheaply than the decoy in verifyCredentials, which is minted at the new
+ * parameters — so the timing equalisation that hides account existence is briefly
+ * imperfect in the other direction (a known account answers faster than an unknown one)
+ * for exactly as long as that account has not signed in since the change.
+ */
+export async function upgradePasswordHash(user: User, password: string): Promise<void> {
+  if (!needsRehash(user.passwordHash)) return;
+  try {
+    await updateUserPassword(user.id, await hashPassword(password));
+  } catch (err) {
+    log(`password hash upgrade failed for user ${user.id}: ${String(err)}`, "auth");
+  }
 }
 
 /** SHA-256 of a raw token — only the hash is ever stored, the raw token is emailed. */
@@ -260,6 +424,8 @@ export function setupAuth(app: Express): void {
         // as a known one. See the note on it above.
         const ok = await verifyCredentials(password, user);
         if (!ok || !user) return done(null, false, { message: "Invalid email or password" });
+        // The one moment the plaintext is legitimately in hand — see upgradePasswordHash.
+        await upgradePasswordHash(user, password);
         return done(null, user);
       } catch (err) {
         return done(err);

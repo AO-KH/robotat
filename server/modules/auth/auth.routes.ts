@@ -12,6 +12,7 @@ import {
   hashPassword,
   verifyPassword,
   verifyCredentials,
+  upgradePasswordHash,
   toPublicUser,
   issueToken,
   canonicalEmail,
@@ -102,51 +103,139 @@ async function sendEmailVerification(user: User): Promise<string> {
 
 export const authRoutes = Router();
 
-// Throttle credential endpoints per IP to blunt brute-force / credential stuffing.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 10,
-  standardHeaders: "draft-7",
+const LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+/*
+  One bucket per thing being defended, rather than one bucket for "auth".
+
+  These used to share a single 10-per-15-minutes IP allowance across register, login,
+  /token, both password-reset endpoints and resend-verification. Two consequences, and
+  neither is the brute-force the limiter was for:
+
+    - a customer who mistypes their password a few times can no longer request a reset,
+      because both spend the same budget; and
+    - anyone can lock an entire NAT'd office out of password recovery by spending that
+      budget on /register calls, which need no credentials at all.
+
+  Splitting them costs nothing and removes both. The reasoning is the one already written
+  for verifyEmailLimiter below, applied to the endpoints it was not applied to.
+*/
+const limiterBase = {
+  windowMs: LIMIT_WINDOW_MS,
+  standardHeaders: "draft-7" as const,
   legacyHeaders: false,
-  message: { message: "Too many attempts. Please try again in a few minutes." },
   // Don't throttle the integration tests (many login/register calls per IP).
   skip: () => process.env.NODE_ENV === "test",
+};
+
+/** Sign-in attempts from one address. Brute force from a single source. */
+const credentialsLimiter = rateLimit({
+  ...limiterBase,
+  limit: 20,
+  message: { message: "Too many attempts. Please try again in a few minutes." },
 });
 
 /*
-  Its own bucket, deliberately not authLimiter's.
+  Sign-in attempts against one ACCOUNT, whatever address they come from.
 
-  authLimiter is one shared 10-per-15-minutes allowance across register, login, /token
-  and the two password-reset endpoints. Hanging verification off it would mean a customer
-  who mistypes their code a few times can no longer sign in, and an attacker who wants a
-  victim locked out of password reset only has to spend the budget on verify calls.
+  The per-IP limiter above does not bound this at all: credential stuffing is distributed
+  by definition, and against a proxy pool "20 per IP" is not a ceiling on anything. What
+  is actually under attack is one account, so that is what the budget belongs to — the
+  same argument verifyEmailLimiter makes for codes.
 
-  Keyed on the account rather than the IP, which is the opposite of the other endpoints
-  and is the point: a code is only ever checked against the signed-in user's own token
-  (see the route note below), so the thing being attacked is one account, and an attacker
-  rotating IPs against it should gain nothing. It also spares everyone behind one office
-  NAT from each other's typos. requireAuth runs first, so req.user is always set; the IP
-  fallback exists only so a future reordering degrades to the house behaviour instead of
-  putting the whole internet in one bucket.
+  Keyed on the canonical address rather than the literal one, so `a.b@gmail.com` and
+  `ab@gmail.com` cannot be used to buy two budgets against one mailbox.
+
+  `skipSuccessfulRequests` is what makes this safe to key on an attacker-supplied value.
+  Only failures count, so no amount of correct signing-in consumes the allowance, and a
+  real customer cannot reach it. The residual is honest and bounded: someone who knows
+  your address can spend twenty failures and keep you out for the rest of the window.
+  That is a worse trade than doing nothing only if unlimited offline-speed guessing
+  against your account is the safer of the two, and it is not.
+*/
+const accountCredentialsLimiter = rateLimit({
+  ...limiterBase,
+  limit: 20,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const email = (req.body as { email?: unknown } | undefined)?.email;
+    return typeof email === "string" && email.trim() !== ""
+      ? `account:${canonicalEmail(email)}`
+      : ipKeyGenerator(req.ip ?? "");
+  },
+  message: { message: "Too many attempts for this account. Please try again in a few minutes." },
+});
+
+/** Account creation. Its own bucket so spending it cannot affect anyone signing in. */
+const registerLimiter = rateLimit({
+  ...limiterBase,
+  limit: 10,
+  message: { message: "Too many attempts. Please try again in a few minutes." },
+});
+
+/*
+  Password reset and verification resends — every endpoint that puts mail in someone's
+  inbox on an unauthenticated or barely-authenticated request.
+
+  Together rather than separately, because the thing being rationed is outbound mail over
+  ROBOTAT's sending reputation, and it does not matter which of the three produced it.
+*/
+const recoveryLimiter = rateLimit({
+  ...limiterBase,
+  limit: 10,
+  message: { message: "Too many attempts. Please try again in a few minutes." },
+});
+
+/*
+  Re-authentication on an account someone is already signed in to: changing a password,
+  deleting the account.
+
+  Both re-check the current password, so both run scrypt on attacker-supplied input, and
+  neither had any limiter at all. Keyed on the account because requireAuth has already
+  established which one it is, and the threat these re-checks exist for — someone who
+  walked up to an unlocked device — is sitting on the legitimate user's IP.
+*/
+const reauthLimiter = rateLimit({
+  ...limiterBase,
+  limit: 10,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const user = req.user as User | undefined;
+    return user ? `reauth:${user.id}` : ipKeyGenerator(req.ip ?? "");
+  },
+  message: { message: "Too many attempts. Please try again in a few minutes." },
+});
+
+/*
+  Its own bucket, and the one this file's split above was modelled on.
+
+  Verification was given a separate allowance first, for the reason that now applies
+  everywhere: a customer who mistypes their code a few times must not thereby lose the
+  ability to sign in, and an attacker who wants someone locked out of password reset must
+  not be able to buy that by spending a shared budget on a different endpoint.
+
+  Keyed on the account rather than the IP: a code is only ever checked against the
+  signed-in user's own token (see the route note below), so the thing being attacked is
+  one account, and an attacker rotating IPs against it should gain nothing. It also spares
+  everyone behind one office NAT from each other's typos. requireAuth runs first, so
+  req.user is always set; the IP fallback exists only so a future reordering degrades to
+  the house behaviour instead of putting the whole internet in one bucket.
 
   Twenty is four full code lifetimes in the window — a real customer never gets near it,
   since a code dies after five wrong guesses and asking for a new one costs a resend from
-  authLimiter's own allowance.
+  recoveryLimiter's allowance.
 */
 const verifyEmailLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  ...limiterBase,
   limit: 20,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
   keyGenerator: (req) => {
     const user = req.user as User | undefined;
     return user ? `user:${user.id}` : ipKeyGenerator(req.ip ?? "");
   },
   message: { message: "Too many incorrect codes. Please try again in a few minutes." },
-  skip: () => process.env.NODE_ENV === "test",
 });
 
-authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
+authRoutes.post(api.auth.register.path, registerLimiter, async (req, res, next) => {
   try {
     const input = api.auth.register.input.parse(req.body);
 
@@ -197,7 +286,7 @@ authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
   }
 });
 
-authRoutes.post(api.auth.login.path, authLimiter, (req, res, next) => {
+authRoutes.post(api.auth.login.path, credentialsLimiter, accountCredentialsLimiter, (req, res, next) => {
   try {
     api.auth.login.input.parse(req.body);
   } catch (err) {
@@ -215,7 +304,7 @@ authRoutes.post(api.auth.login.path, authLimiter, (req, res, next) => {
 });
 
 // POST /api/auth/token — exchange credentials for a bearer token (no session cookie).
-authRoutes.post(api.auth.token.path, authLimiter, async (req, res, next) => {
+authRoutes.post(api.auth.token.path, credentialsLimiter, accountCredentialsLimiter, async (req, res, next) => {
   try {
     const input = api.auth.token.input.parse(req.body);
     const user = await getUserByEmail(input.email);
@@ -225,6 +314,9 @@ authRoutes.post(api.auth.token.path, authLimiter, async (req, res, next) => {
     if (!ok || !user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+    // Same upgrade the session path does — the native client must not be the reason an
+    // account is left on old hashing parameters forever.
+    await upgradePasswordHash(user, input.password);
     res.status(200).json({ token: issueToken(user.id, user.tokenVersion), user: toPublicUser(user) });
   } catch (err) {
     if (handleZodError(err, res)) return;
@@ -282,7 +374,7 @@ authRoutes.patch(api.auth.updateProfile.path, requireAuth, async (req, res, next
 });
 
 // PATCH /api/auth/password — change password (requires the current password).
-authRoutes.patch(api.auth.changePassword.path, requireAuth, async (req, res, next) => {
+authRoutes.patch(api.auth.changePassword.path, requireAuth, reauthLimiter, async (req, res, next) => {
   try {
     const input = api.auth.changePassword.input.parse(req.body);
     const user = req.user as User;
@@ -308,7 +400,7 @@ authRoutes.patch(api.auth.changePassword.path, requireAuth, async (req, res, nex
 
 // DELETE /api/auth/account — delete the signed-in user's account. Irreversible.
 // Required in-app by App Store Guideline 5.1.1(v).
-authRoutes.delete(api.auth.deleteAccount.path, requireAuth, async (req, res, next) => {
+authRoutes.delete(api.auth.deleteAccount.path, requireAuth, reauthLimiter, async (req, res, next) => {
   try {
     const input = api.auth.deleteAccount.input.parse(req.body);
     const user = req.user as User;
@@ -341,7 +433,7 @@ authRoutes.delete(api.auth.deleteAccount.path, requireAuth, async (req, res, nex
 });
 
 // POST /api/auth/forgot-password — email a reset link. Always 200 (no user enumeration).
-authRoutes.post(api.auth.forgotPassword.path, authLimiter, async (req, res, next) => {
+authRoutes.post(api.auth.forgotPassword.path, recoveryLimiter, async (req, res, next) => {
   try {
     const input = api.auth.forgotPassword.input.parse(req.body);
 
@@ -393,7 +485,7 @@ authRoutes.post(api.auth.forgotPassword.path, authLimiter, async (req, res, next
 });
 
 // POST /api/auth/reset-password — redeem a reset token and set a new password.
-authRoutes.post(api.auth.resetPassword.path, authLimiter, async (req, res, next) => {
+authRoutes.post(api.auth.resetPassword.path, recoveryLimiter, async (req, res, next) => {
   try {
     const input = api.auth.resetPassword.input.parse(req.body);
     const token = await getValidAuthToken("password_reset", hashToken(input.token));
@@ -494,7 +586,7 @@ authRoutes.post(api.auth.verifyEmail.path, requireAuth, verifyEmailLimiter, asyn
 });
 
 // POST /api/auth/resend-verification — re-send the verification email (signed-in users).
-authRoutes.post(api.auth.resendVerification.path, requireAuth, authLimiter, async (req, res, next) => {
+authRoutes.post(api.auth.resendVerification.path, requireAuth, recoveryLimiter, async (req, res, next) => {
   try {
     const sessionUser = req.user as User;
     const user = await getUserById(sessionUser.id);
