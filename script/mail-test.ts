@@ -47,16 +47,27 @@ Gmail needs an App Password, not your account password:
   }
 
   const port = Number(SMTP_PORT || 587);
+
+  // The same IPv4 pinning the server does, so this reports on the connection production
+  // will actually open rather than on a different one. See smtpEndpoint's note.
+  const { smtpEndpoint } = await import("../server/lib/notify");
+  const endpoint = await smtpEndpoint(SMTP_HOST);
+
   console.log(`host      ${SMTP_HOST}:${port}${port === 465 ? " (implicit TLS)" : " (STARTTLS)"}`);
+  if (endpoint.host !== SMTP_HOST) console.log(`resolved  ${endpoint.host} (IPv4, SNI ${SMTP_HOST})`);
   console.log(`user      ${mask(SMTP_USER)}`);
   console.log(`password  ${SMTP_PASS ? `set, ${SMTP_PASS.length} characters` : "NOT SET"}`);
   console.log(`sending   ${mask(to)}\n`);
 
   const transport = nodemailer.createTransport({
-    host: SMTP_HOST,
+    host: endpoint.host,
+    ...(endpoint.servername ? { tls: { servername: endpoint.servername } } : {}),
     port,
     secure: port === 465,
     auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
   try {
