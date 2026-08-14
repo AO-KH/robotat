@@ -5,7 +5,7 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import passport from "passport";
 import { api } from "@shared/routes";
 import type { User } from "@shared/schema";
-import { handleZodError } from "../../lib/errors";
+import { handleZodError, pgErrorCode, PG_UNIQUE_VIOLATION } from "../../lib/errors";
 import { env } from "../../lib/env";
 import {
   requireAuth,
@@ -184,8 +184,13 @@ authRoutes.post(api.auth.register.path, authLimiter, async (req, res, next) => {
       Two people registering the same mailbox in the same instant both pass the check
       above and one loses at the index. Postgres 23505 is unique_violation; without this
       the loser gets a 500 for what is really the ordinary "already taken" answer.
+
+      Read through pgErrorCode rather than off `err` directly: Drizzle rethrows every
+      failed query as a DrizzleQueryError that carries the driver error on `.cause` and
+      copies no properties off it, so `err.code` is undefined for every database error
+      this app can raise. See the note on pgErrorCode.
     */
-    if ((err as { code?: string })?.code === "23505") {
+    if (pgErrorCode(err) === PG_UNIQUE_VIOLATION) {
       return res.status(409).json({ message: DUPLICATE_EMAIL_MESSAGE, field: "email" });
     }
     next(err);
