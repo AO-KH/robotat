@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import net from "node:net";
+import { promises as dnsPromises } from "node:dns";
 import type { Assessment } from "@shared/schema";
 import { log } from "./log";
 import {
@@ -203,6 +205,48 @@ export function mailFrom(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 /**
+ * Pin the SMTP connection to IPv4, because nodemailer picks a family at random.
+ *
+ * `smtp.hostinger.com` publishes both an A record and an AAAA record. nodemailer resolves
+ * the host itself (shared/index.js resolveHostname), concatenates the two families under a
+ * comment that says "IPv4 first, then IPv6" — and then does not preserve that order.
+ * Called three times in a row against the same name it returned 172.65.255.143, then the
+ * IPv6 address, then the IPv6 address. The choice is effectively a coin toss per process.
+ *
+ * On a host with no IPv6 route that is not an outage, it is worse: mail works or fails
+ * depending on which address that boot happened to draw. Ours drew the AAAA and every send
+ * died with `connect ENETUNREACH 2606:4700:…:465`.
+ *
+ * Neither `--dns-result-order=ipv4first` nor `dns.setDefaultResultOrder()` fixes it. Those
+ * only affect `dns.lookup`, and nodemailer resolves through `dns.resolve4`/`resolve6`,
+ * which they do not touch — verified, not assumed.
+ *
+ * So the address is chosen here. Handing nodemailer an IP makes it skip its own resolution
+ * entirely (`net.isIP(options.host)` short-circuits resolveHostname), and the `servername`
+ * passed alongside keeps SNI and certificate validation pointed at the real hostname.
+ *
+ * A host with no A record falls through to the name unchanged, so an IPv6-only server still
+ * works — this prefers IPv4, it does not require it. The resolver is injectable so the
+ * behaviour can be tested without depending on live DNS.
+ */
+export async function smtpEndpoint(
+  host: string,
+  resolve4: (hostname: string) => Promise<string[]> = dnsPromises.resolve4,
+): Promise<{ host: string; servername?: string }> {
+  if (net.isIP(host)) return { host };
+
+  try {
+    const [ipv4] = await resolve4(host);
+    if (ipv4) return { host: ipv4, servername: host };
+  } catch {
+    // No A record, or DNS is unhappy. Hand back the name and let nodemailer try — a
+    // resolution problem should surface as its error, not as a silent refusal to send.
+  }
+
+  return { host };
+}
+
+/**
  * The one place mail leaves this process.
  *
  * Every send went through its own `createTransport` + `sendMail` pair, which meant a
@@ -242,11 +286,34 @@ async function deliverEmail(opts: {
     return;
   }
 
+  const endpoint = await smtpEndpoint(SMTP_HOST);
+
   const transport = nodemailer.createTransport({
-    host: SMTP_HOST,
+    host: endpoint.host,
+    /*
+      SNI, and with it certificate validation, has to keep pointing at the hostname now
+      that `host` is an address. Left alone, nodemailer sets servername to false for an IP
+      (smtp-connection/index.js:84) and the handshake has no name to check against.
+
+      Through `tls` rather than as a top-level `servername` because both TLS paths merge
+      these options before their own fallback — the implicit-TLS connect and the STARTTLS
+      upgrade — and because nodemailer's type definitions do not declare a top-level
+      servername, so that spelling does not compile.
+    */
+    ...(endpoint.servername ? { tls: { servername: endpoint.servername } } : {}),
     port: Number(SMTP_PORT || 587),
     secure: Number(SMTP_PORT) === 465,
     auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    /*
+      nodemailer's own defaults are 2 minutes to connect and 10 minutes of socket
+      inactivity. That is how a single unreachable address held POST
+      /api/auth/resend-verification open for 122 seconds before failing: the caller waits
+      out the whole connect timeout. Ten seconds is far longer than a working SMTP
+      handshake needs and short enough that a broken one is reported rather than endured.
+    */
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
   await transport.sendMail({
