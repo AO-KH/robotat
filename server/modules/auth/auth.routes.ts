@@ -187,6 +187,32 @@ const recoveryLimiter = rateLimit({
 });
 
 /*
+  How much mail one address can be made to receive, whatever the sender's IP.
+
+  recoveryLimiter above is per-IP, and per-IP is the wrong unit for this: the thing being
+  protected is a mailbox, and an attacker aiming at one has no reason to keep using one
+  address. Registering with someone else's email sends them a code — unavoidably, that is
+  what verification is — and resend-verification then re-sends it on demand. Ten per
+  fifteen minutes per IP, across a proxy pool, is a mail bomb with ROBOTAT's name on it.
+
+  Keyed on the account because an account is exactly one address here, so this is a ceiling
+  on messages to that mailbox. Three is generous for a customer whose first code went
+  astray, and it composes with the code lifetime: a code lasts fifteen minutes, so three
+  resends already covers the window.
+*/
+const resendLimiter = rateLimit({
+  ...limiterBase,
+  limit: 3,
+  keyGenerator: (req) => {
+    const user = req.user as User | undefined;
+    return user ? `resend:${user.id}` : ipKeyGenerator(req.ip ?? "");
+  },
+  message: {
+    message: "A code has already been sent. Check your inbox, and try again in a few minutes.",
+  },
+});
+
+/*
   Re-authentication on an account someone is already signed in to: changing a password,
   deleting the account.
 
@@ -586,7 +612,7 @@ authRoutes.post(api.auth.verifyEmail.path, requireAuth, verifyEmailLimiter, asyn
 });
 
 // POST /api/auth/resend-verification — re-send the verification email (signed-in users).
-authRoutes.post(api.auth.resendVerification.path, requireAuth, recoveryLimiter, async (req, res, next) => {
+authRoutes.post(api.auth.resendVerification.path, requireAuth, recoveryLimiter, resendLimiter, async (req, res, next) => {
   try {
     const sessionUser = req.user as User;
     const user = await getUserById(sessionUser.id);
