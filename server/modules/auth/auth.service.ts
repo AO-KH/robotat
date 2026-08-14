@@ -399,7 +399,22 @@ export function setupAuth(app: Express): void {
   app.set("trust proxy", 1);
   app.use(
     session({
-      store: new PgStore({ pool, tableName: "user_sessions", createTableIfMissing: true }),
+      /*
+        createTableIfMissing is off because migration 0014 creates the table.
+
+        It cannot work in the shipped artifact anyway: connect-pg-simple creates the table
+        by reading `table.sql` out of its own package directory, and esbuild rewrites
+        __dirname to the bundle's location, so the built server looked for
+        /app/dist/table.sql and threw ENOENT on the first request that persisted a session
+        — the first sign-in. Under tsx it resolved fine, which is why dev and the test
+        suite never saw it.
+
+        Leaving it on as a fallback would only restore that: an ENOENT naming a file inside
+        a dependency, raised at sign-in, in place of Postgres saying plainly that a
+        relation is missing. It also kept CREATE TABLE on the list of rights this process
+        needs while serving traffic, which it should not have.
+      */
+      store: new PgStore({ pool, tableName: "user_sessions", createTableIfMissing: false }),
       secret: env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
