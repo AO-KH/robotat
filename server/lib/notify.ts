@@ -204,6 +204,61 @@ export function mailFrom(env: NodeJS.ProcessEnv = process.env): string {
   return env.MAIL_FROM || env.SMTP_USER || "robotat@nasl-tech.com";
 }
 
+/** Where Resend accepts a message. Overridable so tests never touch the network. */
+const RESEND_ENDPOINT = process.env.RESEND_ENDPOINT || "https://api.resend.com/emails";
+
+/**
+ * Hand one message to Resend over HTTPS.
+ *
+ * Deliberately a bare fetch. The whole payload is four fields, the failure modes are HTTP
+ * status codes, and a vendor SDK would be a dependency to keep current in exchange for
+ * nothing — the same reasoning that put APNs on node:http2 rather than a push library.
+ * Another provider is a different URL and a differently-shaped body, both in this
+ * function.
+ *
+ * Errors carry the provider's own message. A 422 for an unverified sending domain and a
+ * 401 for a bad key need to be told apart by whoever reads the log, and "request failed"
+ * tells them neither.
+ *
+ * The timeout matters as much here as it did for SMTP: without it a hung connection holds
+ * the request that triggered it, and resend-verification awaits this.
+ */
+export async function sendViaResend(opts: {
+  apiKey: string;
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: string;
+  fetchImpl?: typeof fetch;
+}): Promise<void> {
+  const doFetch = opts.fetchImpl ?? fetch;
+
+  const res = await doFetch(RESEND_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${opts.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: opts.from,
+      to: [opts.to],
+      subject: opts.subject,
+      text: opts.text,
+      ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!res.ok) {
+    // Read the body for the provider's explanation, but never let a failure to read it
+    // replace the status — a 401 that reports itself as a JSON parse error is worse than
+    // a 401 with no detail.
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Resend rejected the message (HTTP ${res.status})${detail ? `: ${detail.slice(0, 300)}` : ""}`);
+  }
+}
+
 /**
  * Pin the SMTP connection to IPv4, because nodemailer picks a family at random.
  *
@@ -272,7 +327,7 @@ async function deliverEmail(opts: {
   /** For the log line, so it says what happened rather than what was asked for. */
   context: string;
 }): Promise<void> {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_REDIRECT_TO } = process.env;
+  const { RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_REDIRECT_TO } = process.env;
 
   const redirected = Boolean(MAIL_REDIRECT_TO);
   const to = MAIL_REDIRECT_TO || opts.to;
@@ -280,6 +335,34 @@ async function deliverEmail(opts: {
   // Subject header into MIME quoted-printable, which makes an inbox of redirected
   // mail unsearchable in its raw form.
   const subject = redirected ? `[-> ${opts.to}] ${opts.subject}` : opts.subject;
+
+  /*
+    HTTPS first, because SMTP is not always allowed to leave.
+
+    Railway drops outbound SMTP: 25, 465 and 587 all time out from a container, while all
+    three answer in about 40 ms from a laptop. It is a normal anti-spam posture for a
+    platform, it is not announced by an error that says so — nodemailer reports
+    "Connection timeout" — and no combination of port, host or DNS setting gets around it.
+    Every verification code this app tried to send died there.
+
+    An HTTP API answers on 443, which nothing blocks, and brings the delivery log and
+    bounce reporting that SMTP never gave us: "did that message arrive?" stops being a
+    question this codebase cannot answer.
+
+    Written against fetch rather than a vendor SDK, in the same spirit as APNs on
+    node:http2 — one endpoint, one JSON body, no dependency to keep current. Swapping
+    providers is this function, not a migration.
+  */
+  if (RESEND_API_KEY) {
+    await sendViaResend({ apiKey: RESEND_API_KEY, from: mailFrom(), to, subject, text: opts.text, replyTo: opts.replyTo });
+    log(
+      redirected
+        ? `[email] ${opts.context} redirected to ${to} (intended ${opts.to}) via https`
+        : `[email] ${opts.context} sent to ${to} via https`,
+      "notify",
+    );
+    return;
+  }
 
   if (!SMTP_HOST) {
     log(`[email:dev] would send to ${to} — ${subject}\n${opts.text}`, "notify");
@@ -657,8 +740,28 @@ export function notifyConfigWarnings(env: NodeJS.ProcessEnv = process.env): stri
         "real recipient. Customers are receiving nothing. Unset it when you are done testing.",
     );
   }
-  if (env.NODE_ENV === "production" && !env.SMTP_HOST) {
-    warnings.push("SMTP_HOST is not set in production — customer emails will only be logged.");
+  /*
+    Either transport counts as configured. RESEND_API_KEY takes precedence in
+    deliverEmail, so warning about a missing SMTP_HOST while mail is going out perfectly
+    well over HTTPS would send someone looking for a problem that is not there.
+  */
+  if (env.NODE_ENV === "production" && !env.RESEND_API_KEY && !env.SMTP_HOST) {
+    warnings.push(
+      "Neither RESEND_API_KEY nor SMTP_HOST is set in production — customer emails will " +
+        "only be logged. Note that some hosts, Railway among them, block outbound SMTP " +
+        "entirely, in which case only the HTTPS transport can deliver.",
+    );
+  }
+  /*
+    Both set is not an error — deliverEmail prefers HTTPS — but it is worth saying out
+    loud, because the SMTP settings then have no effect and someone will eventually change
+    them expecting something to happen.
+  */
+  if (env.RESEND_API_KEY && env.SMTP_HOST) {
+    warnings.push(
+      "RESEND_API_KEY and SMTP_HOST are both set. Mail goes over HTTPS via Resend; the " +
+        "SMTP_* settings are unused. Remove them to avoid confusion.",
+    );
   }
   /*
     Unset, new bookings are mailed to a hardcoded fallback address. If nobody owns that
