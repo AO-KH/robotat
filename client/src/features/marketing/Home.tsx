@@ -8,10 +8,13 @@ import { riseIn, riseOnMount } from "@/lib/motion";
 
 import marqueeImg from "@assets/06_1772321886237.jpg";
 import fieldImg from "@assets/05_1771963956072.jpeg";
+import greenhouseImg from "@assets/greenhouse.jpeg";
 import solarImg from "@assets/solar_farm.jpeg";
 
-// Environment images, aligned by index with dict.home.environments (greenhouse has none yet).
-const ENV_IMAGES: (string | null)[] = [fieldImg, null, solarImg];
+// Environment images, aligned by index with dict.home.environments. The type still admits
+// null — an environment can be written up before there is a photo of it, and the tile then
+// falls back to home.greenhouseComingSoon — but all three have one today.
+const ENV_IMAGES: (string | null)[] = [fieldImg, greenhouseImg, solarImg];
 
 function SectionHead({ tag, title, sub }: { tag: string; title: ReactNode; sub?: string }) {
   return (
