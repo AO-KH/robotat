@@ -190,10 +190,8 @@ export default function Home() {
       {/* ===== CTA BAND ===== */}
       <section className="px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
         <motion.div {...riseIn} className="max-w-3xl mx-auto flex flex-col items-center gap-6">
-          <h2 className="text-heading font-semibold inline-block">
-            {t("home.ctaTitle1")}{" "}
-            <br />
-            {t("home.ctaTitle2")}
+          <h2 className="text-heading font-semibold inline-block text-balance">
+            {t("home.ctaTitle")}
           </h2>
           <p className="text-body text-muted-foreground">{t("home.ctaSub")}</p>
           <div className="flex flex-col sm:flex-row items-center gap-5">

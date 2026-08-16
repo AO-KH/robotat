@@ -128,8 +128,7 @@ export const en = {
       },
     ],
 
-    ctaTitle1: "Show us your farm.",
-    ctaTitle2: "We'll show you the robots.",
+    ctaTitle: "Autonomy for the ground beneath us",
     ctaSub:
       "A ROBOTAT agronomist walks your farm in 2–3 days. No commitment. No charge for the assessment.",
     emailTeam: "Email the team",
