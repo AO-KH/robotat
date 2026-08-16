@@ -23,9 +23,34 @@ installApiBase();
  * Failures are swallowed inside `restoreAuthToken`, so a broken store starts the app
  * signed-out instead of not starting it at all.
  */
+/**
+ * Take down the first-paint splash in `index.html` once React has rendered.
+ *
+ * Two nested frames, not one. `render()` only schedules the work; after the first
+ * frame React has committed to the DOM but the browser has not necessarily drawn
+ * it, so fading on frame one can uncover an empty root for a beat. Waiting for the
+ * second frame means the fade starts against pixels that are actually on screen.
+ *
+ * The node is removed on `transitionend`, with a timer as a backstop — that event
+ * never fires when the transition is off (`prefers-reduced-motion`), and a splash
+ * that stays is far worse than one that leaves early, since it covers the whole app.
+ */
+function dismissSplash() {
+  const splash = document.getElementById("splash");
+  if (!splash) return;
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      splash.classList.add("is-done");
+      splash.addEventListener("transitionend", () => splash.remove(), { once: true });
+      setTimeout(() => splash.remove(), 600);
+    }),
+  );
+}
+
 async function boot() {
   await restoreAuthToken();
   createRoot(document.getElementById("root")!).render(<App />);
+  dismissSplash();
 }
 
 void boot();
