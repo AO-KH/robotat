@@ -42,7 +42,7 @@ do: CocoaPods never installed, because it does not exist on Windows.
 npm ci
 
 # Build the web client against the deployed API (baked into the bundle):
-VITE_API_URL=https://robotat2-production.up.railway.app npm run build
+VITE_API_URL=https://robotat.sa npm run build
 
 # Install the native dependencies CocoaPods could not install off-Mac:
 cd ios/App && bundle exec pod install && cd ../..
@@ -51,10 +51,25 @@ cd ios/App && bundle exec pod install && cd ../..
 npx cap sync ios
 ```
 
-**`VITE_API_URL` must be the Railway URL.** `robotat.nasl-tech.com` has no DNS record
-and has never resolved — building against it produces an app that looks completely
-normal and fails every single API call at name resolution. There is no build-time error
-for this, because the value is only ever baked in as a string.
+**`VITE_API_URL` must be an origin that actually resolves — check, do not assume.** The
+value is only ever baked in as a string, so there is no build-time error for a dead
+origin: you get an app that looks completely normal and fails every single API call at
+name resolution, on a device, after you shipped it. This has already bitten this project
+once with `robotat.nasl-tech.com`, which never had a DNS record at all.
+
+`robotat.sa` is the intended public origin and is registered to NASL, but at the time of
+writing it still has **no A record** and does not resolve; its nameservers are SaudiNIC's
+parking pair. The origin that answers today is `https://robotat2-production.up.railway.app`.
+Before cutting a release build, run:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://robotat.sa/api/products   # want 200
+```
+
+Note also that Railway issues a **CNAME** target for custom domains, and a CNAME cannot
+exist at a zone apex. Pointing bare `robotat.sa` at Railway therefore needs a DNS provider
+with ALIAS/ANAME or CNAME flattening (Cloudflare), or a subdomain such as `api.robotat.sa`,
+which is an ordinary CNAME and needs no nameserver change.
 
 **Installing CocoaPods is not one command.** macOS ships Ruby 2.6, and current CocoaPods
 depends on gems (`ffi`, `securerandom`) that require Ruby ≥ 3.0. `gem install cocoapods`
@@ -158,7 +173,7 @@ but the place to fix it is a `post_install` hook in the Podfile.
 ## Dev loop
 
 ```bash
-VITE_API_URL=https://robotat2-production.up.railway.app npm run build
+VITE_API_URL=https://robotat.sa npm run build
 npx cap copy ios      # push the fresh web build into the native project
 npx cap open ios      # opens Xcode → run on a simulator or a signed device
 ```
