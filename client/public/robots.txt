@@ -6,4 +6,4 @@ Disallow: /admin
 Disallow: /profile
 Disallow: /assessments/
 
-Sitemap: https://robotat.nasl-tech.com/sitemap.xml
+Sitemap: https://robotat2-production.up.railway.app/sitemap.xml
