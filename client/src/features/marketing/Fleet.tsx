@@ -13,6 +13,7 @@ import maxT100Img from "@assets/max_t100_robot.png";
 import grassCutterImg from "@assets/XMachines_GC02_1771963974422.JPG";
 import cultivatorImg from "@assets/Gemini_Generated_Image_46wxzi46wxzi46wx_1771964517234.jpg";
 import sprayerImg from "@assets/Untitled_Project_(8)_1771966958954.jpg";
+import commandCenterImg from "@assets/command_center.jpg";
 
 // Product images stay in the bundle (optimized by Vite), keyed by DB slug.
 const PRODUCT_IMAGES: Record<string, string> = {
@@ -244,19 +245,15 @@ export default function Fleet() {
               </div>
               <div className="relative h-64 md:h-80 rounded-2xl border border-white/10 bg-[#15101f] overflow-hidden shadow-2xl flex items-center justify-center">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-                <div className="relative z-10 surface p-6 rounded-xl w-3/4 shadow-2xl">
-                  <div className="flex gap-2 mb-4">
-                    <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                    <div className="w-3 h-3 rounded-full bg-[#5eead4] shadow-[0_0_8px_#5eead4]" />
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-4 bg-white/10 rounded w-1/3" />
-                    <div className="h-20 bg-primary/20 rounded border border-primary/30" />
-                    <div className="h-4 bg-white/10 rounded w-full" />
-                    <div className="h-4 bg-white/10 rounded w-4/5" />
-                  </div>
-                </div>
+                {/* The real app, not a wireframe of one. Portrait screenshot in a landscape
+                    box, so `object-contain` and a height cap rather than `object-cover`,
+                    which would crop it to a band across the middle. The grid behind it
+                    reads as a backdrop in the space either side. */}
+                <img
+                  src={commandCenterImg}
+                  alt={t("fleet.commandCenter")}
+                  className="relative z-10 max-h-[88%] w-auto object-contain rounded-lg border border-white/10 shadow-2xl"
+                />
               </div>
             </div>
           </div>
