@@ -54,6 +54,9 @@ export function Navigation() {
     { href: "/services", label: t("nav.services") },
     ...(isStaff ? [{ href: "/admin", label: t("nav.admin") }] : []),
     user ? { href: "/dashboard", label: t("nav.myDashboard") } : { href: "/auth", label: t("nav.signIn") },
+    // Apple wants the privacy policy reachable from inside the app, not only from the
+    // App Store listing. This menu is on every route, so this is that link.
+    { href: "/privacy", label: t("privacy.title") },
   ];
 
   const mobileLinks = [

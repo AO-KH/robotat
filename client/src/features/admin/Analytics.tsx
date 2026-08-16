@@ -20,7 +20,7 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
       "/fleet": t("nav.products"),
       "/services": t("nav.services"),
       "/auth": t("nav.signIn"),
-      "/dashboard": t("footer.dashboard"),
+      "/dashboard": t("nav.myDashboard"),
       "/admin": t("admin.assessments"),
       "/admin/analytics": t("adminAnalytics.title"),
       "/profile": t("profile.accountSettings"),

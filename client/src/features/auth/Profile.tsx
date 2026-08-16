@@ -206,6 +206,17 @@ export default function Profile() {
             </button>
           </form>
         </motion.section>
+
+        {/* Signed-in route to the privacy policy, for the same reason the nav menu is not
+            enough on its own: it is md:hidden and this app ships to iPad. */}
+        <div className="mt-6 text-center">
+          <Link
+            href="/privacy"
+            className="text-label text-muted-foreground hover:text-primary transition-colors min-h-[44px] px-4 inline-flex items-center justify-center"
+          >
+            {t("privacy.title")}
+          </Link>
+        </div>
       </div>
     </div>
   );

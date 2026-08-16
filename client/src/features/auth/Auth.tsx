@@ -134,6 +134,17 @@ export default function Auth() {
             {isLogin ? t("auth.toSignUp") : t("auth.toSignIn")}
           </button>
         </div>
+
+        {/* Signed-out route to the privacy policy. The nav menu carries the same link but
+            is md:hidden, and this app ships to iPad, so above 768px this is the only one. */}
+        <div className="mt-2 text-center">
+          <Link
+            href="/privacy"
+            className="text-label text-muted-foreground hover:text-primary transition-colors min-h-[44px] px-4 inline-flex items-center justify-center"
+          >
+            {t("privacy.title")}
+          </Link>
+        </div>
       </motion.div>
     </div>
   );

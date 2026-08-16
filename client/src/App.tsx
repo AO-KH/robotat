@@ -15,7 +15,6 @@ import { initPush } from "@/lib/push";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DemoModalProvider } from "@/features/booking/DemoModalContext";
 import { Navigation } from "@/components/layout/Navigation";
-import { Footer } from "@/components/layout/Footer";
 import { BackgroundMesh } from "@/components/layout/BackgroundMesh";
 import { BookDemoModal } from "@/features/booking/BookDemoModal";
 
@@ -158,7 +157,6 @@ function App() {
                     </Suspense>
                   </ErrorBoundary>
                 </main>
-                <Footer />
                 <BookDemoModal />
               </div>
               <Toaster />
