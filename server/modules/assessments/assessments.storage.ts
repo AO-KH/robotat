@@ -1,5 +1,6 @@
 import { assessments, type Assessment } from "@shared/schema";
 import { db } from "../../lib/db";
+import { requireRow } from "../../lib/errors";
 import { eq, and, desc, gte, count, sql } from "drizzle-orm";
 
 /** The fields a booking is created from. */
@@ -88,7 +89,7 @@ export async function createAssessmentWithinLimit(
     if ((row?.n ?? 0) >= opts.limit) return null;
 
     const [created] = await tx.insert(assessments).values(input).returning();
-    return created;
+    return requireRow(created, "createAssessmentWithinLimit");
   });
 }
 

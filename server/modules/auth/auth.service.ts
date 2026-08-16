@@ -280,7 +280,9 @@ export function canonicalEmail(raw: string): string {
   let local = trimmed.slice(0, at);
   const domain = trimmed.slice(at + 1);
 
-  if (PLUS_ALIAS_DOMAINS.has(domain)) local = local.split("+")[0];
+  // `split` always yields at least one element, so the `?? ""` is unreachable — and were
+  // it ever reached, the empty-local guard below is already the right answer for it.
+  if (PLUS_ALIAS_DOMAINS.has(domain)) local = local.split("+")[0] ?? "";
   if (DOT_INSENSITIVE_DOMAINS.has(domain)) local = local.replaceAll(".", "");
 
   // An address that is nothing but a +suffix would canonicalise to an empty local part,

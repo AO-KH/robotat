@@ -1,5 +1,6 @@
 import { pushTokens, type PushToken, type PushPlatform } from "@shared/schema";
 import { db } from "../../lib/db";
+import { requireRow } from "../../lib/errors";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 /**
@@ -31,7 +32,7 @@ export async function upsertPushToken(input: {
       set: { userId: sql`excluded.user_id`, lastSeenAt: sql`now()` },
     })
     .returning();
-  return row;
+  return requireRow(row, "upsertPushToken");
 }
 
 /**

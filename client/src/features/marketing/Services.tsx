@@ -5,6 +5,10 @@ import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 import { riseIn, riseOnMount } from "@/lib/motion";
 
+// Aligned by index with dict.services.items. A fifth service added to the dictionary
+// without an icon here would otherwise render `undefined` as a component, which React
+// throws on — a blank page for the whole route rather than one tile with the wrong
+// glyph. Hence the fallback below.
 const SERVICE_ICONS = [Wrench, BarChart3, Cpu, ShieldCheck];
 
 export default function Services() {
@@ -40,7 +44,7 @@ export default function Services() {
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {dict.services.items.map((service, index) => {
-            const Icon = SERVICE_ICONS[index];
+            const Icon = SERVICE_ICONS[index] ?? Wrench;
             return (
               <motion.div
                 key={index}

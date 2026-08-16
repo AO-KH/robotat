@@ -33,7 +33,7 @@ const PLACEHOLDER_PATTERNS = [
  */
 function mailboxAddress(value: string): string {
   const angled = value.match(/<([^<>]*)>\s*$/);
-  return (angled ? angled[1] : value).trim();
+  return (angled?.[1] ?? value).trim();
 }
 
 export const envSchema = z.object({

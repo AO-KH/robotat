@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { ApiError, apiError, errorText } from "@/lib/api-error";
 import { isNativeApiMode } from "@/lib/api-base";
+import { firstName } from "@/lib/utils";
 import { getAuthToken, setAuthToken } from "@/lib/auth-token";
 import { teardownPush } from "@/lib/push";
 import { ME_KEY, clearSignedInState } from "./auth-state";
@@ -149,7 +150,7 @@ export function useLogin() {
       // tail, and the dictionary is what decides where.
       toast({
         title: t("toast.login.successTitle"),
-        description: t("toast.login.successBody", { name: user.name.split(" ")[0] }),
+        description: t("toast.login.successBody", { name: firstName(user.name) }),
       });
     },
     onError: (err: Error) => {

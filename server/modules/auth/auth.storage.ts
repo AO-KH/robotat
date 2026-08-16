@@ -8,6 +8,7 @@ import {
   type AuthTokenKind,
 } from "@shared/schema";
 import { db } from "../../lib/db";
+import { requireRow } from "../../lib/errors";
 import { canonicalEmail } from "./auth.service";
 import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 
@@ -37,7 +38,7 @@ export async function createUser(input: {
       ...(input.locale ? { locale: input.locale } : {}),
     })
     .returning();
-  return user;
+  return requireRow(user, "createUser");
 }
 
 export async function getUserById(id: number): Promise<User | undefined> {
@@ -70,7 +71,7 @@ export async function getUserByCanonicalEmail(canonical: string): Promise<User |
 
 export async function updateUserName(id: number, name: string): Promise<User> {
   const [user] = await db.update(users).set({ name }).where(eq(users.id, id)).returning();
-  return user;
+  return requireRow(user, "updateUserName");
 }
 
 export async function updateUserPassword(id: number, passwordHash: string): Promise<void> {
@@ -113,7 +114,7 @@ export async function markEmailVerified(id: number): Promise<User> {
     .set({ emailVerifiedAt: new Date() })
     .where(eq(users.id, id))
     .returning();
-  return user;
+  return requireRow(user, "markEmailVerified");
 }
 
 /**
@@ -167,7 +168,7 @@ export async function createAuthToken(input: {
   expiresAt: Date;
 }): Promise<AuthToken> {
   const [token] = await db.insert(authTokens).values(input).returning();
-  return token;
+  return requireRow(token, "createAuthToken");
 }
 
 /** A token is valid if it matches, is of the right kind, is unused, and unexpired. */
@@ -258,7 +259,7 @@ export async function replaceVerificationToken(input: {
       .insert(authTokens)
       .values({ ...input, kind: "email_verification" })
       .returning();
-    return token;
+    return requireRow(token, "replaceVerificationToken");
   });
 }
 

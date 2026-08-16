@@ -9,6 +9,7 @@ import { useI18n } from "@/i18n";
 import { useSeo } from "@/lib/seo";
 import { useEffect } from "react";
 import { riseOnMount } from "@/lib/motion";
+import { firstName } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-400",
@@ -64,7 +65,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-heading font-semibold mb-2">{t("dashboard.greeting", { name: user.name.split(" ")[0] })}</h1>
+            <h1 className="text-heading font-semibold mb-2">{t("dashboard.greeting", { name: firstName(user.name) })}</h1>
             <p className="text-body text-muted-foreground">{t("dashboard.subtitle")}</p>
           </div>
           <button

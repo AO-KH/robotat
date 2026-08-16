@@ -12,6 +12,7 @@
     "noEmit": true,
     "module": "ESNext",
     "strict": true,
+    "noUncheckedIndexedAccess": true,
     "lib": ["esnext", "dom", "dom.iterable"],
     "jsx": "preserve",
     "esModuleInterop": true,

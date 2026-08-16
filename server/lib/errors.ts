@@ -4,13 +4,40 @@ import { z } from "zod";
 /** If `err` is a Zod validation error, send a 400 and return true; otherwise return false. */
 export function handleZodError(err: unknown, res: Response): boolean {
   if (err instanceof z.ZodError) {
+    // A ZodError carries at least one issue in every case Zod itself produces, but the
+    // type does not say so, and reading [0] blind would throw inside the error handler —
+    // turning a 400 someone can act on into a 500 that says nothing.
+    const first = err.errors[0];
     res.status(400).json({
-      message: err.errors[0].message,
-      field: err.errors[0].path.join("."),
+      message: first?.message ?? "Invalid request.",
+      field: first?.path.join("."),
     });
     return true;
   }
   return false;
+}
+
+/**
+ * Assert that a write returned the row it is defined to return.
+ *
+ * `INSERT … RETURNING` and `INSERT … ON CONFLICT DO UPDATE … RETURNING` always yield
+ * exactly one row, so the destructured `[row]` at those call sites is never undefined —
+ * but `noUncheckedIndexedAccess` cannot know that, and the alternative to asserting it
+ * once here is either seven local non-null assertions or seven return types widened to
+ * `| undefined` that every caller then has to pretend to handle.
+ *
+ * `UPDATE … WHERE … RETURNING` is the case that genuinely can come back empty, and it is
+ * why this throws rather than casting. Those callers pass an id they have already
+ * authenticated or resolved through a foreign key, so an empty result means the row went
+ * away underneath a request that had just proven it was there. Failing loudly on that is
+ * the point: the previous behaviour was to hand back `undefined` typed as a real record,
+ * which surfaces later as an unreadable property access somewhere else entirely.
+ */
+export function requireRow<T>(row: T | undefined, what: string): T {
+  if (row === undefined) {
+    throw new Error(`${what}: expected a returned row, got none`);
+  }
+  return row;
 }
 
 /** Postgres SQLSTATE for unique_violation. */

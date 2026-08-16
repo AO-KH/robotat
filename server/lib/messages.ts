@@ -113,7 +113,16 @@ function scheduledForLong(a: Assessment, locale: Locale): string | null {
 type Message = { subject: string; body: string };
 type Push = { title: string; body: string };
 
-const STATUS_EMAIL: Record<Locale, (name: string, ref: string, when: string | null, status: string) => Record<string, Message>> = {
+/**
+ * A lookup from `assessments.status` to the text for it, plus the `fallback` that covers
+ * a status the table does not name — a new one added to the database before the copy
+ * catches up. Naming `fallback` in the type rather than leaving it to a bare
+ * `Record<string, T>` is what makes it provably present at the point of use, so the
+ * lookup can end in `?? table.fallback` and be total.
+ */
+type StatusTable<T> = Record<string, T> & { fallback: T };
+
+const STATUS_EMAIL: Record<Locale, (name: string, ref: string, when: string | null, status: string) => StatusTable<Message>> = {
   en: (name, ref, when, status) => ({
     scheduled: {
       subject: "Your ROBOTAT site assessment is scheduled",
@@ -169,7 +178,7 @@ export function customerStatusMessage(a: Assessment): Message {
  * Status change — push
  * ========================================================== */
 
-const STATUS_PUSH: Record<Locale, (ref: string, when: string | null, status: string) => Record<string, Push>> = {
+const STATUS_PUSH: Record<Locale, (ref: string, when: string | null, status: string) => StatusTable<Push>> = {
   en: (ref, when, status) => ({
     scheduled: {
       title: "Site assessment scheduled",
