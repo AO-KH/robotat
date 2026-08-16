@@ -46,7 +46,10 @@ export const envSchema = z.object({
   // header, which an attacker controls — see validateProduction().
   PUBLIC_APP_URL: z.preprocess(
     (v) => (v === "" ? undefined : v),
-    z.string().url("PUBLIC_APP_URL must be an absolute URL, e.g. https://robotat.nasl-tech.com").optional(),
+    z
+      .string()
+      .url("PUBLIC_APP_URL must be an absolute URL, e.g. https://robotat2-production.up.railway.app")
+      .optional(),
   ),
   // Comma-separated extra origins allowed to call the API cross-origin, e.g. a
   // separately-hosted web client. The Capacitor origins are always allowed and do
