@@ -85,7 +85,7 @@ under it are ignored: `App/Pods`, `App/App/public` (the copied web build),
 
 | Setting | Value | Why |
 | --- | --- | --- |
-| Launch screen images | solid `#05040c`, sRGB-tagged | The default was Capacitor's white placeholder. The storyboard's `imageView` is `scaleAspectFill` over the full screen, so **the images are what fixes the flash** — the storyboard's own background colour is only a fallback for a failed asset lookup |
+| Launch screen images | ROBOTAT lockup on `#05040c`, sRGB-tagged | The default was Capacitor's white placeholder. The storyboard's `imageView` is `scaleAspectFill` over the full screen, so **the images are what fixes the flash** — the storyboard's own background colour is never visible at all, since a square image aspect-filled onto a phone covers the view completely. Size artwork against the crop, not the canvas: on a 1206×2622 screen the scale is 2622/2732 = 0.96, so only the central ~1257px of the 2732 square reaches the glass |
 | Webview background | `#05040c` | The second flash point: between the launch screen dismissing and React's first paint. Capacitor parses 8-digit hex here as RGBA, not ARGB |
 | `UIUserInterfaceStyle` | `Dark` | The app has one theme and no `prefers-color-scheme` anywhere. Without this the *native* layer stays light on a light-mode device — keyboard, pickers, action sheets — and `prefers-color-scheme` inside the webview reports `light` |
 | Status bar | `UIStatusBarStyleLightContent` with `UIViewControllerBasedStatusBarAppearance` **`true`** | Capacitor's `CAPBridgeViewController` reads `UIStatusBarStyle` from this plist and returns it from `preferredStatusBarStyle` — which is the view-controller path, so the key must stay `true`. Setting it `false` looks identical but silently turns `StatusBar.setStyle()` into a no-op if `@capacitor/status-bar` is ever added |
@@ -93,6 +93,29 @@ under it are ignored: `App/Pods`, `App/App/public` (the copied web build),
 
 `#05040c` is what `--background: 253 53% 3%` in `client/src/index.css` actually
 resolves to. If that token ever changes, these three native surfaces must change with it.
+
+**The launch storyboard does not appear to render under `simctl launch`, and the startup
+gap is mostly not the launch screen anyway.** Recording the simulator screen and pulling
+frames with AVFoundation gives, from the launch command: ~1.6s black, ~1.2s empty webview
+at `#05040c`, then content at ~3.4s. Setting the storyboard's background to red produced
+no red in any frame, and no snapshot is written to the app's `Library/SplashBoard` even
+though system apps get one — so the storyboard is not being drawn, rather than being drawn
+and looking wrong. The build itself checks out: `assetutil --info` finds `Splash` in
+`Assets.car` at 2732×2732, `Info.plist` carries `UILaunchStoryboardName`, and the compiled
+`LaunchScreen.storyboardc` nib does reference the image. Untested on real hardware with an
+icon tap, which is a different launch path.
+
+What actually covers the gap today is the first-paint splash in
+[client/index.html](../client/index.html): the lockup inlined as a data URI, removed by
+`main.tsx` once React renders. It only reaches the screen once the webview has parsed the
+document (~2.8s in), so it fixes the tail of the wait, not the head. Closing the rest means
+`@capacitor/splash-screen` with `launchAutoHide: false`, held until the app calls `hide()`.
+
+Two things make measuring this harder than it should be. `xcrun simctl io screenshot` takes
+~0.3s per frame, which is too coarse — record video and extract frames instead; there is no
+`ffmpeg` here, but `swiftc` plus `AVAssetImageGenerator` does the job. And a `CGImage` from
+that generator is **BGRA**, so reading bytes as RGB silently swaps red and blue and makes
+`#05040c` look red-dominant.
 
 **Do not accept Xcode's "Update to recommended settings" wholesale.** One of the boxes it
 pre-ticks is **Enable User Script Sandboxing**, which breaks this project. The Podfile sets
