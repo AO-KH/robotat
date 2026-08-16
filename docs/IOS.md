@@ -42,14 +42,38 @@ do: CocoaPods never installed, because it does not exist on Windows.
 npm ci
 
 # Build the web client against the deployed API (baked into the bundle):
-VITE_API_URL=https://robotat.nasl-tech.com npm run build
+VITE_API_URL=https://robotat2-production.up.railway.app npm run build
 
 # Install the native dependencies CocoaPods could not install off-Mac:
-cd ios/App && pod install && cd ../..
+cd ios/App && bundle exec pod install && cd ../..
 
 # Copy the web build into the native project:
 npx cap sync ios
 ```
+
+**`VITE_API_URL` must be the Railway URL.** `robotat.nasl-tech.com` has no DNS record
+and has never resolved — building against it produces an app that looks completely
+normal and fails every single API call at name resolution. There is no build-time error
+for this, because the value is only ever baked in as a string.
+
+**Installing CocoaPods is not one command.** macOS ships Ruby 2.6, and current CocoaPods
+depends on gems (`ffi`, `securerandom`) that require Ruby ≥ 3.0. `gem install cocoapods`
+therefore fails, and pinning the offending gems one at a time does not converge — each
+pin surfaces the next incompatible transitive dependency. Let a modern Bundler resolve
+the whole graph against Ruby 2.6 in one pass instead:
+
+```bash
+gem install --user-install bundler -v 2.4.22     # system Bundler 1.17 cannot do this
+export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
+
+# A Gemfile containing just: source "https://rubygems.org" / gem "cocoapods"
+bundle install                                    # resolves to CocoaPods 1.17 on Ruby 2.6
+
+export LANG=en_US.UTF-8                           # CocoaPods aborts without a UTF-8 locale
+```
+
+Installing a current Ruby (Homebrew, rbenv) is the tidier long-term fix; the above
+avoids needing either.
 
 `ios/App/*` is a normal Xcode project and is committed, because it is where native
 configuration lives — `Info.plist`, icons, entitlements. Only generated artifacts
@@ -72,18 +96,29 @@ resolves to. If that token ever changes, these three native surfaces must change
 
 **Not yet done:**
 
-- **The app icon is still Capacitor's placeholder.** `AppIcon-512@2x.png` needs real
-  ROBOTAT artwork before submission — this alone will fail review.
 - **Code signing is unconfigured.** `project.pbxproj` has `CODE_SIGN_STYLE = Automatic`
-  but no `DEVELOPMENT_TEAM`, so the first build fails until you select a team under
+  but no `DEVELOPMENT_TEAM`. Simulator builds do not care — `xcodebuild … -destination
+  'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO` succeeds as-is — but
+  any build for a real device or for submission fails until you select a team under
   Signing & Capabilities in Xcode.
-- **`Podfile.lock` does not exist yet** because `pod install` has never run. Commit it
-  once it does — it is not ignored, and `.gitattributes` already pins it to LF.
+
+**Done:**
+
+- **The app icon** is the ROBOTAT "R" on the brand purple gradient (`#65429a → #a84c9d`),
+  both lifted from `attached_assets/Robtat_by_Nasl_Logo-02_*.png` so the icon and the site
+  share one source of truth. It replaced Capacitor's blue-X placeholder, which would have
+  failed review on its own. 1024×1024, opaque, **no alpha channel** — App Store validation
+  rejects an icon that has one, and PNG editors add it back silently, so re-check after any
+  edit. The dark-on-`#05040c` variants were tried and rejected: they go muddy at home-screen
+  size and vanish against a dark wallpaper.
+- **`Podfile.lock` and `App.xcworkspace/contents.xcworkspacedata`** exist and are committed.
+  The latter is what points the workspace at `Pods/Pods.xcodeproj`; without it the workspace
+  builds nothing.
 
 ## Dev loop
 
 ```bash
-VITE_API_URL=https://robotat.nasl-tech.com npm run build
+VITE_API_URL=https://robotat2-production.up.railway.app npm run build
 npx cap copy ios      # push the fresh web build into the native project
 npx cap open ios      # opens Xcode → run on a simulator or a signed device
 ```
