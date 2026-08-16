@@ -48,7 +48,7 @@ export const envSchema = z.object({
     (v) => (v === "" ? undefined : v),
     z
       .string()
-      .url("PUBLIC_APP_URL must be an absolute URL, e.g. https://robotat.sa")
+      .url("PUBLIC_APP_URL must be an absolute URL, e.g. https://www.robotat.sa")
       .optional(),
   ),
   // Comma-separated extra origins allowed to call the API cross-origin, e.g. a

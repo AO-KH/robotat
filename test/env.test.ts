@@ -14,7 +14,7 @@ const GOOD: Env = {
   PORT: 5000,
   DATABASE_URL: "postgresql://user:pw@db:5432/robotat",
   SESSION_SECRET: "Zt8Kq2mXv4Lp9RwHs6Yb3Nc7Fj1Dg5Ae0Uz",
-  PUBLIC_APP_URL: "https://robotat.sa",
+  PUBLIC_APP_URL: "https://www.robotat.sa",
 };
 
 const prod = (overrides: Partial<Env>): Env => ({ ...GOOD, ...overrides });
@@ -56,7 +56,7 @@ describe("production env guard", () => {
   });
 
   it("requires PUBLIC_APP_URL to be https", () => {
-    expect(validateProduction(prod({ PUBLIC_APP_URL: "http://robotat.sa" }))[0]).toMatch(/https/);
+    expect(validateProduction(prod({ PUBLIC_APP_URL: "http://www.robotat.sa" }))[0]).toMatch(/https/);
   });
 
   it("reports every problem at once rather than stopping at the first", () => {
@@ -77,7 +77,7 @@ describe("MAIL_REDIRECT_TO in production", () => {
     const problems = validateProduction({
       NODE_ENV: "production",
       SESSION_SECRET: "a".repeat(48),
-      PUBLIC_APP_URL: "https://robotat.sa",
+      PUBLIC_APP_URL: "https://www.robotat.sa",
       MAIL_REDIRECT_TO: "dev@example.com",
     } as never);
     expect(problems.some((p) => p.includes("MAIL_REDIRECT_TO"))).toBe(true);

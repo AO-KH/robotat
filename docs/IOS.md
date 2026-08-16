@@ -42,7 +42,7 @@ do: CocoaPods never installed, because it does not exist on Windows.
 npm ci
 
 # Build the web client against the deployed API (baked into the bundle):
-VITE_API_URL=https://robotat.sa npm run build
+VITE_API_URL=https://www.robotat.sa npm run build
 
 # Install the native dependencies CocoaPods could not install off-Mac:
 cd ios/App && bundle exec pod install && cd ../..
@@ -57,19 +57,25 @@ origin: you get an app that looks completely normal and fails every single API c
 name resolution, on a device, after you shipped it. This has already bitten this project
 once with `robotat.nasl-tech.com`, which never had a DNS record at all.
 
-`robotat.sa` is the intended public origin and is registered to NASL, but at the time of
-writing it still has **no A record** and does not resolve; its nameservers are SaudiNIC's
-parking pair. The origin that answers today is `https://robotat2-production.up.railway.app`.
-Before cutting a release build, run:
+`www.robotat.sa` is the intended public origin. **Note the `www`, and do not "tidy" it
+away.** Railway issues a **CNAME** target for custom domains, a CNAME cannot exist at a
+zone apex, and `robotat.sa` is hosted on T2's nameservers (`pns01/pns02.t2.sa`), which
+offer no ALIAS or CNAME flattening. Bare `robotat.sa` therefore does not resolve and is
+not planned to; only the `www` host is wired up. Reaching the apex would mean moving the
+nameservers to a provider that flattens (Cloudflare) — a deliberate trade, not a typo to
+fix.
+
+The origin that answers today is `https://robotat2-production.up.railway.app`. Before
+cutting a release build, run:
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}\n' https://robotat.sa/api/products   # want 200
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.robotat.sa/api/products   # want 200
 ```
 
-Note also that Railway issues a **CNAME** target for custom domains, and a CNAME cannot
-exist at a zone apex. Pointing bare `robotat.sa` at Railway therefore needs a DNS provider
-with ALIAS/ANAME or CNAME flattening (Cloudflare), or a subdomain such as `api.robotat.sa`,
-which is an ordinary CNAME and needs no nameserver change.
+A wildcard `*.robotat.sa` record does **not** count as a working setup, however plausible
+it looks: it never matches the apex, and Railway serves only the hostnames registered as
+custom domains in its dashboard, so everything else answers with a certificate warning
+rather than with nothing — a worse failure than an unconfigured domain.
 
 **Installing CocoaPods is not one command.** macOS ships Ruby 2.6, and current CocoaPods
 depends on gems (`ffi`, `securerandom`) that require Ruby ≥ 3.0. `gem install cocoapods`
@@ -173,7 +179,7 @@ but the place to fix it is a `post_install` hook in the Podfile.
 ## Dev loop
 
 ```bash
-VITE_API_URL=https://robotat.sa npm run build
+VITE_API_URL=https://www.robotat.sa npm run build
 npx cap copy ios      # push the fresh web build into the native project
 npx cap open ios      # opens Xcode → run on a simulator or a signed device
 ```
