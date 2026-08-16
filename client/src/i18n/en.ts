@@ -51,7 +51,6 @@ export const en = {
     envTitle2: "Every environment",
     envSub:
       "The MAX T100 doesn't change — the attachment does. One platform covers open fields, protected agriculture, and solar sites.",
-    greenhouseComingSoon: "Greenhouse · Coming soon",
     environments: [
       {
         corner: "01 · Open field",

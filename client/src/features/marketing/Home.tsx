@@ -11,10 +11,10 @@ import fieldImg from "@assets/05_1771963956072.jpeg";
 import greenhouseImg from "@assets/greenhouse.jpeg";
 import solarImg from "@assets/solar_farm.jpeg";
 
-// Environment images, aligned by index with dict.home.environments. The type still admits
-// null — an environment can be written up before there is a photo of it, and the tile then
-// falls back to home.greenhouseComingSoon — but all three have one today.
-const ENV_IMAGES: (string | null)[] = [fieldImg, greenhouseImg, solarImg];
+// Environment images, aligned by index with dict.home.environments. There is no fallback
+// tile any more, so a fourth environment added to the dictionary needs its photo added
+// here in the same change — otherwise it renders a broken <img>.
+const ENV_IMAGES: string[] = [fieldImg, greenhouseImg, solarImg];
 
 function SectionHead({ tag, title, sub }: { tag: string; title: ReactNode; sub?: string }) {
   return (
@@ -131,15 +131,7 @@ export default function Home() {
                   className={`p-6 md:p-8 flex flex-col ${i < 2 ? "border-b md:border-b-0 md:border-r border-border" : ""}`}
                 >
                   <div className="relative aspect-[16/11] mb-6 border border-border bg-[#06040d]/40 overflow-hidden">
-                    {img ? (
-                      <img src={img} alt={env.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-[radial-gradient(ellipse_70%_60%_at_50%_40%,rgba(124,58,237,0.18),transparent_70%)] flex items-center justify-center">
-                        <span className="data-label">
-                          {t("home.greenhouseComingSoon")}
-                        </span>
-                      </div>
-                    )}
+                    <img src={img} alt={env.title} className="w-full h-full object-cover" />
                     <span className="absolute top-3 left-3 font-mono text-label text-[#c084fc] tracking-[0.14em] bg-black/50 px-2 py-1">
                       {env.corner}
                     </span>

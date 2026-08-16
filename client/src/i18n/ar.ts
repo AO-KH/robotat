@@ -53,7 +53,6 @@ export const ar: Dictionary = {
     envTitle2: "كل بيئة",
     envSub:
       "منصّة MAX T100 لا تتغيّر — بل المُلحق. منصّة واحدة تغطّي الحقول المفتوحة والزراعة المحمية ومواقع الطاقة الشمسية.",
-    greenhouseComingSoon: "البيوت المحمية · قريباً",
     environments: [
       {
         corner: "01 · حقل مفتوح",
