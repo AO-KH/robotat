@@ -77,24 +77,43 @@ it looks: it never matches the apex, and Railway serves only the hostnames regis
 custom domains in its dashboard, so everything else answers with a certificate warning
 rather than with nothing — a worse failure than an unconfigured domain.
 
-**Installing CocoaPods is not one command.** macOS ships Ruby 2.6, and current CocoaPods
-depends on gems (`ffi`, `securerandom`) that require Ruby ≥ 3.0. `gem install cocoapods`
-therefore fails, and pinning the offending gems one at a time does not converge — each
-pin surfaces the next incompatible transitive dependency. Let a modern Bundler resolve
-the whole graph against Ruby 2.6 in one pass instead:
+**Installing CocoaPods needs `GEM_HOME` set, and almost nothing else.** There is a
+[`Gemfile`](../Gemfile) at the repo root now, pinning CocoaPods to 1.17.0 — the version
+that produced the committed `ios/App/Podfile.lock`:
 
 ```bash
-gem install --user-install bundler -v 2.4.22     # system Bundler 1.17 cannot do this
+gem install --user-install bundler -v 2.4.22     # system Bundler 1.17 cannot resolve this
 export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
-
-# A Gemfile containing just: source "https://rubygems.org" / gem "cocoapods"
-bundle install                                    # resolves to CocoaPods 1.17 on Ruby 2.6
-
-export LANG=en_US.UTF-8                           # CocoaPods aborts without a UTF-8 locale
+export GEM_HOME="$HOME/.gem/ruby/2.6.0"          # ← the one that actually matters
+export LANG=en_US.UTF-8                          # CocoaPods aborts without a UTF-8 locale
+bundle install
 ```
 
-Installing a current Ruby (Homebrew, rbenv) is the tidier long-term fix; the above
-avoids needing either.
+**Do not skip `GEM_HOME`.** Without it Bundler installs into the system gem directory,
+`/Library/Ruby/Gems/2.6.0`, which is root-owned, and every gem needing to write there
+fails. What makes this cost hours is how it presents: Bundler reports
+
+```
+An error occurred while installing json (2.7.6), and Bundler cannot continue.
+In Gemfile:
+  cocoapods was resolved to 1.17.0, which depends on
+    cocoapods-core was resolved to 1.17.0, which depends on
+      algoliasearch was resolved to 1.27.5, which depends on
+        json
+```
+
+— a *different gem each run* depending on install order, each time with the dependency
+chain that pulled it in. Every signal says version resolution. The real cause is a
+`Bundler::PermissionError` several lines above, which `| tail` hides. The tell is that
+`gem install <the-named-gem> --user-install` succeeds immediately, because
+`--user-install` writes somewhere else.
+
+An earlier revision of this document concluded from those messages that Ruby 2.6 was too
+old and that "pinning the offending gems one at a time does not converge." That was the
+wrong diagnosis, and it is a seductive one: each pin genuinely does clear the gem it
+names, so it feels like progress right up until you run out of gems. With `GEM_HOME` set,
+the unpinned Gemfile resolves and builds all 41 gems on stock Ruby 2.6.10 in one pass.
+Installing a current Ruby is still tidier long-term, but it is not required.
 
 `ios/App/*` is a normal Xcode project and is committed, because it is where native
 configuration lives — `Info.plist`, icons, entitlements. Only generated artifacts
@@ -186,89 +205,82 @@ npx cap open ios      # opens Xcode → run on a simulator or a signed device
 
 Use `npx cap sync ios` (instead of `copy`) whenever native dependencies change.
 
-## Still to do for a shippable app (Phase 4, on the Mac)
+## Native dependencies (done 2026-08-18)
 
-These are the remaining Phase 4 items from the improvement plan — code-level pieces
-can be prototyped anywhere, but building/signing/submitting is Mac-only:
+Both native plugins are installed, wired and building. `pod install` reports
+`@capacitor/push-notifications@7.0.7` and `capacitor-secure-storage-plugin@0.12.0`, and a
+Release build embeds `CapacitorPushNotifications.framework`,
+`CapacitorSecureStoragePlugin.framework` and `SwiftKeychainWrapper.framework`.
 
-1. **Native push (APNs)** — one `npm install` away; **no code change**.
+- **Native push (APNs).** `client/src/lib/push.ts` needed no edit, exactly as designed —
+  it binds the plugin by name via `registerPlugin('PushNotifications')`, so installing the
+  package only supplied the native half.
 
-   Everything but the native pod is done and tested. The server stores device tokens
-   (`push_tokens`, `POST /api/push/register` and `/unregister`), `server/lib/apns.ts`
-   signs and sends, and `pushCustomer` in `server/lib/notify.ts` fans a booking status
-   change out to the customer's devices and prunes the ones APNs reports as dead.
-   On the client, `client/src/lib/push.ts` asks for permission, registers the device and
-   — importantly — releases the token on sign-out, before the session is torn down.
+  The `aps-environment` entitlement is **split across two files**:
+  [`App.entitlements`](../ios/App/App/App.entitlements) (`development`) for Debug and
+  [`AppRelease.entitlements`](../ios/App/App/AppRelease.entitlements) (`production`) for
+  Release, selected by `CODE_SIGN_ENTITLEMENTS` per build configuration. Xcode's Organizer
+  does rewrite that key on export, but that is behaviour rather than a contract — it does
+  not apply to a plain `xcodebuild archive`, and a token minted in the wrong APNs
+  environment fails by having notifications silently never arrive. Making it a build
+  setting removes the dependence on an export step.
 
-   `push.ts` does **not** import `@capacitor/push-notifications`. The plugin's
-   JavaScript half is just `registerPlugin('PushNotifications')` from `@capacitor/core`,
-   which is already a dependency, so the module binds by name instead. That keeps an
-   unbuildable-off-a-Mac dependency out of the tree and the plugin out of the web
-   bundle, and it means the install below needs no follow-up edit anywhere.
+- **Secure token storage.** `capacitor-secure-storage-plugin` is pinned to **0.12.x**:
+  0.13 raised its peer dependency to Capacitor 8 and this project is on 7. npm installs it
+  anyway and the mismatch only shows up as a native crash on device.
 
-   On the Mac:
+  Registered in `client/src/main.tsx` via `installTokenPersistence()`, behind
+  `Capacitor.isNativePlatform()` and a dynamic `import()` — the plugin's *web* fallback is
+  `localStorage`, which is the one store `token-persistence.ts` exists to avoid. The lazy
+  import keeps it out of the web bundle rather than merely unused inside it.
 
-   ```bash
-   npm install @capacitor/push-notifications   # for the native pod, not the JS
-   npx cap sync ios
-   ```
+Still pending, and needs the Apple Developer portal: create an **APNs key**, download the
+`.p8` once, and set `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_PRIVATE_KEY` (the `.p8` contents,
+newlines as `\n`), `APNS_BUNDLE_ID` (defaults to `com.nasl.robotat`) and
+**`APNS_ENV=production`** on Railway. That last one must agree with
+`AppRelease.entitlements`; the server default is the sandbox, which only matches a Debug
+build. With them unset push is switched off and status changes are logged instead, so
+nothing breaks.
 
-   Then in Xcode, under **Signing & Capabilities**, add the **Push Notifications**
-   capability (this writes the `aps-environment` entitlement — without it
-   `registrationError` fires and no token is ever issued), and confirm **Background
-   Modes → Remote notifications** if silent pushes are ever added.
+## App Store readiness
 
-   Finally, in the Apple Developer portal create an **Apple Push Notifications service
-   (APNs)** key, download the `.p8` once, and set on the server:
-   `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_PRIVATE_KEY` (the `.p8` contents, newlines as
-   `\n`), `APNS_BUNDLE_ID` (defaults to `com.nasl.robotat`) and `APNS_ENV=production`
-   for a TestFlight/App Store build — the default is the sandbox, which is what a
-   development build needs. See `.env.example`. With those unset, push is switched off
-   and status changes are logged instead of sent, so nothing breaks.
+Verified against a real `xcodebuild archive`, not by inspection:
 
-   This is the primary native value for Guideline 4.2.
-2. **Secure token storage** — one `npm install` and two lines away.
+| Item | State |
+| --- | --- |
+| Apple Developer Program | ✅ **NASL TECHNOLOGY COMPANY**, team `889N48X22R` (an organization team) |
+| Release build | ✅ `** BUILD SUCCEEDED **`, 5.5 MB, `com.nasl.robotat` 1.0 (1) |
+| App icon | ✅ 1024×1024, `hasAlpha: no` |
+| Privacy policy URL | ✅ `https://www.robotat.sa/privacy` serves 200 |
+| In-app account deletion | ✅ `DELETE /api/auth/account`, re-auths and anonymises |
+| Privacy manifest | ✅ [`PrivacyInfo.xcprivacy`](../ios/App/App/PrivacyInfo.xcprivacy), copied to the bundle root |
+| Export compliance | ✅ `ITSAppUsesNonExemptEncryption = false` in `Info.plist` |
+| Device family | ✅ `UIDeviceFamily = [1]` — iPhone only for v1 |
+| Distribution certificate | ❌ none on this Mac (`security find-identity` finds 0 `Apple Distribution`) |
 
-   The boot sequence is done and tested: `main.tsx` awaits `restoreAuthToken()` before
-   React mounts, so the token is in memory before the first request is built, and a
-   revoked token is cleared from the store on the first 401 instead of being retried
-   every launch. `client/src/lib/token-persistence.ts` has `secureTokenPersistence()`,
-   which adapts any Capacitor secure-storage plugin — it takes the plugin as an
-   argument, so it is unit-tested against a fake even though the plugin itself only
-   runs on a device.
+**Blocker: the Program License Agreement is unsigned.** Any provisioning change fails with
 
-   What is missing is a plugin, because installing an untested native dependency off a
-   Mac would have been unverifiable. On the Mac:
+```
+error: Unable to process request - PLA Update available: You currently don't have access
+to this membership resource. To resolve this issue, agree to the latest Program License
+Agreement in your developer account.
+```
 
-   ```bash
-   npm install <a-capacitor-keychain-plugin>   # must expose get/set/remove
-   npx cap sync ios
-   ```
+Only the **Account Holder** can clear it, at
+[developer.apple.com/account](https://developer.apple.com/account) → Review Agreement.
+Until then Xcode cannot register the App ID, enable Push Notifications on it, or issue any
+profile — and nothing can be uploaded to App Store Connect either. Worth checking first
+whenever signing suddenly breaks, because the surface error is about a provisioning
+profile and points nowhere near the cause: building with `CODE_SIGNING_ALLOWED=NO`
+succeeds throughout, which is how you tell this apart from a real build problem.
 
-   then register it in `client/src/main.tsx`, before `restoreAuthToken()`:
+Remaining after that: distribution certificate, App Store Connect app record, screenshots,
+privacy labels (must match `PrivacyInfo.xcprivacy` and `Privacy.tsx`), age rating, and a
+**demo account in the App Review notes** — the app is behind a login wall, and omitting
+credentials is an automatic rejection. Then TestFlight, then submit.
 
-   ```ts
-   import { Capacitor } from "@capacitor/core";
-   import { registerTokenPersistence } from "./lib/auth-token";
-   import { secureTokenPersistence } from "./lib/token-persistence";
-
-   if (Capacitor.isNativePlatform()) {
-     const { SecureStoragePlugin } = await import("<the-plugin>");
-     registerTokenPersistence(secureTokenPersistence(SecureStoragePlugin));
-   }
-   ```
-
-   Guard on `isNativePlatform()` so the web build never loads it. **`@capacitor/preferences`
-   is not secure** — it is plain `UserDefaults` — and is not an acceptable stopgap for a
-   30-day credential. Nor is `localStorage`: anything that can run script in the webview
-   can read it.
-
-   Until that lands the app still signs out on relaunch, which is the one part of this
-   that could not be finished without the hardware.
-3. **App polish** — app icon, offline states. (Launch screen and dark appearance are
-   done — see the table above.)
-4. **App Store** — bundle id `com.nasl.robotat`, code signing team, screenshots,
-   privacy labels, TestFlight beta, then submit for review.
+**App polish** still open: offline states. (Icon, launch screen and dark appearance are
+done — see the table above.)
 
 ## Config reference
 
