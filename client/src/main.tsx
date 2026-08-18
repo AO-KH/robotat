@@ -1,7 +1,9 @@
 import { createRoot } from "react-dom/client";
+import { Capacitor } from "@capacitor/core";
 import App from "./App";
 import { installApiBase } from "./lib/api-base";
-import { restoreAuthToken } from "./lib/auth-token";
+import { registerTokenPersistence, restoreAuthToken } from "./lib/auth-token";
+import { secureTokenPersistence } from "./lib/token-persistence";
 import "./index.css";
 
 // Point relative /api calls at the deployed backend when running in the native
@@ -47,7 +49,41 @@ function dismissSplash() {
   );
 }
 
+/**
+ * Give the bearer token a home in the iOS Keychain.
+ *
+ * Must run before `restoreAuthToken()`, which is a no-op while no persistence is
+ * registered — that is exactly the state that made the native app sign itself out on
+ * every relaunch.
+ *
+ * Dynamic import, not a static one, and guarded on `isNativePlatform()`: the plugin's
+ * web implementation falls back to `localStorage`, which is precisely the store
+ * `token-persistence.ts` refuses to use for a 30-day credential. Importing it lazily
+ * keeps it out of the web bundle entirely rather than merely unused within it.
+ *
+ * The plugin is pinned to 0.12.x because 0.13 raised its peer dependency to Capacitor
+ * 8 and this project is on 7 — npm would install it regardless and the mismatch would
+ * only surface as a native crash on device.
+ *
+ * `SecureStoragePlugin.get()` rejects (rather than resolving null) when the key is
+ * absent, which is every first launch. `secureTokenPersistence.load()` already treats
+ * a throw as "no token", so that path needs nothing here.
+ *
+ * Failures are swallowed: no Keychain is a reason to start signed-out, never a reason
+ * not to start.
+ */
+async function installTokenPersistence(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const { SecureStoragePlugin } = await import("capacitor-secure-storage-plugin");
+    registerTokenPersistence(secureTokenPersistence(SecureStoragePlugin));
+  } catch (err) {
+    console.warn("[auth] secure storage is unavailable; sessions will not survive a relaunch", err);
+  }
+}
+
 async function boot() {
+  await installTokenPersistence();
   await restoreAuthToken();
   createRoot(document.getElementById("root")!).render(<App />);
   dismissSplash();

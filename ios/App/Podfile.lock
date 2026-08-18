@@ -2,21 +2,40 @@ PODS:
   - Capacitor (7.6.7):
     - CapacitorCordova
   - CapacitorCordova (7.6.7)
+  - CapacitorPushNotifications (7.0.7):
+    - Capacitor
+  - CapacitorSecureStoragePlugin (0.12.0):
+    - Capacitor
+    - SwiftKeychainWrapper
+  - SwiftKeychainWrapper (4.0.1)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
+  - CapacitorSecureStoragePlugin (from `../../node_modules/capacitor-secure-storage-plugin`)
+
+SPEC REPOS:
+  trunk:
+    - SwiftKeychainWrapper
 
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorPushNotifications:
+    :path: "../../node_modules/@capacitor/push-notifications"
+  CapacitorSecureStoragePlugin:
+    :path: "../../node_modules/capacitor-secure-storage-plugin"
 
 SPEC CHECKSUMS:
   Capacitor: ee608ffbcf73b0030813d77ce8b10142f26cad4a
   CapacitorCordova: 139e2ed3d91c54b5aeae7941135c9f9aefc6da1d
+  CapacitorPushNotifications: f7e0909b16354405bbf4fd50b1ae5111843220ab
+  CapacitorSecureStoragePlugin: 90465f0c8ce4a0e81467653c0b91b5010a201f99
+  SwiftKeychainWrapper: 807ba1d63c33a7d0613288512399cd1eda1e470c
 
-PODFILE CHECKSUM: e5aad413742a07f9e736126612b43b6c058babcd
+PODFILE CHECKSUM: 3614ecf79e2acf59fa9f1dc6c8f9453d7892093f
 
 COCOAPODS: 1.17.0
