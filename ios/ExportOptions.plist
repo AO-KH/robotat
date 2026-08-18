@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Options for `xcodebuild -exportArchive`, which turns the .xcarchive into the .ipa
+  that gets uploaded to App Store Connect.
+
+  Committed rather than passed on the command line so that an export from a CI machine,
+  or from this one a year from now, produces the same artefact. Xcode's Organizer window
+  asks these same questions as a series of checkboxes; the answers are easy to click
+  through differently by accident.
+
+  Usage (from the repo root):
+
+    xcodebuild -exportArchive \
+      -archivePath /tmp/robotat.xcarchive \
+      -exportOptionsPlist ios/ExportOptions.plist \
+      -exportPath /tmp/robotat-export \
+      -allowProvisioningUpdates
+-->
+<plist version="1.0">
+<dict>
+	<!--
+	  Xcode 15 renamed this value from "app-store". The old name still works, but only
+	  as a deprecated alias, and the deprecation warning is easy to miss in a build log.
+	-->
+	<key>method</key>
+	<string>app-store-connect</string>
+
+	<key>teamID</key>
+	<string>889N48X22R</string>
+
+	<!--
+	  Let Xcode fetch and refresh the distribution profile. The alternative, manual
+	  signing, means pinning a profile name here that expires in a year and fails the
+	  export with a message that does not mention expiry.
+	-->
+	<key>signingStyle</key>
+	<string>automatic</string>
+
+	<!--
+	  Upload the dSYMs alongside the binary. Without them every crash report in
+	  Organizer and TestFlight is raw hex addresses instead of function names — and the
+	  symbols cannot be attached retroactively to a build already processed.
+	-->
+	<key>uploadSymbols</key>
+	<true/>
+
+	<!--
+	  Bitcode has been dead since Xcode 14 (Apple stopped accepting it), but the export
+	  still honours the key. Stating it explicitly stops a future Xcode from picking a
+	  default that re-introduces a stripping step.
+	-->
+	<key>compileBitcode</key>
+	<false/>
+
+	<!--
+	  "export" writes an .ipa to disk. The other option, "upload", sends it straight to
+	  App Store Connect from here — which is faster but gives nothing to inspect if the
+	  upload is rejected. Keeping the .ipa means the validate/upload step can be retried
+	  without a full rebuild.
+	-->
+	<key>destination</key>
+	<string>export</string>
+
+	<!--
+	  Ship the app thinned per device model rather than as one universal binary. On an
+	  app this size the saving is small, but it costs nothing and is what the App Store
+	  serves anyway.
+	-->
+	<key>thinning</key>
+	<string>&lt;thin-for-all-variants&gt;</string>
+
+	<!--
+	  Strip Swift symbols the runtime does not need. Does not affect the dSYMs uploaded
+	  above, so crash reports stay symbolicated.
+	-->
+	<key>stripSwiftSymbols</key>
+	<true/>
+</dict>
+</plist>
