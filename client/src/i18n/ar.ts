@@ -130,7 +130,11 @@ export const ar: Dictionary = {
       },
     ],
 
-    ctaTitle: "القيادة الذاتية للأرض التي تحت أقدامنا",
+    // The \u00A0 is deliberate. It holds the two halves of the compound term
+    // for "self-driving" together; with a plain space the mobile wrap breaks
+    // between them and strands the first half at the end of the line. Written
+    // as an escape rather than a literal character so it is visible here.
+    ctaTitle: "روبوتات ذاتية\u00A0القيادة تعتني بأرضنا",
     ctaSub: "يجوب مهندس زراعي من ROBOTAT مزرعتك خلال 2–3 أيام. دون التزام. ودون رسوم على التقييم.",
     emailTeam: "راسل الفريق",
     metaKingdom: "متوفّر في جميع أنحاء المملكة",
