@@ -1,6 +1,19 @@
 require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
 
-platform :ios, '14.0'
+# 15.0, not Capacitor's template default of 14.0. App Store Connect warns on upload
+# that from Spring 2027 it refuses anything below 15.0 outright. Capacitor 7's own
+# podspec floor is 14.0, so this clears it; assertDeploymentTarget below only raises
+# pods sitting *under* 14.0, so it is a no-op here rather than a conflict.
+#
+# Must stay in step with IPHONEOS_DEPLOYMENT_TARGET in App.xcodeproj. If they diverge
+# the app builds anyway and ships whichever value the Info.plist got.
+#
+# Individual pods keep whatever floor their own podspec declares — Capacitor's says
+# 14.0 — so Pods.xcodeproj still shows 14.0 in places after this. That is not an
+# oversight and does not need forcing: a framework may support an older OS than the
+# app that embeds it, and only the app bundle's MinimumOSVersion is what App Store
+# Connect reads.
+platform :ios, '15.0'
 use_frameworks!
 
 # workaround to avoid Xcode caching of Pods that requires

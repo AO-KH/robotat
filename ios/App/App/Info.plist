@@ -28,7 +28,7 @@
 	<string>Main</string>
 	<!--
 	  arm64, not Capacitor's template default of armv7. armv7 is 32-bit, which no
-	  device capable of running the deployment target (iOS 14) has ever been.
+	  device capable of running the deployment target (iOS 15) has ever been.
 	-->
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
