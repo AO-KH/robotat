@@ -331,6 +331,40 @@ xcodebuild -exportArchive -archivePath /tmp/robotat.xcarchive \
 To upload from Xcode instead, copy the archive into
 `~/Library/Developer/Xcode/Archives/<date>/` and it appears in Organizer.
 
+### Screenshots
+
+[`script/ios-screenshots.sh`](../script/ios-screenshots.sh) captures the whole set from
+the Simulator into `screenshots/ios-6.9/` at 1320×2868 — the 6.9-inch size App Store
+Connect asks for. The target is iPhone-only (`TARGETED_DEVICE_FAMILY = 1`), so that one
+set covers the submission; Apple scales it for smaller devices and no iPad set is needed.
+
+```sh
+script/ios-screenshots.sh        # all scenes
+script/ios-screenshots.sh 03     # just one, while tuning its framing
+```
+
+The PNGs are gitignored (~6 MB; the largest asset tracked anywhere else here is 526 KB).
+The script is the reproducible artefact.
+
+Three things about it are not obvious:
+
+- **There is no tap command.** `simctl` installs, launches and screenshots, but cannot
+  touch the screen, and driving the Simulator window with the desktop automation tools
+  needs a Screen Recording grant this machine does not have. So each scene injects a
+  script into the *installed* bundle's `index.html`: `history.replaceState` before the
+  module script boots (wouter reads `location.pathname` on init, so the route renders
+  directly), then real `.click()` calls on the real `<button>` elements once React has
+  painted. The container copy is restored on exit; `dist/public` and the archive are
+  never touched.
+- **The scroll cannot fire on `load`.** That event lands long before React mounts, when
+  the document is still one screen tall — `scrollTo` silently does nothing and every
+  scene comes out at offset 0. The script polls for `#root` having children and `#splash`
+  being gone. A cold launch takes ~30s to get there, which is what `SETTLE` is for.
+- **`simctl` cannot write into `~/Documents`.** It is a different binary from the shell
+  and carries no TCC Files-and-Folders grant, so a capture straight into `$OUTDIR` fails
+  with "You don't have permission" even though the shell can write there fine. Captures
+  go to a temp path and get moved in.
+
 **App polish** still open: offline states. (Icon, launch screen and dark appearance are
 done — see the table above.)
 

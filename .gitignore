@@ -36,3 +36,9 @@ Thumbs.db
 *.xcworkspace/xcuserdata/
 *.xcuserstate
 
+# App Store screenshots. Regenerate with `script/ios-screenshots.sh` — the script
+# is committed, the ~6 MB of PNGs it produces is not. The largest asset tracked
+# anywhere else in this repo is 526 KB, and App Store Connect is the system of
+# record for what was actually submitted.
+/screenshots/
+
