@@ -26,16 +26,32 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!--
+	  arm64, not Capacitor's template default of armv7. armv7 is 32-bit, which no
+	  device capable of running the deployment target (iOS 14) has ever been.
+	-->
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
+	<!--
+	  Answers App Store Connect's export-compliance question at upload time instead of
+	  once per submission. False is the accurate answer: the app's only cryptography is
+	  HTTPS to the API and the Keychain, both of which are the system's own and exempt.
+	  It uses no bundled crypto library of its own.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!--
+	  Kept even though the target is now iPhone-only (TARGETED_DEVICE_FAMILY = 1), so
+	  that re-adding iPad support does not silently ship with upside-down disabled.
+	-->
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

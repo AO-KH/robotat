@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Release entitlements: aps-environment is "production".
+
+  ## Why this is a second file rather than one shared with Debug
+
+  APNs has two entirely separate environments with separate device tokens. A token
+  minted under "development" is meaningless to the production APNs endpoint and vice
+  versa — the send is accepted and the notification simply never arrives. Nothing warns
+  you, on either side.
+
+  Xcode does rewrite this key during Organizer export, so a single "development" file
+  usually survives an App Store build. That is behaviour, not a contract: it does not
+  apply to a plain `xcodebuild archive`, and it is invisible when it stops applying.
+  Splitting the file makes the value a build-configuration fact instead — Debug builds
+  onto a device get a sandbox token, Release/TestFlight/App Store builds get a
+  production one, and neither depends on an export step doing a substitution.
+
+  This must agree with APNS_ENV on the server (see .env.example and server/lib/apns.ts),
+  which defaults to the sandbox. A TestFlight or App Store build needs
+  APNS_ENV=production set on Railway, or the server will sign for the wrong environment
+  and every notification will be silently dropped.
+-->
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>production</string>
+</dict>
+</plist>

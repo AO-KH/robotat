@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Debug entitlements. Release uses AppRelease.entitlements, which is identical except
+  that aps-environment is "production" — see the note there for why they are split.
+
+  Without an aps-environment entitlement, PushNotifications.register() fires
+  `registrationError` and no device token is ever issued, so client/src/lib/push.ts
+  logs a warning and the app is silently never reachable by notification.
+-->
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

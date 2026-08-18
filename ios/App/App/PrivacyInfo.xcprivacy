@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Privacy manifest for the ROBOTAT iOS app.
+
+  Two independent things live in here, and only the second is strictly required:
+
+  1. NSPrivacyCollectedDataTypes — what the app collects. This must agree with the
+     privacy labels entered in App Store Connect and with client/src/features/marketing/
+     Privacy.tsx. If any of the three drift apart, the one Apple shows users is the
+     App Store Connect one, and the mismatch is what gets flagged.
+
+  2. NSPrivacyAccessedAPITypes — declarations for Apple's "required reason" APIs.
+     Deliberately empty: Capacitor core, @capacitor/push-notifications and
+     capacitor-secure-storage-plugin were each searched for UserDefaults, systemUptime,
+     mach_absolute_time, volumeAvailableCapacity, statfs, file-timestamp and
+     activeInputModes usage, and none of them touch any of it. An empty array is the
+     accurate declaration, not an omission. If a plugin is ever added, re-check —
+     shipping without a needed entry is what triggers ITMS-91053 on upload.
+
+  Data is collected by this app's own backend only. There is no third-party analytics
+  SDK, no ad network, and no tracking across apps or websites, which is why
+  NSPrivacyTracking is false and NSPrivacyTrackingDomains is empty.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<!-- users.name / assessments.name — account and the site-assessment booking. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeName</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!-- users.email / assessments.email — sign-in identity and booking confirmations. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!-- assessments.phone — optional; how the agronomist arranges the visit. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhoneNumber</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!--
+		  assessments.location — the farm to visit, typed by the user. Declared as a
+		  physical address rather than a location data type on purpose: the app never
+		  reads Core Location and requests no location permission, so declaring
+		  Precise/CoarseLocation would claim a capability it does not have.
+		-->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhysicalAddress</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!-- assessments.company and the free-text booking notes. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!--
+		  analytics_events — first-party page views and funnel steps.
+
+		  Declared as LINKED, which is stricter than it first looks: visitor_id is an
+		  anonymous client-generated value, but the table also carries a nullable user_id
+		  foreign key, so an event recorded while signed in is attributable to a person.
+		  "Not linked" would be a false declaration on exactly those rows.
+		-->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
