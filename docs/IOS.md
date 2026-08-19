@@ -249,7 +249,7 @@ Verified against a real `xcodebuild archive`, not by inspection:
 | Item | State |
 | --- | --- |
 | Apple Developer Program | ✅ **NASL TECHNOLOGY COMPANY**, team `889N48X22R` (an organization team) |
-| Release build | ✅ `** ARCHIVE SUCCEEDED **` signed, exported to a 3.9 MB `.ipa`, `com.nasl.robotat` 1.0 (4) — build 3 added the in-app Support link, build 4 the Device ID privacy declaration |
+| Release build | ✅ `** ARCHIVE SUCCEEDED **` signed, exported to a 3.9 MB `.ipa`, `com.nasl.robotat` 1.0 (4) — build 3 added the in-app Support link, build 4 the Device ID privacy declaration. These are `CURRENT_PROJECT_VERSION` numbers and **do not line up with App Store Connect's**; see [the export used to renumber the build](#the-export-used-to-renumber-the-build-behind-your-back) |
 | Deployment target | ✅ iOS 15.0 — see below |
 | App icon | ✅ 1024×1024, `hasAlpha: no` |
 | Privacy policy URL | ✅ `https://www.robotat.sa/privacy` serves 200 |
@@ -365,13 +365,40 @@ plist governs `xcodebuild`; the Organizer upload sheet has its own **"Manage Ver
 Build Number"** checkbox. Untick it, or upload the exported `.ipa` through Transporter,
 which does not renumber anything.
 
-Because this was unset for the 1.0 (2) release, **the build number on App Store Connect
-for that upload may be 3 rather than 2** — Organizer would have bumped it the same way.
-If an upload is rejected as a duplicate build, that is why: raise
-`CURRENT_PROJECT_VERSION`, re-archive and re-export. Nothing else needs to change.
+This was unset for the 1.0 (2) release, and Organizer did bump it: **App Store Connect
+holds that upload as build 3, not build 2.** That is confirmed rather than inferred —
+select the archive in Organizer and the Submission Status panel reads *Build Number 3*
+while the Archive panel directly above it still reads *Version 1.0 (2)*. The two panels
+contradicting each other on one screen is the whole bug made visible: the archive kept
+the number it was sealed with, and the only record of what actually went up lives on
+Apple's servers.
+
+So 3 is spent and the next free number is 4, which is what build 4 ships as. If an upload
+is ever rejected as a duplicate, that is the reason: raise `CURRENT_PROJECT_VERSION`,
+re-archive and re-export. Nothing else needs to change.
+
+**Two different binaries are called build 3, and the one on Apple's servers is not the one
+this repo means.** App Store Connect's build 3 is the 1.0 (2) archive, renumbered on the
+way up: it has neither the `/support` route nor the Device ID declaration. The repo's
+build 3 — the `.ipa` carrying `CFBundleVersion = 3`, which did add the Support link — was
+superseded by build 4 before anyone uploaded it, so it never left this machine. A crash
+report or a tester saying "build 3" therefore means the *older* binary, missing a feature
+the table above credits to that number. Build 4 is the first upload whose number means the
+same thing in both places, and pinning `manageAppVersionAndBuildNumber` to `false` is what
+keeps it that way.
 
 To upload from Xcode instead, copy the archive into
-`~/Library/Developer/Xcode/Archives/<date>/` and it appears in Organizer.
+`~/Library/Developer/Xcode/Archives/<date>/`. **Organizer builds its archive list when
+Xcode launches and does not notice a directory copied in underneath a running Xcode** —
+the archive is simply absent from the list, with nothing on screen to say why, which
+reads exactly like a failed export. Quit and reopen Xcode, or double-click the
+`.xcarchive` in Finder to load it directly.
+
+The date directory is Hijri (`1448-03-06`), matching Xcode's own naming, but neither it
+nor the `.xcarchive` filename affects what Organizer displays: it reads `Name`,
+`SchemeName` and `CreationDate` out of the archive's `Info.plist`. An archive built by
+`xcodebuild` into `/tmp` carries the same values as one Xcode made itself, so copying it
+in is enough — if it still does not appear, the list is stale, not the archive.
 
 ### Screenshots
 
