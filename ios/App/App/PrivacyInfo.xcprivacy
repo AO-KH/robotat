@@ -111,6 +111,32 @@
 		</dict>
 
 		<!--
+		  push_tokens.token — the APNs device token, registered when the user allows
+		  notifications and used to tell them their assessment has been scheduled.
+
+		  Apple's Device ID covers "any device-level ID", which an APNs token is. LINKED
+		  because push_tokens.user_id is NOT NULL with a foreign key to users: the token
+		  is stored against an account, not on its own. App Functionality rather than
+		  Analytics — it is never read for measurement, only addressed to.
+
+		  This was missing until build 4 while privacy.collectPush in the i18n dictionaries
+		  had disclosed it since the table shipped, so the policy users read and the
+		  manifest disagreed. If the push feature is ever removed, this goes with it.
+		-->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!--
 		  analytics_events — first-party page views and funnel steps.
 
 		  Declared as LINKED, which is stricter than it first looks: visitor_id is an

@@ -249,13 +249,13 @@ Verified against a real `xcodebuild archive`, not by inspection:
 | Item | State |
 | --- | --- |
 | Apple Developer Program | ✅ **NASL TECHNOLOGY COMPANY**, team `889N48X22R` (an organization team) |
-| Release build | ✅ `** ARCHIVE SUCCEEDED **` signed, exported to a 3.9 MB `.ipa`, `com.nasl.robotat` 1.0 (3) — build 3 adds the in-app Support link |
+| Release build | ✅ `** ARCHIVE SUCCEEDED **` signed, exported to a 3.9 MB `.ipa`, `com.nasl.robotat` 1.0 (4) — build 3 added the in-app Support link, build 4 the Device ID privacy declaration |
 | Deployment target | ✅ iOS 15.0 — see below |
 | App icon | ✅ 1024×1024, `hasAlpha: no` |
 | Privacy policy URL | ✅ `https://www.robotat.sa/privacy` serves 200 |
 | Support URL | ✅ `https://www.robotat.sa/support` serves 200, and the route is in the deployed bundle — a 200 alone proves nothing here, the SPA answers 200 for any path |
 | In-app account deletion | ✅ `DELETE /api/auth/account`, re-auths and anonymises |
-| Privacy manifest | ✅ [`PrivacyInfo.xcprivacy`](../ios/App/App/PrivacyInfo.xcprivacy), copied to the bundle root |
+| Privacy manifest | ✅ [`PrivacyInfo.xcprivacy`](../ios/App/App/PrivacyInfo.xcprivacy), copied to the bundle root — seven collected data types, and they must stay equal to the App Store labels in [APP_STORE.md](APP_STORE.md) |
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption = false` in `Info.plist` |
 | Device family | ✅ `UIDeviceFamily = [1]` — iPhone only for v1 |
 | Distribution signing | ✅ `iOS Team Store Provisioning Profile: com.nasl.robotat`, issued automatically at export |
@@ -308,10 +308,15 @@ provisioning profile and points nowhere near the cause. The way to tell it apart
 real build problem: `CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO` builds fine, which
 isolates the failure to the account rather than the code.
 
-Remaining: App Store Connect app record, screenshots, privacy labels (must match
-`PrivacyInfo.xcprivacy` and `Privacy.tsx`), age rating, and a **demo account in the App
-Review notes** — the app is behind a login wall, and omitting credentials is an automatic
-rejection. Then TestFlight, then submit.
+Every App Store Connect field — description, keywords, privacy labels, age rating and the
+Guideline 4.2 review notes, in English and Arabic — is written out ready to paste in
+[APP_STORE.md](APP_STORE.md). The privacy labels there are the same seven types as
+`PrivacyInfo.xcprivacy`, and that equality is the thing to re-check whenever either moves.
+
+Remaining: a **demo account in the App Review notes**. The app is behind a login wall and
+omitting credentials is an automatic rejection, so this blocks submission on its own — and
+it also blocks the Dashboard screenshot, which is the shot that best explains the app. Then
+TestFlight, then submit.
 
 ### Exporting an .ipa
 
