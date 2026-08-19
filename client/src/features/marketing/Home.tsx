@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useI18n } from "@/i18n";
@@ -208,9 +209,19 @@ export default function Home() {
               {t("home.emailTeam")}
             </a>
           </div>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 eyebrow text-muted-foreground">
+          {/* This row is the nearest thing the site has to a footer, so it carries the
+              one link that has to be reachable from a desktop browser: the nav menu holds
+              it too, but that menu is md:hidden. "Email the team" above is a sales
+              opening — this is the way in for somebody who already bought and is stuck. */}
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 eyebrow text-muted-foreground">
             <span>{t("home.metaKingdom")}</span>
             <span>{t("home.metaResponse")}</span>
+            <Link
+              href="/support"
+              className="hover:text-foreground transition-colors underline underline-offset-4"
+            >
+              {t("support.title")}
+            </Link>
           </div>
         </motion.div>
       </section>

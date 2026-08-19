@@ -54,8 +54,11 @@ export function Navigation() {
     { href: "/services", label: t("nav.services") },
     ...(isStaff ? [{ href: "/admin", label: t("nav.admin") }] : []),
     user ? { href: "/dashboard", label: t("nav.myDashboard") } : { href: "/auth", label: t("nav.signIn") },
-    // Apple wants the privacy policy reachable from inside the app, not only from the
-    // App Store listing. This menu is on every route, so this is that link.
+    // Apple wants the privacy policy and a support contact reachable from inside the
+    // app, not only from the App Store listing. This menu is on every route, so these
+    // are those links. Support sits above Privacy because someone opening this menu
+    // mid-problem is looking for help, not for a policy.
+    { href: "/support", label: t("support.title") },
     { href: "/privacy", label: t("privacy.title") },
   ];
 

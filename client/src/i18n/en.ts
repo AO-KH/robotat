@@ -248,6 +248,51 @@ export const en = {
     contactHeading: "Contact",
     contactBody: "Questions about this policy: info@nasl-tech.com",
   },
+  support: {
+    title: "Support",
+    intro:
+      "Something not working, or a question about a booking? Reach us either way below — a real person answers both.",
+    hours: "We reply within one business day, Sunday to Thursday.",
+
+    whatsapp: "WhatsApp",
+    whatsappSub: "Fastest — reply in your chats",
+    email: "Email",
+    emailSub: "Reply in your inbox",
+    emailCopy: "Or write to us directly at",
+
+    faqHeading: "Common questions",
+    faq: [
+      {
+        q: "How do I book a site assessment?",
+        a: "Tap Book a site assessment on the home screen, tell us how to reach you, and an agronomist arranges a visit to your land. You do not need an account to ask — but with one you can follow what happens next.",
+      },
+      {
+        q: "Where do I see the status of my booking?",
+        a: "Sign in and open your dashboard. Each request shows whether it is pending, scheduled, completed or cancelled, along with the date once we have set one.",
+      },
+      {
+        q: "Will I be told when something changes?",
+        a: "Yes. We email you whenever the status of a request changes, and if you allowed notifications on your iPhone, the app tells you too.",
+      },
+      {
+        q: "I forgot my password.",
+        a: "Choose Forgot your password? on the sign-in screen. We send a single-use link to your email address; it stops working once used.",
+      },
+      {
+        q: "My confirmation email never arrived.",
+        a: "Check the spam folder first — confirmation mail often lands there. If it is not there, write to us and we will confirm the address by hand.",
+      },
+      {
+        q: "How do I delete my account?",
+        a: "Open the Account page and choose to delete it. That removes your account and strips your name, email, phone number and notes from past assessments. The privacy policy sets out exactly what is kept and why.",
+      },
+    ],
+
+    privacyHeading: "Your data",
+    privacyBody:
+      "What we store, who else sees it, and how to have it removed is set out in full in the privacy policy.",
+    privacyLink: "Read the privacy policy",
+  },
   status: {
     all: "All",
     pending: "Pending",

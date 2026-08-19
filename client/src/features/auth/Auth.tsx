@@ -135,9 +135,23 @@ export default function Auth() {
           </button>
         </div>
 
-        {/* Signed-out route to the privacy policy. The nav menu carries the same link but
-            is md:hidden, and this app ships to iPad, so above 768px this is the only one. */}
-        <div className="mt-2 text-center">
+        {/* Signed-out routes to the privacy policy and to help. The nav menu carries both
+            links but is md:hidden, so on the desktop web these are the only ones.
+
+            Support belongs here more than on any other page: someone whose password is
+            refused is looking at this screen, and the alternative to a link is guessing
+            at an address. It stays a plain <Link> — no fetch, no auth — precisely because
+            the reader may be here on account of something that is already broken. */}
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <Link
+            href="/support"
+            className="text-label text-muted-foreground hover:text-primary transition-colors min-h-[44px] px-4 inline-flex items-center justify-center"
+          >
+            {t("support.title")}
+          </Link>
+          <span aria-hidden="true" className="text-label text-muted-foreground/40">
+            ·
+          </span>
           <Link
             href="/privacy"
             className="text-label text-muted-foreground hover:text-primary transition-colors min-h-[44px] px-4 inline-flex items-center justify-center"

@@ -115,6 +115,40 @@ export function buildMailtoLink(lead: Lead): string {
   return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(userMessage(lead))}`;
 }
 
+/**
+ * Help channels for the /support page.
+ *
+ * Deliberately not the booking builders above: those open with "I'd like to book a
+ * site assessment", which is the wrong thing to put in the mouth of someone writing
+ * in because they cannot sign in.
+ *
+ * Unlike FALLBACK_ASSESSMENT_INBOX this default is a real published address — it is
+ * already on the home page and in the privacy policy — so it needs no config warning.
+ */
+const FALLBACK_SUPPORT_INBOX = "info@nasl-tech.com";
+
+export function buildSupportLinks(lead: Lead = {}): {
+  email: string;
+  whatsappUrl: string;
+  mailtoUrl: string;
+} {
+  const email = process.env.SUPPORT_INBOX || FALLBACK_SUPPORT_INBOX;
+
+  // Identify the sender when we know them, so support does not have to ask who is
+  // writing. Nothing is added for a signed-out visitor.
+  const lines = ["Hi ROBOTAT 👋 I need help with my account."];
+  if (lead.name || lead.email) lines.push("");
+  if (lead.name) lines.push(`Name: ${lead.name}`);
+  if (lead.email) lines.push(`Email: ${lead.email}`);
+  const body = lines.join("\n");
+
+  return {
+    email,
+    whatsappUrl: `https://wa.me/${businessWhatsappNumber()}?text=${encodeURIComponent(body)}`,
+    mailtoUrl: `mailto:${email}?subject=${encodeURIComponent("ROBOTAT support")}&body=${encodeURIComponent(body)}`,
+  };
+}
+
 async function sendEmail(a: Assessment): Promise<void> {
   const { ASSESSMENT_INBOX } = process.env;
   const to = ASSESSMENT_INBOX || FALLBACK_ASSESSMENT_INBOX;

@@ -2,9 +2,17 @@ import { Router } from "express";
 import { api } from "@shared/routes";
 import type { User } from "@shared/schema";
 import { handleZodError } from "../../lib/errors";
-import { buildWhatsappLink, buildMailtoLink } from "../../lib/notify";
+import { buildWhatsappLink, buildMailtoLink, buildSupportLinks } from "../../lib/notify";
 
 export const contactRoutes = Router();
+
+// Help channels for the /support page. Registered before the bare /api/contact
+// handler only for readability — Express matches these paths exactly, so the order
+// of the two does not actually decide anything.
+contactRoutes.get(api.contact.support.path, (req, res) => {
+  const u = (req.user as User) || undefined;
+  res.status(200).json(buildSupportLinks({ name: u?.name, email: u?.email }));
+});
 
 // Contact links, personalized when signed in (no record saved).
 contactRoutes.get(api.contact.get.path, (req, res) => {

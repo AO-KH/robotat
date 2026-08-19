@@ -304,6 +304,26 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    /**
+     * Help channels for the /support page, which is what App Store Connect is given
+     * as the Support URL.
+     *
+     * Separate from `get` above because that one pre-fills "I'd like to book a site
+     * assessment" — the wrong opening line from someone who cannot sign in. `email`
+     * is returned alongside the links so the page can show an address that survives
+     * a device with no mail client configured.
+     */
+    support: {
+      method: "GET" as const,
+      path: "/api/contact/support" as const,
+      responses: {
+        200: z.object({
+          email: z.string(),
+          whatsappUrl: z.string(),
+          mailtoUrl: z.string(),
+        }),
+      },
+    },
   },
 };
 
