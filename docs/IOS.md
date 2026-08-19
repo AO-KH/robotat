@@ -313,10 +313,17 @@ Guideline 4.2 review notes, in English and Arabic — is written out ready to pa
 [APP_STORE.md](APP_STORE.md). The privacy labels there are the same seven types as
 `PrivacyInfo.xcprivacy`, and that equality is the thing to re-check whenever either moves.
 
-Remaining: a **demo account in the App Review notes**. The app is behind a login wall and
-omitting credentials is an automatic rejection, so this blocks submission on its own — and
-it also blocks the Dashboard screenshot, which is the shot that best explains the app. Then
-TestFlight, then submit.
+The **demo account** App Review signs in with exists on production and its credentials are
+in [APP_STORE.md §5](APP_STORE.md#5-app-review-information). It is created by
+`npm run demo:account` rather than by hand, because three separate things have to be true
+for a reviewer to get anywhere — a pre-verified email (booking 403s without it), a
+dashboard with history rather than an empty list, and an unspent daily booking allowance —
+and each is easy to miss one at a time. Re-run it whenever Apple wants fresh credentials;
+the password is printed once and stored nowhere.
+
+Remaining: **screenshots** (the Dashboard shot needs re-capturing now that the demo account
+gives it data — `script/ios-screenshots.sh`), uploading build 4, then TestFlight, then
+submit.
 
 ### Exporting an .ipa
 

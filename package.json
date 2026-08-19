@@ -18,6 +18,7 @@
     "cap:sync": "cap sync",
     "cap:sync:ios": "cap sync ios",
     "dev:staff": "tsx script/dev-staff.ts",
+    "demo:account": "tsx script/demo-account.ts",
     "mail:test": "tsx script/mail-test.ts",
     "assets:optimise": "tsx script/optimise-assets.ts"
   },

@@ -265,15 +265,40 @@ already declared above.
 
 | Field | Value |
 | --- | --- |
-| Username | *(fill in — see below)* |
-| Password | *(fill in — see below)* |
+| Username | `appreview@robotat.sa` |
+| Password | `S24Z-P6J5-RH5E-65MV` |
 
-> **This is the one blocking gap.** The app is behind a login wall for its core feature,
-> and submitting without working credentials is an automatic Guideline 2.1 rejection.
-> Create the account against production, book two or three assessments on it so the
-> dashboard is not empty, and put it here. Do not use a real customer's account.
-> `npm run dev:staff` mints **staff** accounts and is the wrong tool — a reviewer should
-> see the customer experience, not `/admin`.
+Created by `npm run demo:account` (see `script/demo-account.ts`), which exists because
+three things have to be true at once and none of them happen by registering through the
+public form:
+
+- **The email is pre-verified.** `POST /api/assessments` returns 403 until
+  `users.email_verified_at` is set, so an unverified account can sign in, see an empty
+  dashboard, and do nothing else — which reads as a broken app, not a locked one.
+- **The dashboard has history.** Three assessments, one per status (completed, scheduled,
+  pending), so the list, the status pills and the counters all have something to show.
+  This is also the Dashboard screenshot.
+- **The booking allowance is intact.** Bookings are capped at 3 per account per rolling
+  24 hours. The seeded rows are backdated 34, 9 and 2 days precisely so the reviewer
+  starts with all three, rather than hitting a 429 on the first thing they try.
+
+The account is an ordinary `customer`, not staff — a reviewer should see the customer
+experience, not `/admin`. (`npm run dev:staff` mints staff accounts and is the wrong tool
+here; it also refuses to run against production.) The seeded bookings appear in `/admin`
+like any other, and each says in its message field that it is review demo data, so nobody
+dispatches an agronomist to a farm that does not exist.
+
+Verified against production on 2026-08-19: session login, bearer-token login (the path
+the iOS build actually uses), and `GET /api/assessments` returning all three rows.
+
+To rotate the password for a later submission, or to remove the account entirely:
+
+```bash
+npm run demo:account                                    # re-run: new password, bookings reset
+npm run demo:account -- --delete appreview@robotat.sa   # remove it and its bookings
+```
+
+Both need `DATABASE_URL` pointed at production.
 
 ### Contact information
 
