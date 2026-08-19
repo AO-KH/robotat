@@ -249,10 +249,11 @@ Verified against a real `xcodebuild archive`, not by inspection:
 | Item | State |
 | --- | --- |
 | Apple Developer Program | ✅ **NASL TECHNOLOGY COMPANY**, team `889N48X22R` (an organization team) |
-| Release build | ✅ `** ARCHIVE SUCCEEDED **` signed, exported to a 3.9 MB `.ipa`, `com.nasl.robotat` 1.0 (2) |
+| Release build | ✅ `** ARCHIVE SUCCEEDED **` signed, exported to a 3.9 MB `.ipa`, `com.nasl.robotat` 1.0 (3) — build 3 adds the in-app Support link |
 | Deployment target | ✅ iOS 15.0 — see below |
 | App icon | ✅ 1024×1024, `hasAlpha: no` |
 | Privacy policy URL | ✅ `https://www.robotat.sa/privacy` serves 200 |
+| Support URL | ✅ `https://www.robotat.sa/support` serves 200, and the route is in the deployed bundle — a 200 alone proves nothing here, the SPA answers 200 for any path |
 | In-app account deletion | ✅ `DELETE /api/auth/account`, re-auths and anonymises |
 | Privacy manifest | ✅ [`PrivacyInfo.xcprivacy`](../ios/App/App/PrivacyInfo.xcprivacy), copied to the bundle root |
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption = false` in `Info.plist` |
@@ -327,6 +328,35 @@ xcodebuild -exportArchive -archivePath /tmp/robotat.xcarchive \
   -exportOptionsPlist "$PWD/ios/ExportOptions.plist" \
   -exportPath /tmp/robotat-export -allowProvisioningUpdates
 ```
+
+Check the number on the exported `.ipa`, not on the archive:
+
+```sh
+unzip -q /tmp/robotat-export/App.ipa -d /tmp/ipacheck
+plutil -extract CFBundleVersion raw /tmp/ipacheck/Payload/App.app/Info.plist
+```
+
+#### The export used to renumber the build behind your back
+
+`manageAppVersionAndBuildNumber` **defaults to true**, and while it was unset here the
+export incremented the build number on its way out: `CURRENT_PROJECT_VERSION = 3`
+archived as 3 and exported as **1.0 (4)**. It is now pinned `false` in
+[`ExportOptions.plist`](../ios/ExportOptions.plist), so the `.ipa` matches the project.
+
+The wasted number is not the problem. The bump happens *after* the archive is sealed, so
+neither the repo, the archive, nor the build log records what actually shipped — the only
+copy of that number is in App Store Connect, which is precisely where you are trying not
+to have to look when reading a crash report or a tester's "it broke in build N".
+
+**Xcode's Organizer asks the same question separately, and also defaults to on.** The
+plist governs `xcodebuild`; the Organizer upload sheet has its own **"Manage Version and
+Build Number"** checkbox. Untick it, or upload the exported `.ipa` through Transporter,
+which does not renumber anything.
+
+Because this was unset for the 1.0 (2) release, **the build number on App Store Connect
+for that upload may be 3 rather than 2** — Organizer would have bumped it the same way.
+If an upload is rejected as a duplicate build, that is why: raise
+`CURRENT_PROJECT_VERSION`, re-archive and re-export. Nothing else needs to change.
 
 To upload from Xcode instead, copy the archive into
 `~/Library/Developer/Xcode/Archives/<date>/` and it appears in Organizer.

@@ -76,5 +76,22 @@
 	-->
 	<key>stripSwiftSymbols</key>
 	<true/>
+
+	<!--
+	  Do NOT let Xcode pick the build number. This key defaults to **true**, and left
+	  unset the export silently ships a different build than the one that was archived:
+	  `CURRENT_PROJECT_VERSION = 3` in App.xcodeproj archived as 3 and came out of
+	  -exportArchive as 1.0 (4).
+
+	  That is worth more than the one wasted number. The build number is how a crash
+	  report, a TestFlight tester's bug report and a git commit are tied together, and
+	  the bump happens after the archive is sealed — so nothing in the repo, the archive
+	  or the build log records the number that actually shipped. The only place it
+	  appears is App Store Connect, which is exactly where you are trying not to have to
+	  look. Setting it false makes the .ipa's CFBundleVersion equal to the project's,
+	  and moves the decision back to a one-line commit.
+	-->
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
 </dict>
 </plist>
