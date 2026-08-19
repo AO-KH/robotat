@@ -201,6 +201,7 @@ export const en = {
     emailSub: "Reply in your inbox",
     haveAccount: "Have an account?",
     signInToTrack: "to track your requests.",
+    needHelp: "Already a customer and need help?",
     individual: "Individual",
     company: "Company",
     fullName: "Full name *",

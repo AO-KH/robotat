@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "wouter";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X, Loader2, Mail, ArrowLeft, User as UserIcon, Building2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -49,6 +50,29 @@ export function BookDemoModal() {
   useEffect(() => {
     if (isOpen) track("booking_open");
   }, [isOpen]);
+
+  /*
+    A modal must not outlive the route it was opened on.
+
+    This component is mounted outside the Router, so a client-side navigation while it
+    is open leaves it sitting over the new page. Radix keeps `pointer-events: none` on
+    <body> for as long as it is open, so the page underneath renders but cannot be
+    clicked at all — it looks like the site has frozen.
+
+    Closing here rather than from each link's onClick because there is more than one
+    way out: the support link below, the sign-in link, and anything added later. The
+    nav menu already does exactly this with `[location]`.
+
+    Safe on mount and on open: `isOpen` is false at mount, and opening the modal does
+    not change the location, so this only ever fires on a real navigation.
+  */
+  const [location] = useLocation();
+  useEffect(() => {
+    if (isOpen) closeModal();
+    // closeModal is recreated on every provider render; depending on it would close
+    // the modal on unrelated re-renders. The location is the only trigger wanted here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
 
   /** Pick a channel and go to the form. Nothing is sent or recorded until it is submitted. */
   const chooseChannel = (next: Channel) => {
@@ -251,6 +275,35 @@ export function BookDemoModal() {
                         {t("booking.signInToTrack")}
                       </p>
                     )}
+
+                    {/*
+                      The way out for someone who came here by the wrong door.
+
+                      The bottom tab bar's "Contact" button opens this modal, and the two
+                      cards above are the same channels in the same colours as /support —
+                      so a customer who tapped Contact wanting help has just had that
+                      expectation confirmed, and the next thing they meet is a form asking
+                      for land size and crop type. This is the last point at which they
+                      can be redirected before they have invested anything in filling it in.
+
+                      Shown signed in and signed out alike. The reader most likely to need
+                      it is the one who cannot get past the sign-in screen, and that reader
+                      is signed out.
+                    */}
+                    <p className="text-center text-label text-muted-foreground mt-3">
+                      {t("booking.needHelp")}{" "}
+                      {/* A Link, not an <a href> like the sign-in line above: inside the
+                          iOS app a real navigation reloads the bundled index.html and
+                          re-boots the whole React app, which took ~30s from cold in the
+                          Simulator. The modal is closed by the route-change effect above,
+                          not from here. */}
+                      <Link
+                        href="/support"
+                        className="text-[#c084fc] hover:underline min-h-[44px] px-2 inline-flex items-center"
+                      >
+                        {t("support.title")}
+                      </Link>
+                    </p>
                   </div>
                 ) : (
                   /* ---- Step 2: email detail form ---- */

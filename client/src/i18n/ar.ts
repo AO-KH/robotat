@@ -201,6 +201,7 @@ export const ar: Dictionary = {
     emailSub: "الرد في بريدك",
     haveAccount: "لديك حساب؟",
     signInToTrack: "لمتابعة طلباتك.",
+    needHelp: "عميل حالي وتحتاج مساعدة؟",
     individual: "فرد",
     company: "شركة",
     fullName: "الاسم الكامل *",
