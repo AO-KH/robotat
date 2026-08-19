@@ -117,7 +117,19 @@ const SEEDED_ASSESSMENTS = [
   },
 ] as const;
 
-const DEMO_NAME = "App Review";
+/**
+ * A person's name, not "App Review", because the dashboard greets the user by first
+ * name — `Hi, {name}` with firstName(), which takes the word before the first space.
+ * "App Review" renders as "Hi, App", and that is the App Store screenshot: it reads as
+ * a truncation bug rather than a name, on the one shot that has to explain the app.
+ *
+ * Nothing depends on this being recognisably the review account. Staff tell the seeded
+ * bookings apart in /admin by the message field, which Admin.tsx renders inline in the
+ * list next to every row, and by the appreview@ address on the row itself — not by the
+ * name. Changing it here changes it on the user and on all three bookings together,
+ * which is why they share the constant.
+ */
+const DEMO_NAME = "Faisal Al-Otaibi";
 const DEMO_PHONE = "+966500000000";
 
 function at(days: number): Date {

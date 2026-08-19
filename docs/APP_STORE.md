@@ -289,7 +289,13 @@ like any other, and each says in its message field that it is review demo data, 
 dispatches an agronomist to a farm that does not exist.
 
 Verified against production on 2026-08-19: session login, bearer-token login (the path
-the iOS build actually uses), and `GET /api/assessments` returning all three rows.
+the iOS build actually uses), and `GET /api/assessments` returning all three rows. The
+Dashboard screenshot is captured by signing this account in on the simulator, so the set
+would not build if the credentials had stopped working.
+
+The account is named "Faisal Al-Otaibi" rather than "App Review" because the dashboard
+greets the user by first name and that shot is in the listing; the reasoning is on
+`DEMO_NAME` in `script/demo-account.ts`.
 
 To rotate the password for a later submission, or to remove the account entirely:
 
@@ -359,8 +365,28 @@ OTHER
 
 `script/ios-screenshots.sh` writes the 6.9-inch set to `screenshots/ios-6.9/` at
 1320×2868. The target is iPhone-only, so that one set covers the submission and Apple
-scales it down; no iPad set is needed.
+scales it down; no iPad set is needed. Eight scenes:
 
-The Dashboard screenshot needs the reviewer demo account to exist first — an empty
-dashboard is a poor shot, and it is the screen that best answers "what is this app for".
-Re-run the script after creating the account.
+| | Scene | |
+| --- | --- | --- |
+| 01 | Home | the hero and the primary call to action |
+| 02 | Fleet | the product grid |
+| 03 | Product detail | the sheet over a dimmed grid |
+| 04 | Services | |
+| 05 | Environments | orchards, row crops, protected agriculture, solar |
+| 06 | Book a site assessment | the WhatsApp/email choice |
+| 07 | Sign in | |
+| 08 | Dashboard | the demo account, signed in, with its three bookings |
+
+Scene 08 signs in as the App Review demo account by driving the real form, so it doubles
+as a live check of the credentials in §5 — if it comes out on the sign-in screen instead
+of the dashboard, the account is broken and so is the submission. It is the only scene
+that needs the account to exist, and the only one that talks to production.
+
+Two things about that scene are worth knowing before changing it. The dashboard greets
+the user by first name, so the account name is on screen — see the note on `DEMO_NAME` in
+`script/demo-account.ts` for why it is a person's name and not "App Review". And signing
+in used to raise the iOS notifications permission alert over the shot; the script now
+hides the push plugin from the webview to prevent it. An alert that is already on screen
+from an earlier run cannot be dismissed by any means simctl offers, which is why the
+script reboots the simulator rather than reusing a booted one.
