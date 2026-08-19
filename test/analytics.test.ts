@@ -20,6 +20,14 @@ describe("analytics ingest (POST /api/analytics/events)", () => {
     expect((await request(app).post("/api/analytics/events").send({ type: "page_view", path: "/" })).status).toBe(202);
     expect((await request(app).post("/api/analytics/events").send({ path: "/" })).status).toBe(400);
   });
+
+  it("accepts an event with a source, and rejects one longer than the column expects", async () => {
+    const post = (body: object) => request(app).post("/api/analytics/events").send(body);
+    expect((await post({ type: "booking_open", source: "home-hero" })).status).toBe(202);
+    // The endpoint is public, so the 64-char bound is the only thing standing between a
+    // stranger and arbitrarily long rows.
+    expect((await post({ type: "booking_open", source: "x".repeat(65) })).status).toBe(400);
+  });
 });
 
 describe("analytics summary (GET /api/admin/analytics)", () => {
@@ -49,5 +57,28 @@ describe("analytics summary (GET /api/admin/analytics)", () => {
     expect(res.body.topPaths[0]).toMatchObject({ path: "/", views: 2 });
     expect(res.body.funnel.opened).toBe(1);
     expect(res.body.funnel.submitted).toBe(1);
+  });
+
+  it("breaks opens down by source, busiest first, and still sums to the funnel", async () => {
+    const send = (body: object) => request(app).post("/api/analytics/events").send(body);
+    await send({ type: "booking_open", source: "tabbar-contact" });
+    await send({ type: "booking_open", source: "tabbar-contact" });
+    await send({ type: "booking_open", source: "home-hero" });
+    // No source: what every row recorded before migration 0015 looks like.
+    await send({ type: "booking_open" });
+
+    const staff = request.agent(app);
+    await staff.post("/api/auth/register").send(newUser({ email: "s@example.com" }));
+    await makeStaff("s@example.com");
+    const res = await staff.get("/api/admin/analytics");
+
+    expect(res.status).toBe(200);
+    expect(res.body.bookingSources[0]).toMatchObject({ source: "tabbar-contact", opens: 2 });
+    // Unlabelled opens are bucketed, not dropped. If they were dropped this panel would
+    // quietly disagree with the "opened" figure sitting next to it on the same screen.
+    expect(res.body.bookingSources).toContainEqual({ source: "(unknown)", opens: 1 });
+
+    const summed = res.body.bookingSources.reduce((n: number, s: { opens: number }) => n + s.opens, 0);
+    expect(summed).toBe(res.body.funnel.opened);
   });
 });

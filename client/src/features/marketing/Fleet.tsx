@@ -198,7 +198,7 @@ export default function Fleet() {
                       <button
                         onClick={() => {
                           setSelected(null);
-                          openModal();
+                          openModal("fleet-product");
                         }}
                         className="px-8 py-4 rounded-full bg-primary text-white text-body font-semibold hover:bg-[#a855f7] transition-colors whitespace-nowrap"
                       >
@@ -237,7 +237,7 @@ export default function Fleet() {
                 <h2 className="text-subhead font-semibold mb-6">{t("fleet.commandCenter")}</h2>
                 <p className="text-body text-muted-foreground mb-8">{t("fleet.commandCenterDesc")}</p>
                 <button
-                  onClick={openModal}
+                  onClick={() => openModal("fleet-platform")}
                   className="px-6 py-3 rounded-full border border-[#a855f7]/[0.22] hover:border-[#c084fc] hover:text-[#c084fc] text-foreground text-body font-semibold transition-colors"
                 >
                   {t("fleet.requestPlatformDemo")}

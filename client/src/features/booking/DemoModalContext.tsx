@@ -1,9 +1,39 @@
 import { createContext, useContext, useRef, useState, ReactNode } from "react";
 
+/**
+ * Which control opened the booking modal.
+ *
+ * The modal is the only conversion path on the site and it has twelve doors. The funnel
+ * could say how many people opened it and how many finished, but not which door any of
+ * them came through, so questions like "is the bottom tab bar's Contact button feeding
+ * the funnel or misdirecting people who wanted support?" had no answer in the data.
+ *
+ * A closed union rather than a free string for two reasons. Typos would silently split
+ * one door's count in two, and — because the type has no overlap with a React event —
+ * `onClick={openModal}` stops compiling, so a new call site cannot be added without
+ * choosing a label. Naming is `<surface>-<place>`, and these strings are written into
+ * the database: renaming one splits its history, so treat them as fixed.
+ */
+export type BookingSource =
+  | "home-hero"
+  | "home-cta"
+  | "services-card"
+  | "services-cta"
+  | "fleet-product"
+  | "fleet-platform"
+  | "dashboard-header"
+  | "dashboard-empty"
+  | "dashboard-quick-action"
+  | "nav-header"
+  | "nav-menu"
+  | "tabbar-contact";
+
 interface DemoModalContextType {
   isOpen: boolean;
-  openModal: () => void;
+  openModal: (source: BookingSource) => void;
   closeModal: () => void;
+  /** The control that opened the modal, for the `booking_open` event. */
+  source: BookingSource | null;
   /**
    * Put focus back on whatever opened the modal. Returns false if there is nothing
    * to return to, so the caller can fall back to Radix's own behaviour.
@@ -15,6 +45,15 @@ const DemoModalContext = createContext<DemoModalContextType | undefined>(undefin
 
 export function DemoModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  /**
+   * State rather than a ref, because the modal reads it from an effect keyed on `isOpen`
+   * and a ref would not have re-rendered it into that effect's closure. Both setters run
+   * in the same click handler, so React batches them into one commit and the effect sees
+   * a matching pair. It is deliberately not cleared on close: nothing reads it while the
+   * modal is shut, and clearing would mean a second state update on every close.
+   */
+  const [source, setSource] = useState<BookingSource | null>(null);
 
   /**
    * The element that opened the modal, so focus can go back to it on close.
@@ -36,9 +75,16 @@ export function DemoModalProvider({ children }: { children: ReactNode }) {
     <DemoModalContext.Provider
       value={{
         isOpen,
-        openModal: () => {
+        source,
+        openModal: (from: BookingSource) => {
+          // `document.activeElement` first, before anything else in this handler — see
+          // the `trigger` docblock above for why it is read here at all. Two call sites
+          // close something else before calling this (the fleet lightbox, the nav menu),
+          // which is safe only because React defers those commits: the DOM still holds
+          // the button that was clicked at the moment this line runs.
           const active = document.activeElement;
           trigger.current = active instanceof HTMLElement ? active : null;
+          setSource(from);
           setIsOpen(true);
         },
         closeModal: () => setIsOpen(false),

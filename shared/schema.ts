@@ -412,6 +412,12 @@ export const analyticsEvents = pgTable("analytics_events", {
   id: serial("id").primaryKey(),
   type: text("type").notNull(), // e.g. page_view, booking_open, booking_whatsapp…
   path: text("path"),
+  // Which control fired the event, for events that can be fired from more than one place.
+  // Only booking_open sets it today: the modal has twelve entry points and `path` cannot
+  // tell them apart, because three of them are in the navigation and render on every path
+  // while three pages carry two CTAs each. Null everywhere else, and on every row written
+  // before migration 0015.
+  source: text("source"),
   visitorId: text("visitor_id"), // anonymous, client-generated (no PII, no IP stored)
   userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: dbClockTimestamp("created_at").defaultNow(),
@@ -423,6 +429,13 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export const trackEventSchema = z.object({
   type: z.string().trim().min(1).max(64),
   path: z.string().max(512).optional(),
+  // Capped short and deliberately not free-form in practice — the labels are a fixed union
+  // (BookingSource in client/src/features/booking/DemoModalContext.tsx) that the compiler
+  // enforces at each call site. The endpoint is public and unauthenticated, so this bound
+  // describes what a stranger could write, not what the app sends. `min(1)` so a blank
+  // string is rejected rather than stored: an empty source would group as its own bucket
+  // alongside the NULL one, splitting "we don't know" into two rows that mean the same.
+  source: z.string().trim().min(1).max(64).optional(),
   visitorId: z.string().max(64).optional(),
 });
 export type TrackEventInput = z.infer<typeof trackEventSchema>;
@@ -458,4 +471,11 @@ export interface AnalyticsSummary {
   uniqueVisitors: number;
   topPaths: { path: string; views: number }[];
   funnel: { opened: number; whatsapp: number; email: number; submitted: number };
+  /**
+   * `booking_open` broken down by the control that fired it, busiest first. Rows written
+   * before migration 0015 have no source and are counted under an "unknown" bucket rather
+   * than dropped, so this column always sums to `funnel.opened` — otherwise the panel
+   * would appear to contradict the funnel beside it for as long as any old rows survive.
+   */
+  bookingSources: { source: string; opens: number }[];
 }

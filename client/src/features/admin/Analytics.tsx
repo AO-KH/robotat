@@ -28,6 +28,29 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
     return map[path] ?? path;
   };
 
+  // Plain English for the labels written into the database by openModal(). Unmapped
+  // values fall through as-is, which is what "(unknown)" and any label added to
+  // BookingSource but not to this map will show as — a raw slug is ugly but honest,
+  // and better than a panel that silently hides a door.
+  const sourceLabel = (source: string): string => {
+    const map: Record<string, string> = {
+      "home-hero": t("adminAnalytics.srcHomeHero"),
+      "home-cta": t("adminAnalytics.srcHomeCta"),
+      "services-card": t("adminAnalytics.srcServicesCard"),
+      "services-cta": t("adminAnalytics.srcServicesCta"),
+      "fleet-product": t("adminAnalytics.srcFleetProduct"),
+      "fleet-platform": t("adminAnalytics.srcFleetPlatform"),
+      "dashboard-header": t("adminAnalytics.srcDashboardHeader"),
+      "dashboard-empty": t("adminAnalytics.srcDashboardEmpty"),
+      "dashboard-quick-action": t("adminAnalytics.srcDashboardQuick"),
+      "nav-header": t("adminAnalytics.srcNavHeader"),
+      "nav-menu": t("adminAnalytics.srcNavMenu"),
+      "tabbar-contact": t("adminAnalytics.srcTabbarContact"),
+      "(unknown)": t("adminAnalytics.srcUnknown"),
+    };
+    return map[source] ?? source;
+  };
+
   const funnelSteps = [
     { key: "opened", label: t("adminAnalytics.openedBooking") },
     { key: "whatsapp", label: t("adminAnalytics.choseWhatsapp") },
@@ -37,6 +60,7 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
 
   const funnelMax = Math.max(summary.funnel.opened, 1);
   const pathMax = Math.max(...summary.topPaths.map((p) => p.views), 1);
+  const sourceMax = Math.max(...summary.bookingSources.map((s) => s.opens), 1);
 
   return (
     <>
@@ -102,6 +126,34 @@ function AnalyticsBody({ summary }: { summary: AnalyticsSummary }) {
               );
             })}
           </div>
+        </div>
+
+        {/* Where bookings start — the funnel above, split by which control opened it.
+            Full width because there are twelve possible rows and the labels are
+            sentences, not paths. */}
+        <div className="surface rounded-3xl p-6 md:col-span-2">
+          <h2 className="text-subhead font-semibold mb-1">{t("adminAnalytics.bookingSources")}</h2>
+          <p className="text-label text-muted-foreground mb-5">{t("adminAnalytics.bookingSourcesSub")}</p>
+          {summary.bookingSources.length === 0 ? (
+            <p className="text-body text-muted-foreground">{t("adminAnalytics.noSources")}</p>
+          ) : (
+            <div className="space-y-3">
+              {summary.bookingSources.map((s) => (
+                <div key={s.source}>
+                  <div className="flex justify-between gap-3 text-body mb-1">
+                    <span className="truncate">{sourceLabel(s.source)}</span>
+                    <span className="text-muted-foreground font-mono text-label shrink-0">{s.opens}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full bg-[#c084fc] rounded-full"
+                      style={{ width: `${(s.opens / sourceMax) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

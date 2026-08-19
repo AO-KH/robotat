@@ -1,0 +1,24 @@
+-- Which button opened the booking modal.
+--
+-- The modal is reachable from twelve controls — two on Home, two on Services, two on
+-- Fleet, three on the Dashboard, and three in the navigation (desktop header, hamburger,
+-- and the mobile bottom tab labelled "Contact"). Every one of them logged the same
+-- `booking_open` event, so the funnel could say how many people opened the form and how
+-- many finished it, but not which door any of them came through. That is the question
+-- that actually decides things: whether the bottom tab bar's "Contact" button is feeding
+-- the funnel or just misdirecting people who wanted support.
+--
+-- A separate column rather than folding the label into `type`, because getSummary()
+-- matches the type exactly — eq(type, 'page_view') and inArray(type, FUNNEL_TYPES) — so
+-- a value like 'booking_open:home-hero' would stop being counted at all and silently
+-- zero the funnel.
+--
+-- Not derivable from `path` either. Home, Services and Fleet each carry two CTAs on one
+-- path, and the three navigation controls render on every path, so `path` cannot tell the
+-- tab bar apart from the page's own button. Distinguishing those is the entire point.
+--
+-- Nullable with no default, and no backfill. Every event already recorded genuinely has
+-- an unknown source, and a default would invent one; every event that is not a
+-- `booking_open` legitimately has none. NULL is the honest value in both cases, and
+-- reading this column means grouping over rows where it is set.
+ALTER TABLE "analytics_events" ADD COLUMN "source" text;

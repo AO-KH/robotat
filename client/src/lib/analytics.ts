@@ -14,15 +14,28 @@ function visitorId(): string {
   }
 }
 
-/** Fire-and-forget event to our own backend. Never throws, never blocks navigation. */
-export function track(type: string, path?: string): void {
+/**
+ * Fire-and-forget event to our own backend. Never throws, never blocks navigation.
+ *
+ * `source` names the control that fired the event, for events reachable from more than
+ * one place — only `booking_open` uses it today. It is sent as its own field rather than
+ * baked into `type`, because the funnel query matches types exactly and would stop
+ * counting a compound value. Omitted from the body entirely when unset, so page views
+ * keep sending the payload they always have.
+ */
+export function track(type: string, path?: string, source?: string): void {
   try {
     void fetch(api.analytics.track.path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       keepalive: true,
-      body: JSON.stringify({ type, path: path ?? window.location.pathname, visitorId: visitorId() }),
+      body: JSON.stringify({
+        type,
+        path: path ?? window.location.pathname,
+        ...(source ? { source } : {}),
+        visitorId: visitorId(),
+      }),
     }).catch(() => {});
   } catch {
     /* ignore */

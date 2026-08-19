@@ -138,7 +138,7 @@ export default function Dashboard() {
                 <LayoutDashboard className="w-6 h-6 text-primary" /> {t("dashboard.myAssessments")}
               </h2>
               <button
-                onClick={openModal}
+                onClick={() => openModal("dashboard-header")}
                 // Same padding-derived shortfall as the header CTA: `py-2` over
                 // `text-body` measured 43.2px, and `hidden md:` kept it out of the
                 // 375px audit. Found by sweeping the breakpoint widths.
@@ -164,7 +164,7 @@ export default function Dashboard() {
               emptyBody={t("dashboard.noAssessmentsSub")}
               emptyAction={
                 <button
-                  onClick={openModal}
+                  onClick={() => openModal("dashboard-empty")}
                   className="min-h-[44px] px-6 rounded-full bg-primary text-primary-foreground text-body font-semibold hover:bg-[#a855f7] transition-colors"
                 >
                   {t("dashboard.bookAssessment")}
@@ -215,7 +215,7 @@ export default function Dashboard() {
             </h2>
             <div className="space-y-4">
               <button
-                onClick={openModal}
+                onClick={() => openModal("dashboard-quick-action")}
                 className="w-full p-6 rounded-3xl bg-primary text-primary-foreground text-body font-semibold text-start hover:bg-[#a855f7] transition-colors flex justify-between items-center"
               >
                 {t("dashboard.bookAssessment")} <ChevronRight className="w-5 h-5 rtl:rotate-180" />

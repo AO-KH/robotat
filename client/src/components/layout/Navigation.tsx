@@ -109,7 +109,7 @@ export function Navigation() {
           <div className="flex items-center gap-3">
             <LangToggle className="hidden sm:inline-flex" />
             <button
-              onClick={openModal}
+              onClick={() => openModal("nav-header")}
               // `min-h-[44px]` because the height here is padding-derived (py-2.5 over
               // text-label) and measured 38.8px — under the 44px floor at every width from
               // 640px up, which on iOS is every iPad and every landscape iPhone. `hidden sm:`
@@ -172,7 +172,7 @@ export function Navigation() {
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    openModal();
+                    openModal("nav-menu");
                   }}
                   className="flex-1 px-4 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors"
                 >
@@ -203,8 +203,13 @@ export function Navigation() {
               </Link>
             );
           })}
+          {/* Labelled `tabbar-contact` rather than something with "book" in it, because
+              this is the one entry point whose label does not say what it opens: it reads
+              "Contact" and shows a booking form. Whether that mismatch costs anything is
+              the question this whole source field exists to answer — compare its opens
+              against its submissions, not against the other doors' volume. */}
           <button
-            onClick={openModal}
+            onClick={() => openModal("tabbar-contact")}
             className="flex flex-col items-center justify-center w-full h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
             <MessageSquare className="w-5 h-5" />

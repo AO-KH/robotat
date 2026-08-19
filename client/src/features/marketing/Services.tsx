@@ -57,8 +57,12 @@ export default function Services() {
                 </div>
                 <h3 className="text-subhead font-semibold text-foreground mb-3">{service.title}</h3>
                 <p className="text-body text-muted-foreground flex-1 mb-8">{service.description}</p>
+                {/* One label for all of the service cards, not one per service: the
+                    question this answers is which entry point converts, and every card
+                    is the same entry point. Which service was on screen is already in
+                    the booking itself. */}
                 <button
-                  onClick={openModal}
+                  onClick={() => openModal("services-card")}
                   className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-primary text-body font-semibold hover:bg-primary hover:text-white transition-all duration-300"
                 >
                   {t("services.requestService")}
@@ -77,7 +81,7 @@ export default function Services() {
           <h2 className="text-heading font-semibold mb-4 relative z-10">{t("services.ctaTitle")}</h2>
           <p className="text-body text-muted-foreground mb-8 max-w-2xl mx-auto relative z-10">{t("services.ctaSub")}</p>
           <button
-            onClick={openModal}
+            onClick={() => openModal("services-cta")}
             className="relative z-10 inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-foreground text-background font-semibold text-body hover:bg-white hover:scale-105 transition-all duration-300"
           >
             {t("services.contactSales")} <ArrowRight className="w-5 h-5 rtl:rotate-180" />

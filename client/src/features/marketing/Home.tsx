@@ -62,7 +62,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
-              onClick={openModal}
+              onClick={() => openModal("home-hero")}
               className="px-7 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors duration-200 flex items-center justify-center gap-2"
             >
               {t("home.bookAssessment")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
@@ -197,7 +197,7 @@ export default function Home() {
           <p className="text-body text-muted-foreground">{t("home.ctaSub")}</p>
           <div className="flex flex-col sm:flex-row items-center gap-5">
             <button
-              onClick={openModal}
+              onClick={() => openModal("home-cta")}
               className="px-8 py-4 min-h-[48px] rounded-full bg-primary text-primary-foreground font-semibold text-body hover:bg-[#a855f7] transition-colors duration-200"
             >
               {t("home.bookAssessment")}

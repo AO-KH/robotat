@@ -19,7 +19,7 @@ type AccountType = "individual" | "company";
 type Channel = "whatsapp" | "email";
 
 export function BookDemoModal() {
-  const { isOpen, closeModal, restoreTriggerFocus } = useDemoModal();
+  const { isOpen, source, closeModal, restoreTriggerFocus } = useDemoModal();
   const { data: user } = useCurrentUser();
   const { t, lang } = useI18n();
   const { mutateAsync: recordBooking } = useBookAssessment();
@@ -46,9 +46,13 @@ export function BookDemoModal() {
     }
   }, [isOpen, user, reset]);
 
-  // Funnel: one "opened" event per time the modal is shown.
+  // Funnel: one "opened" event per time the modal is shown, tagged with the control that
+  // opened it. `source` is set in the same click handler as `isOpen`, so React has
+  // committed both by the time this runs; it stays out of the dependency array so that a
+  // source change alone could never fire a second open event.
   useEffect(() => {
-    if (isOpen) track("booking_open");
+    if (isOpen) track("booking_open", undefined, source ?? undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   /*
