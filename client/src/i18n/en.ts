@@ -53,7 +53,6 @@ export const en = {
       "The MAX T100 doesn't change — the attachment does. One platform covers open fields, protected agriculture, and solar sites.",
     environments: [
       {
-        corner: "01 · Open field",
         type: "— Orchards, vineyards & row crops",
         title: "Drives every row, all season.",
         desc: "Scouts crop health, cultivates soil, and sprays plant-by-plant across orchards, vineyards, and broadacre rows. Low ground pressure, GPS-tight navigation.",
@@ -64,7 +63,6 @@ export const en = {
         ],
       },
       {
-        corner: "02 · Greenhouse",
         type: "— Protected & indoor agriculture",
         title: "Climate-aware, all day indoors.",
         desc: "Quiet, compact operation inside greenhouses and vertical farms — scouting and monitoring crop and climate in tight aisles, around the clock.",
@@ -75,7 +73,6 @@ export const en = {
         ],
       },
       {
-        corner: "03 · Solar farm",
         type: "— Solar & infrastructure",
         title: "Keeps the panel rows clear.",
         desc: "Manages vegetation under and between panel rows — preventing shading and fire risk with no mowing crews and zero herbicide.",

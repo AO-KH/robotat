@@ -133,9 +133,6 @@ export default function Home() {
                 >
                   <div className="relative aspect-[16/11] mb-6 border border-border bg-[#06040d]/40 overflow-hidden">
                     <img src={img} alt={env.title} className="w-full h-full object-cover" />
-                    <span className="absolute top-3 left-3 font-mono text-label text-[#c084fc] tracking-[0.14em] bg-black/50 px-2 py-1">
-                      {env.corner}
-                    </span>
                   </div>
 
                   <div className="eyebrow mb-2.5">{env.type}</div>
@@ -146,7 +143,7 @@ export default function Home() {
                     {env.specs.map((s) => (
                       <div key={s.label} className="flex justify-between gap-3 text-label">
                         <b className="font-normal">{s.label}</b>
-                        <span className="data-label text-right">{s.value}</span>
+                        <span className="data-label text-end">{s.value}</span>
                       </div>
                     ))}
                   </div>
@@ -178,7 +175,7 @@ export default function Home() {
                   {phase.kv.map((k) => (
                     <div key={k.label} className="flex justify-between gap-3 text-label">
                       <b className="font-normal">{k.label}</b>
-                      <span className="data-label text-right">{k.value}</span>
+                      <span className="data-label text-end">{k.value}</span>
                     </div>
                   ))}
                 </div>
