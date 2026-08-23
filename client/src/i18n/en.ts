@@ -49,7 +49,7 @@ export const en = {
     envTitle1: "One robot.",
     envTitle2: "Every environment",
     envSub:
-      "The MAX T100 doesn't change — the attachment does. One platform covers open fields, protected agriculture, and solar sites.",
+      "Shaddad doesn't change — the attachment does. One platform covers open fields, protected agriculture, and solar sites.",
     environments: [
       {
         type: "— Orchards, vineyards & row crops",
@@ -462,7 +462,7 @@ export const en = {
     ourProducts: "Our products",
     onePlatform: "One platform.",
     unlimitedAttachments: "Unlimited attachments",
-    sub: "From agriculture to solar farms — meet the MAX T100 and its specialized ecosystem of attachments. One heavy-duty autonomous base, every job in the field.",
+    sub: "From agriculture to solar farms — meet Shaddad and its specialized ecosystem of attachments. One heavy-duty autonomous base, every job in the field.",
     basePlatform: "Base Platform",
     attachmentTool: "Attachment Tool",
     viewDetails: "View Details",

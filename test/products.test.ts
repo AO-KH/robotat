@@ -23,6 +23,11 @@ describe("products (GET /api/products)", () => {
     expect(res.body[0].kind).toBe("platform");
 
     const p = res.body[0];
+    // The platform is the one product whose brand differs by script (0016);
+    // attachments leave nameAr NULL and read the same in both languages.
+    expect(p.name).toBe("Shaddad");
+    expect(p.nameAr).toBe("شداد");
+    expect(res.body[1].nameAr).toBeNull();
     expect(p.roleEn).toBeTruthy();
     expect(p.roleAr).toBeTruthy();
     expect(p.descriptionAr).toBeTruthy();

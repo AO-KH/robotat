@@ -455,7 +455,10 @@ export const products = pgTable("products", {
   slug: text("slug").notNull().unique(),
   kind: text("kind").notNull(), // 'platform' | 'attachment'
   sortOrder: integer("sort_order").notNull().default(0),
-  name: text("name").notNull(), // brand name, not translated (e.g. "MAX T100")
+  name: text("name").notNull(), // brand name shown in English (e.g. "Shaddad", "X-Sprayer")
+  // The Arabic rendering of the name, when it has one — the platform is شداد. NULL
+  // means the brand reads the same in both languages, which is what the X-* tools want.
+  nameAr: text("name_ar"),
   roleEn: text("role_en").notNull(),
   roleAr: text("role_ar").notNull(),
   descriptionEn: text("description_en").notNull(),
