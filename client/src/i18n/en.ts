@@ -195,8 +195,14 @@ export const en = {
     whatsappSub: "Reply in your chats",
     email: "Email",
     emailSub: "Reply in your inbox",
-    haveAccount: "Have an account?",
-    signInToTrack: "to track your requests.",
+    signInGateTitle: "Sign in to book",
+    signInGateBody:
+      "Create an account or sign in to book a site assessment — you'll track its status from your dashboard.",
+    signInGateCta: "Sign in or create an account",
+    sentTitle: "Request sent",
+    sentBody:
+      "Your site assessment request is on its way — we've emailed you a confirmation and will contact you soon.",
+    done: "Done",
     needHelp: "Already a customer and need help?",
     individual: "Individual",
     company: "Company",

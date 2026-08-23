@@ -27,21 +27,6 @@ export function useMyAssessments(enabled = true) {
   });
 }
 
-/** Submit the booking form as a guest (no account) — returns prefilled channel links, saves nothing. */
-export function useContactSubmit() {
-  return useMutation({
-    mutationFn: async (data: BookAssessmentInput) => {
-      const res = await fetch(api.contact.submit.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(api.contact.submit.input.parse(data)),
-      });
-      if (!res.ok) throw new Error("Could not submit your request");
-      return (await res.json()) as { whatsappUrl: string; mailtoUrl: string };
-    },
-  });
-}
-
 /** A single booking owned by the signed-in user. */
 export function useAssessment(id: number | undefined) {
   return useQuery<Assessment>({

@@ -4,16 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Loader2, Mail, ArrowLeft, User as UserIcon, Building2 } from "lucide-react";
+import { X, Loader2, Mail, ArrowLeft, User as UserIcon, Building2, LogIn, CheckCircle2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
-import { useContactSubmit, useBookAssessment } from "@/features/booking/use-assessments";
+import { useBookAssessment } from "@/features/booking/use-assessments";
 import { useI18n } from "@/i18n";
 import { track } from "@/lib/analytics";
 import { bookAssessmentSchema, type BookAssessmentInput } from "@shared/schema";
 
-type View = "choose" | "form";
+type View = "choose" | "form" | "sent";
 type AccountType = "individual" | "company";
 /** Where the finished booking gets handed off to. */
 type Channel = "whatsapp" | "email";
@@ -23,7 +23,6 @@ export function BookDemoModal() {
   const { data: user } = useCurrentUser();
   const { t, lang } = useI18n();
   const { mutateAsync: recordBooking } = useBookAssessment();
-  const { mutateAsync: submitContact } = useContactSubmit();
 
   const [view, setView] = useState<View>("choose");
   const [type, setType] = useState<AccountType>("individual");
@@ -95,28 +94,38 @@ export function BookDemoModal() {
     const withLocale = { ...data, locale: lang };
     const payload = type === "individual" ? { ...withLocale, company: "" } : withLocale;
     try {
-      const res = user ? await recordBooking(payload) : await submitContact(payload);
+      const res = await recordBooking(payload);
       track("booking_submitted");
-      /*
-        Both links come back from the server, built from the row it just wrote, so the
-        WhatsApp draft carries the same farm details as the email rather than the name
-        and address this modal happens to know. Before this, the WhatsApp option skipped
-        the form entirely and sent only those two fields.
+      if (channel === "whatsapp") {
+        /*
+          The WhatsApp link comes back from the server, built from the row it just wrote,
+          so the draft carries the same farm details as the email rather than the name
+          and address this modal happens to know.
 
-        Same-tab navigation for both, and for WhatsApp that is a correction rather than a
-        preference. This first used window.open(_blank) with a `null` check falling back
-        to a navigation — but a browser that refuses the popup does not reliably return
-        null. Measured here: open() handed back a live-looking object, no tab appeared,
-        the page never moved, so the fallback never ran and the booking silently saved
-        and went nowhere. There is no dependable way to ask whether a popup actually
-        opened, and location.href cannot be popup-blocked at all.
+          Same-tab navigation, and that is a correction rather than a preference. This
+          first used window.open(_blank) with a `null` check falling back to a
+          navigation — but a browser that refuses the popup does not reliably return
+          null. Measured here: open() handed back a live-looking object, no tab appeared,
+          the page never moved, so the fallback never ran and the booking silently saved
+          and went nowhere. There is no dependable way to ask whether a popup actually
+          opened, and location.href cannot be popup-blocked at all.
 
-        On a phone — the case that matters, since this ships as an iOS app — the OS
-        catches the wa.me link and hands off to WhatsApp, leaving this page loaded
-        behind it. On desktop it means web.whatsapp.com in this tab.
-      */
-      window.location.href = channel === "whatsapp" ? res.whatsappUrl : res.mailtoUrl;
-      setTimeout(closeModal, 300);
+          On a phone — the case that matters, since this ships as an iOS app — the OS
+          catches the wa.me link and hands off to WhatsApp, leaving this page loaded
+          behind it. On desktop it means web.whatsapp.com in this tab.
+        */
+        window.location.href = res.whatsappUrl;
+        setTimeout(closeModal, 300);
+      } else {
+        /*
+          No mailto handoff. The server has already delivered this booking — business
+          notice and customer confirmation both — so opening the Mail app on top of that
+          only re-asked the customer to send a message that was already sent, and on a
+          phone with no configured mail account it dead-ended in an OS password prompt.
+          The in-modal receipt is the whole email experience now.
+        */
+        setView("sent");
+      }
     } catch {
       /* mutation hooks surface the toast */
     }
@@ -233,8 +242,39 @@ export function BookDemoModal() {
               </div>
 
               <div className="overflow-y-auto">
-                {/* ---- Step 1: choose a channel ---- */}
-                {view === "choose" ? (
+                {!user ? (
+                  /*
+                    Signed-out visitors do not book. A booking creates a tracked row on an
+                    account and its confirmations go to that account's verified address,
+                    so the account is the first step of the funnel — not an afterthought
+                    offered in small print under the channel cards. The gate sits where
+                    those cards would be, before anyone has invested in the form.
+                  */
+                  <div className="p-6 text-center">
+                    <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mb-4">
+                      <LogIn className="w-6 h-6 text-[#c084fc] rtl:-scale-x-100" />
+                    </div>
+                    <h3 className="text-body font-semibold">{t("booking.signInGateTitle")}</h3>
+                    <p className="text-label text-muted-foreground mt-2 mb-6">{t("booking.signInGateBody")}</p>
+                    {/* A Link, not an <a>: inside the iOS app a real navigation re-boots
+                        the whole React app. The route-change effect above closes the modal. */}
+                    <Link
+                      href="/auth"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full text-body font-semibold bg-primary text-primary-foreground hover:bg-[#a855f7] transition-colors"
+                    >
+                      {t("booking.signInGateCta")}
+                    </Link>
+                    <p className="text-center text-label text-muted-foreground mt-4">
+                      {t("booking.needHelp")}{" "}
+                      <Link
+                        href="/support"
+                        className="text-[#c084fc] hover:underline min-h-[44px] px-2 inline-flex items-center"
+                      >
+                        {t("support.title")}
+                      </Link>
+                    </p>
+                  </div>
+                ) : view === "choose" ? (
                   <div className="p-6">
                     <div className="text-center mb-6">
                       <h3 className="text-body font-semibold">{t("booking.howReach")}</h3>
@@ -267,19 +307,6 @@ export function BookDemoModal() {
                       </button>
                     </div>
 
-                    {!user && (
-                      <p className="text-center text-label text-muted-foreground mt-5">
-                        {t("booking.haveAccount")}{" "}
-                        <a
-                          href="/auth"
-                          className="text-[#c084fc] hover:underline min-h-[44px] px-2 inline-flex items-center"
-                        >
-                          {t("auth.signIn")}
-                        </a>{" "}
-                        {t("booking.signInToTrack")}
-                      </p>
-                    )}
-
                     {/*
                       The way out for someone who came here by the wrong door.
 
@@ -308,6 +335,21 @@ export function BookDemoModal() {
                         {t("support.title")}
                       </Link>
                     </p>
+                  </div>
+                ) : view === "sent" ? (
+                  /* ---- Step 3: the in-app receipt the email channel ends on — see onSubmit ---- */
+                  <div className="p-6 text-center">
+                    <div className="mx-auto w-14 h-14 rounded-full bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center mb-4">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+                    </div>
+                    <h3 className="text-body font-semibold">{t("booking.sentTitle")}</h3>
+                    <p className="text-label text-muted-foreground mt-2 mb-6">{t("booking.sentBody")}</p>
+                    <button
+                      onClick={closeModal}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full text-body font-semibold bg-primary text-primary-foreground hover:bg-[#a855f7] transition-colors"
+                    >
+                      {t("booking.done")}
+                    </button>
                   </div>
                 ) : (
                   /* ---- Step 2: email detail form ---- */

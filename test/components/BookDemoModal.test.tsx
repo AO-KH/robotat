@@ -31,12 +31,18 @@ function renderModal() {
   );
 }
 
-beforeEach(() => {
+/** Stub the API: `/api/auth/me` answers as a guest or a signed-in customer. */
+function stubAuth(signedIn: boolean) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
       if (String(url).includes("/api/auth/me")) {
-        return new Response(JSON.stringify({ message: "Not signed in" }), { status: 401 });
+        return signedIn
+          ? new Response(
+              JSON.stringify({ id: 1, name: "Test User", email: "t@example.com", role: "customer" }),
+              { status: 200, headers: { "Content-Type": "application/json" } },
+            )
+          : new Response(JSON.stringify({ message: "Not signed in" }), { status: 401 });
       }
       return new Response(
         JSON.stringify({ whatsappUrl: "https://wa.me/1?text=x", mailtoUrl: "mailto:x" }),
@@ -44,10 +50,15 @@ beforeEach(() => {
       );
     }),
   );
+}
+
+beforeEach(() => {
+  stubAuth(false);
 });
 
 describe("BookDemoModal", () => {
   it("asks for the farm details on the WhatsApp branch too", async () => {
+    stubAuth(true);
     const user = userEvent.setup();
     renderModal();
 
@@ -60,6 +71,20 @@ describe("BookDemoModal", () => {
     for (const field of ["name", "phone", "email", "landSize", "location", "message"]) {
       expect(document.querySelector(`[name="${field}"]`)).not.toBeNull();
     }
+  });
+
+  it("gates a signed-out visitor behind sign-in instead of the channel cards", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByTestId("open"));
+
+    // The gate, with its way in — and no channel to book through without an account.
+    expect(await screen.findByRole("link", { name: /sign in or create an account/i })).toHaveAttribute(
+      "href",
+      "/auth",
+    );
+    expect(screen.queryByRole("button", { name: /WhatsApp/i })).toBeNull();
   });
 
   it("is a real dialog that Escape closes", async () => {
