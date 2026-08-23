@@ -18,7 +18,6 @@ export const ar: Dictionary = {
     heroSub:
       "روبوت ذاتي القيادة واحد، تصنعه وتشغّله ROBOTAT للبساتين والمحاصيل الحقلية والزراعة المحمية ومواقع الطاقة الشمسية في المنطقة.",
     bookAssessment: "احجز تقييماً للموقع",
-    marqueeLabel: "ROBOTAT · ميدان",
 
     capsTag: "ماذا تفعل",
     capsTitle1: "أعينٌ على كل صفّ.",
@@ -100,7 +99,7 @@ export const ar: Dictionary = {
         titleAccent: "مزرعتك.",
         desc: "يجوب فريق زراعي من ROBOTAT حقولك، ويحدّد مسارات الاستكشاف والمعالجة، ويصمّم المهمّة وفق محصولك وموسمك. دون التزام ودون رسوم على التقييم.",
         kv: [
-          { label: "زيارة الموقع", value: "2–3 أيام في الحقل" },
+          { label: "زيارة الموقع", value: "2-3 أيام في الحقل" },
           { label: "خطة المهمّة", value: "مسارات، جداول، مؤشرات" },
           { label: "حجم الأسطول", value: "مُقاسٌ على العمل" },
         ],
@@ -111,7 +110,7 @@ export const ar: Dictionary = {
         titleAccent: "تباشر العمل.",
         desc: "دوريات ذاتية مستمرّة. تجمع المستشعرات بيانات الفحص، وتظهر الحالات الشاذّة فوراً، ويرى مشغّلوك كل شيء في لوحة واحدة.",
         kv: [
-          { label: "مستمرّ", value: "تشغيل ذاتي 24 / 7" },
+          { label: "مستمرّ", value: "تشغيل ذاتي 24/7" },
           { label: "طبقة البيانات", value: "مباشرة إلى لوحتك" },
           { label: "قابل للتتبّع", value: "كل دورية مسجّلة" },
         ],
@@ -134,7 +133,7 @@ export const ar: Dictionary = {
     // between them and strands the first half at the end of the line. Written
     // as an escape rather than a literal character so it is visible here.
     ctaTitle: "روبوتات ذاتية\u00A0القيادة تعتني بأرضنا",
-    ctaSub: "يجوب مهندس زراعي من ROBOTAT مزرعتك خلال 2–3 أيام. دون التزام. ودون رسوم على التقييم.",
+    ctaSub: "يجوب مهندس زراعي من ROBOTAT مزرعتك خلال 2-3 أيام. دون التزام. ودون رسوم على التقييم.",
     emailTeam: "راسل الفريق",
     metaKingdom: "متوفّر في جميع أنحاء المملكة",
     metaResponse: "الرد خلال 48 ساعة",

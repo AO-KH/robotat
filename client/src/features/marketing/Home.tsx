@@ -77,9 +77,6 @@ export default function Home() {
           <div className="relative aspect-[16/10] md:aspect-[21/9] border border-[#a855f7]/[0.22] overflow-hidden bg-gradient-to-b from-[#281c40]/40 to-[#140e20]/20">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#c084fc] to-transparent z-10" />
             <img src={marqueeImg} alt="ROBOTAT" className="w-full h-full object-cover" />
-            <div className="absolute bottom-4 md:bottom-6 inset-x-4 md:inset-x-6 z-10 flex justify-between items-end font-mono text-label uppercase tracking-[0.14em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
-              <span>{t("home.marqueeLabel")}</span>
-            </div>
           </div>
         </motion.div>
       </section>
