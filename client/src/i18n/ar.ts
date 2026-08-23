@@ -49,8 +49,8 @@ export const ar: Dictionary = {
     ],
 
     envTag: "أين تعمل",
-    envTitle1: "روبوت واحد.",
-    envTitle2: "كل بيئة",
+    envTitle1: "روبوت واحد",
+    envTitle2: "لكل بيئة",
     envSub:
       "منصّة MAX T100 لا تتغيّر — بل المُلحق. منصّة واحدة تغطّي الحقول المفتوحة والزراعة المحمية ومواقع الطاقة الشمسية.",
     environments: [
