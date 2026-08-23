@@ -1,6 +1,31 @@
 import { Link, useLocation } from "wouter";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, User, Home, Bot, Layers, MessageSquare, ChevronRight } from "lucide-react";
+import { Menu, X, User, Home, Layers, MessageSquare, ChevronRight } from "lucide-react";
+import type { SVGProps } from "react";
+
+/* The MAX T100 itself — a tracked chassis under a boxy body with a sensor mast —
+   drawn to lucide's 24px/stroke-2 grammar so it sits beside the stock icons. */
+function TrackedRobotIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="6" y="8" width="12" height="6" rx="1" />
+      <path d="M15 8V5" />
+      <circle cx="15" cy="4" r="1" />
+      <rect x="3" y="14" width="18" height="6" rx="3" />
+      <circle cx="8" cy="17" r="1" />
+      <circle cx="16" cy="17" r="1" />
+    </svg>
+  );
+}
 import { useEffect, useState } from "react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
@@ -64,7 +89,7 @@ export function Navigation() {
 
   const mobileLinks = [
     { href: "/", label: t("nav.home"), icon: Home },
-    { href: "/fleet", label: t("nav.products"), icon: Bot },
+    { href: "/fleet", label: t("nav.products"), icon: TrackedRobotIcon },
     { href: "/services", label: t("nav.services"), icon: Layers },
   ];
 
