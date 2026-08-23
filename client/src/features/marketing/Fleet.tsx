@@ -29,11 +29,13 @@ export default function Fleet() {
   const { data: products = [], isLoading, isLoadingError, isPaused, refetch } = useProducts();
   const [selected, setSelected] = useState<Product | null>(null);
   useSeo({
-    title: "Products — MAX T100 & Attachments",
+    title: "Products — Shaddad & Attachments",
     description:
-      "Meet the MAX T100 autonomous platform and its ecosystem of attachments — X-Grass Cutter, X-Cultivator, and X-Sprayer. One base, every job in the field.",
+      "Meet Shaddad, the autonomous platform, and its ecosystem of attachments — X-Grass Cutter, X-Cultivator, and X-Sprayer. One base, every job in the field.",
   });
 
+  // A NULL nameAr means the brand reads the same in both languages (the X-* tools).
+  const name = (p: Product) => (lang === "ar" && p.nameAr ? p.nameAr : p.name);
   const role = (p: Product) => (lang === "ar" ? p.roleAr : p.roleEn);
   const desc = (p: Product) => (lang === "ar" ? p.descriptionAr : p.descriptionEn);
   const isPlatform = (p: Product) => p.kind === "platform";
@@ -123,7 +125,7 @@ export default function Fleet() {
                   </div>
                   <img
                     src={PRODUCT_IMAGES[product.slug]}
-                    alt={product.name}
+                    alt={name(product)}
                     className={`w-full h-full ${isPlatform(product) ? "object-contain p-4" : "object-cover"} group-hover:scale-110 transition-transform duration-700`}
                   />
                   <div
@@ -137,7 +139,7 @@ export default function Fleet() {
                 </div>
                 <div className="p-8 relative z-20 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-subhead font-semibold">{product.name}</h3>
+                    <h3 className="text-subhead font-semibold">{name(product)}</h3>
                     <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       <Target className="w-5 h-5" />
                     </span>
@@ -177,7 +179,7 @@ export default function Fleet() {
                   <div className="relative h-72 md:h-96 shrink-0">
                     <img
                       src={PRODUCT_IMAGES[selected.slug]}
-                      alt={selected.name}
+                      alt={name(selected)}
                       className={`w-full h-full ${isPlatform(selected) ? "object-contain p-6 bg-[radial-gradient(ellipse_80%_70%_at_50%_40%,rgba(124,58,237,0.22),transparent_70%)]" : "object-cover"}`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#15101f] via-transparent to-transparent" />
@@ -192,7 +194,7 @@ export default function Fleet() {
                   <div className="p-8 md:p-12 overflow-y-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                       <div>
-                        <h2 className="text-heading font-semibold mb-2">{selected.name}</h2>
+                        <h2 className="text-heading font-semibold mb-2">{name(selected)}</h2>
                         <p className="text-primary font-semibold tracking-widest uppercase text-label">{role(selected)}</p>
                       </div>
                       <button

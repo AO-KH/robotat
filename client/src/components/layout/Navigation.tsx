@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, User, Home, Layers, MessageSquare, ChevronRight } from "lucide-react";
 import type { SVGProps } from "react";
 
-/* The MAX T100 itself — a tracked chassis under a boxy body with a sensor mast —
+/* Shaddad itself — a tracked chassis under a boxy body with a sensor mast —
    drawn to lucide's 24px/stroke-2 grammar so it sits beside the stock icons. */
 function TrackedRobotIcon(props: SVGProps<SVGSVGElement>) {
   return (
