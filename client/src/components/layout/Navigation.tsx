@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, User, Home, Tractor, Layers, MessageSquare, ChevronRight } from "lucide-react";
+import { Menu, X, User, Home, Bot, Layers, MessageSquare, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDemoModal } from "@/features/booking/DemoModalContext";
 import { useCurrentUser } from "@/features/auth/use-auth";
@@ -64,7 +64,7 @@ export function Navigation() {
 
   const mobileLinks = [
     { href: "/", label: t("nav.home"), icon: Home },
-    { href: "/fleet", label: t("nav.products"), icon: Tractor },
+    { href: "/fleet", label: t("nav.products"), icon: Bot },
     { href: "/services", label: t("nav.services"), icon: Layers },
   ];
 
