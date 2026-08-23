@@ -233,6 +233,16 @@
     color: hsl(var(--muted-foreground));
   }
 
+  /* Arabic takes neither mono nor tracking: JetBrains Mono has no Arabic glyphs
+     (the browser substitutes a system font) and letter-spacing disconnects the
+     joined script. Digits and Latin still hit JetBrains Mono first via per-glyph
+     fallback; only Arabic falls through to Plex Arabic. */
+  [dir="rtl"] .data-label,
+  [dir="rtl"] .font-mono {
+    font-family: 'JetBrains Mono', 'IBM Plex Sans Arabic', sans-serif;
+    letter-spacing: 0;
+  }
+
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
