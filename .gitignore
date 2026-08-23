@@ -42,3 +42,8 @@ Thumbs.db
 # record for what was actually submitted.
 /screenshots/
 
+# Local working material that lives beside the repo but is not part of it
+/mobile-app-ui-design-main/
+/service-template/
+/slop.md
+
