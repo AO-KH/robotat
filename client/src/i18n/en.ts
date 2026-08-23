@@ -16,7 +16,6 @@ export const en = {
     heroSub:
       "One autonomous robot, built and operated by ROBOTAT for orchards, row crops, protected agriculture, and solar sites across the region.",
     bookAssessment: "Book a site assessment",
-    marqueeLabel: "ROBOTAT · Field",
 
     capsTag: "What they do",
     capsTitle1: "Eyes on every row.",
