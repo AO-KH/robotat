@@ -23,11 +23,12 @@ describe("products (GET /api/products)", () => {
     expect(res.body[0].kind).toBe("platform");
 
     const p = res.body[0];
-    // The platform is the one product whose brand differs by script (0016);
-    // attachments leave nameAr NULL and read the same in both languages.
+    // Every product carries both scripts now: the platform since 0016, the
+    // attachments since 0017 — English keeps the X-* branding in `name`.
     expect(p.name).toBe("Shaddad");
     expect(p.nameAr).toBe("شداد");
-    expect(res.body[1].nameAr).toBeNull();
+    expect(res.body[1].name).toBe("X-Grass Cutter");
+    expect(res.body[1].nameAr).toBe("الجزازة");
     expect(p.roleEn).toBeTruthy();
     expect(p.roleAr).toBeTruthy();
     expect(p.descriptionAr).toBeTruthy();

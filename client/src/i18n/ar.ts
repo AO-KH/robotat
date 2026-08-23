@@ -62,7 +62,7 @@ export const ar: Dictionary = {
           // the bidi algorithm — an en dash between spaces reorders it to 2.4 – 0.9.
           { label: "عرض الصفّ", value: "0.9-2.4 م" },
           { label: "المهام", value: "استكشاف · حراثة · رشّ" },
-          { label: "الملحقات", value: "X-Cultivator · X-Sprayer" },
+          { label: "الملحقات", value: "الحراثة · الرشاش الموجه" },
         ],
       },
       {
@@ -82,7 +82,7 @@ export const ar: Dictionary = {
         specs: [
           { label: "التغطية", value: "مواقع بحجم المرافق" },
           { label: "المهام", value: "التحكّم بالنباتات" },
-          { label: "الملحق", value: "X-Grass Cutter" },
+          { label: "الملحق", value: "الجزازة" },
         ],
       },
     ],
