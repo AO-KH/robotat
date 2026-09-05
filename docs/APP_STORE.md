@@ -92,7 +92,7 @@ WHAT THE FLEET DOES
 • Vegetation control on solar sites — panel rows kept clear without mowing crews and without herbicide
 
 ONE ROBOT, EVERY ENVIRONMENT
-The MAX T100 does not change — the attachment does. It drives orchard and vineyard rows from 0.9 to 2.4 m, works greenhouse aisles as narrow as 0.5 m, and manages vegetation across utility-scale solar sites.
+Shaddad does not change — the attachment does. It drives orchard and vineyard rows from 0.9 to 2.4 m, works greenhouse aisles as narrow as 0.5 m, and manages vegetation across utility-scale solar sites.
 
 SERVICES
 Grass cutting, fertilizer and compost spraying, land cultivation, and predictive fleet maintenance — a full service wrapper around the platform, operated by NASL.
@@ -183,7 +183,7 @@ ROBOTAT
 • التحكّم في الغطاء النباتي في مواقع الطاقة الشمسية — إبقاء صفوف الألواح نظيفة دون فرق قص ودون مبيدات أعشاب
 
 روبوت واحد، وكل البيئات
-لا يتغيّر MAX T100 — بل تتغيّر الملحقات. يسير بين صفوف البساتين والكروم من 0.9 إلى 2.4 متر، ويعمل في ممرات الصوبات الضيّقة حتى 0.5 متر، ويدير الغطاء النباتي في مواقع الطاقة الشمسية واسعة النطاق.
+لا تتغيّر منصّة شداد — بل تتغيّر الملحقات. يسير بين صفوف البساتين والكروم من 0.9 إلى 2.4 متر، ويعمل في ممرات الصوبات الضيّقة حتى 0.5 متر، ويدير الغطاء النباتي في مواقع الطاقة الشمسية واسعة النطاق.
 
 الخدمات
 قص العشب، ورش الأسمدة والكمبوست، وحراثة الأرض، والصيانة التنبّؤية للأسطول — حزمة خدمات كاملة حول المنصّة، تشغّلها نصل.

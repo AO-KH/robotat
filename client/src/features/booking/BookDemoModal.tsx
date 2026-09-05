@@ -20,7 +20,7 @@ type Channel = "whatsapp" | "email";
 
 export function BookDemoModal() {
   const { isOpen, source, closeModal, restoreTriggerFocus } = useDemoModal();
-  const { data: user } = useCurrentUser();
+  const { data: user, isPending: sessionPending } = useCurrentUser();
   const { t, lang } = useI18n();
   const { mutateAsync: recordBooking } = useBookAssessment();
 
@@ -242,7 +242,24 @@ export function BookDemoModal() {
               </div>
 
               <div className="overflow-y-auto">
-                {!user ? (
+                {sessionPending ? (
+                  /*
+                    `undefined` from useCurrentUser is three states, not one: signed out,
+                    still loading, and failed. Branching on `!user` collapsed all three
+                    into the gate, so a signed-in customer was told to sign in for as long
+                    as /api/auth/me was in flight — and permanently if it errored.
+
+                    Split them. Pending gets a spinner. Only `null`, which the query
+                    returns for an explicit 401, means signed out. Anything else — an
+                    error, a network blip — falls through to the form, because the client
+                    gate is a courtesy and requireAuth on the server is the real one: a
+                    signed-out visitor who gets this far is refused there, where being
+                    wrong is safe. Blocking someone who is actually signed in is not.
+                  */
+                  <div className="p-10 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : user === null ? (
                   /*
                     Signed-out visitors do not book. A booking creates a tracked row on an
                     account and its confirmations go to that account's verified address,
