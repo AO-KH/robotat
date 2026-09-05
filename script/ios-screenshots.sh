@@ -72,8 +72,12 @@ SCENES=(
   # 0 that strip is the page's own <h1>, which collides with the status bar and
   # reads as a rendering bug. Scrolling first puts dimmed card artwork up there
   # instead. click() directly rather than tap() — tap() centres the element,
-  # which would undo the scroll.
-  "03|product-detail|/fleet|scrollTo({top:1760,behavior:'instant'});var b=byText(/MAX T100/);if(b)b.click();"
+  # which would undo the scroll. Throws rather than skipping if the card is not
+  # found: the previous `if(b)` swallowed a miss, so after the platform was
+  # renamed this step still produced a file called product-detail — of the
+  # wrong screen — and a silently wrong App Store screenshot is worse than a
+  # failed run. Matches both scripts because the page follows the locale.
+  "03|product-detail|/fleet|scrollTo({top:1760,behavior:'instant'});var b=byText(/Shaddad|شداد/);if(!b)throw new Error('product card not found');b.click();"
   "04|services|/services|"
   "05|environments|/|var s=document.querySelectorAll('section')[3];scrollTo({top:s.getBoundingClientRect().top+scrollY-18,behavior:'instant'});"
   "06|book-assessment|/|tap(byText(/Book a site assessment/i));"
